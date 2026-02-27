@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Вирощувай Член</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { margin:0; padding:0; overflow:hidden; background:var(--tg-theme-bg-color,#111); font-family:sans-serif; color:var(--tg-theme-text-color,#fff); }
+        canvas { display:block; }
+        .ui { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+        .info { position:absolute; top:15px; left:15px; font-size:20px; text-shadow:0 0 5px #000; pointer-events:auto; }
+        .buttons { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:15px; pointer-events:auto; }
+        button { padding:15px 25px; font-size:18px; border:none; border-radius:12px; background:var(--tg-theme-button-color,#2481cc); color:#fff; box-shadow:0 4px 15px rgba(0,0,0,0.3); }
+        #length { font-size:28px; font-weight:bold; margin:10px 0; }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+    
+    <div class="ui">
+        <div class="info">
+            <div id="length">Член: 5.0 см</div>
+            <div id="status">Росте...</div>
+        </div>
+        
+        <div class="buttons">
+            <button id="water">💧 Підлити</button>
+            <button id="shave">✂️ Побрити</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.MainButton.setText("Поділитись членом 🔥").show();
+        
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        
+        let w = canvas.width = window.innerWidth;
+        let h = canvas.height = window.innerHeight;
+        
+        // Дані гри
+        let length = 5;           // поточна довжина в см
+        let lastTime = Date.now();
+        let waterBoostEnd = 0;    // timestamp коли закінчується буст від підливання
+        let shaveBoostEnd = 0;    // timestamp коли закінчується буст від гоління
+        let hair = true;          // чи є волосся (впливає на швидкість)
+
+        // Завантаження збереженого прогресу
+        if (localStorage.getItem('penisGame')) {
+            const saved = JSON.parse(localStorage.getItem('penisGame'));
+            length = saved.length || 5;
+            lastTime = saved.lastTime || Date.now();
+            waterBoostEnd = saved.waterBoostEnd || 0;
+            shaveBoostEnd = saved.shaveBoostEnd || 0;
+            hair = saved.hair !== false;
+        }
+
+        // Офлайн-прогрес
+        function calculateOffline() {
+            const now = Date.now();
+            const secondsPassed = (now - lastTime) / 1000;
+            let rate = 0.0008; // \~2.88 см за годину базово
+            
+            if (now < waterBoostEnd) rate *= 3;
+            if (now < shaveBoostEnd) rate *= 2.5;
+            if (!hair) rate *= 1.4;
+            
+            length += secondsPassed * rate;
+            if (length > 60) length = 60; // максимум 60 см
+            
+            lastTime = now;
+            saveGame();
+        }
+
+        function saveGame() {
+            localStorage.setItem('penisGame', JSON.stringify({
+                length, lastTime, waterBoostEnd, shaveBoostEnd, hair
+            }));
+        }
+
+        // Малюємо член (в стилі піксель-арту з твоєї картинки)
+        function draw() {
+            ctx.clearRect(0, 0, w, h);
+            
+            // Тло (небо + трава)
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, w, h*0.6);
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(0, h*0.6, w, h);
+            
+            // Сонце/хмари (просто для краси)
+            ctx.fillStyle = '#FFEB3B';
+            ctx.beginPath(); ctx.arc(w*0.8, h*0.15, 40, 0, Math.PI*2); ctx.fill();
+            
+            // Член
+            const scale = Math.min(1, length / 30); // масштаб від 5 до 60 см
+            const penisHeight = 180 + scale * 280;   // від 180px до \~460px
+            const centerX = w / 2;
+            const baseY = h * 0.75;
+            
+            // Яйця
+            ctx.fillStyle = '#C68642';
+            ctx.beginPath();
+            ctx.ellipse(centerX - 28, baseY + 20, 32, 25, 0, 0, Math.PI*2);
+            ctx.ellipse(centerX + 28, baseY + 20, 32, 25, 0, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Ствол
+            ctx.fillStyle = '#D38E5F';
+            ctx.fillRect(centerX - 22, baseY - penisHeight + 30, 44, penisHeight);
+            
+            // Головка
+            ctx.fillStyle = '#E07A5F';
+            ctx.beginPath();
+            ctx.ellipse(centerX, baseY - penisHeight + 25, 26, 18, 0, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Блиск на головці
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.beginPath();
+            ctx.ellipse(centerX-8, baseY - penisHeight + 22, 10, 6, 0, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Волосся (якщо є)
+            if (hair && length > 8) {
+                ctx.strokeStyle = '#3D2B1F';
+                ctx.lineWidth = 6;
+                for (let i = -20; i <= 20; i += 8) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX + i, baseY - 40);
+                    ctx.lineTo(centerX + i + (Math.random()*6-3), baseY - 80);
+                    ctx.stroke();
+                }
+            }
+            
+            // Трава знизу
+            ctx.fillStyle = '#2E7D32';
+            ctx.fillRect(0, baseY + 45, w, h - baseY - 45);
+        }
+
+        // Оновлення кожну секунду
+        function loop() {
+            calculateOffline();
+            
+            const now = Date.now();
+            let status = "Росте сам по собі...";
+            
+            if (now < waterBoostEnd) status = "💧 Підсилений поливом!";
+            else if (now < shaveBoostEnd) status = "✂️ Після гоління росте швидше!";
+            else if (!hair) status = "Голий = росте швидше!";
+            
+            document.getElementById('length').textContent = `Член: ${length.toFixed(1)} см`;
+            document.getElementById('status').textContent = status;
+            
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // Кнопки
+        document.getElementById('water').addEventListener('click', () => {
+            tg.HapticFeedback.impactOccurred('heavy');
+            
+            const now = Date.now();
+            length += 3.5;                    // великий миттєвий бонус
+            waterBoostEnd = now + 4 * 60 * 60 * 1000; // +4 години прискорення ×3
+            
+            if (length > 60) length = 60;
+            saveGame();
+        });
+
+        document.getElementById('shave').addEventListener('click', () => {
+            tg.HapticFeedback.impactOccurred('medium');
+            
+            length += 1.8;
+            hair = false;
+            shaveBoostEnd = Date.now() + 2 * 60 * 60 * 1000; // +2 години прискорення ×2.5
+            
+            // Волосся відростає через 30 хвилин після гоління
+            setTimeout(() => { hair = true; saveGame(); }, 30 * 60 * 1000);
+            
+            if (length > 60) length = 60;
+            saveGame();
+        });
+
+        // Поділитись через Telegram
+        tg.MainButton.onClick(() => {
+            tg.sendData(JSON.stringify({ length: length.toFixed(1), action: "share" }));
+            tg.showAlert(`Твій член ${length.toFixed(1)} см 🔥\nПоділись з друзями!`);
+        });
+
+        // Старт
+        calculateOffline();
+        loop();
+
+        // Адаптація під зміну розміру вікна
+        window.addEventListener('resize', () => {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
