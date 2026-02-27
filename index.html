@@ -1,368 +1,203 @@
+```html
 <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍆 ВИРОЩУВАЧ ЧЛЕНА 1000см</title>
+    <title>🍆 Вирощувач Члена — Telegram Bot</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        
-        body {
-            background: linear-gradient(180deg, #1a001a, #330033);
-            color: #ffccff;
-            font-family: 'Press Start 2P', cursive;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-            image-rendering: pixelated;
-        }
-        h1 {
-            font-size: 2.8em;
-            text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
-            margin: 10px 0 5px;
-        }
-        .subtitle {
-            font-size: 1.1em;
-            color: #ff99ff;
-            margin-bottom: 20px;
-        }
-        #game {
-            max-width: 700px;
-            margin: 0 auto;
-            background: rgba(0,0,0,0.6);
-            border: 8px solid #ff00aa;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 0 50px #ff00ff;
-        }
-        #length {
-            font-size: 3.5em;
-            color: #ffff00;
-            text-shadow: 0 0 15px #ffff00;
-            margin: 15px 0;
-        }
-        progress {
-            width: 90%;
-            height: 35px;
-            accent-color: #ff00ff;
-            border: 4px solid #ff99ff;
-        }
-        canvas {
-            background: #110022;
-            border: 6px solid #ff00aa;
-            border-radius: 15px;
-            margin: 25px auto;
-            box-shadow: 0 0 40px #ff00ff;
-            image-rendering: crisp-edges;
-        }
-        .actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-            max-width: 620px;
-            margin: 0 auto;
-        }
-        button {
-            background: linear-gradient(#ff3399, #cc0066);
-            color: white;
-            border: 6px solid #ffff00;
-            border-radius: 15px;
-            padding: 18px 10px;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 1.15em;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 8px 0 #990033;
-        }
-        button:active {
-            transform: translateY(6px);
-            box-shadow: 0 2px 0 #990033;
-        }
-        button:disabled {
-            background: #555;
-            border-color: #777;
-            color: #aaa;
-            cursor: not-allowed;
-        }
-        .cd {
-            font-size: 0.85em;
-            color: #ffff99;
-            margin-top: 8px;
-            display: block;
-        }
-        .info {
-            margin: 25px 0 10px;
-            font-size: 1.1em;
-            color: #ffccff;
-        }
-        #win-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 100;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
-        .modal-content {
-            background: #220033;
-            border: 10px solid #ff00ff;
-            padding: 40px 50px;
-            text-align: center;
-            box-shadow: 0 0 60px #ff00ff;
-            max-width: 90%;
-        }
-        .modal-content h2 {
-            font-size: 2.5em;
-            color: #ffff00;
-            text-shadow: 0 0 20px #ffff00;
-        }
-        .reset-btn {
-            margin-top: 30px;
-            background: #990033;
-            padding: 12px 30px;
-            font-size: 1em;
-        }
+        body { font-family: system-ui, sans-serif; background: #0f001a; color: #ffccff; text-align: center; padding: 20px; }
+        pre { background: #1a0033; padding: 20px; border-radius: 12px; text-align: left; max-width: 800px; margin: 20px auto; overflow-x: auto; }
+        h1 { color: #ff00ff; text-shadow: 0 0 20px #ff00ff; }
+        code { color: #00ffcc; }
+        .warning { color: #ffff00; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="game">
-        <h1>🍆 ВИРОЩУВАЧ ЧЛЕНА</h1>
-        <div class="subtitle">від 0 до 1000 см у віртуальному боті</div>
-        
-        <div class="info">Поточна довжина:</div>
-        <div id="length">0.0 см</div>
-        
-        <progress id="progress" value="0" max="1000"></progress>
-        
-        <canvas id="canvas" width="320" height="520"></canvas>
-        
-        <div class="actions">
-            <button id="btn-pump">
-                💦 ПІДКАЧАТИ<br>
-                <span style="font-size:0.8em">+50 см</span><br>
-                <span class="cd" id="cd-pump">Готово!</span>
-            </button>
-            
-            <button id="btn-shave">
-                🪒 ПОБРИТИ<br>
-                <span style="font-size:0.8em">+20 см</span><br>
-                <span class="cd" id="cd-shave">Готово!</span>
-            </button>
-            
-            <button id="btn-massage">
-                🖐️ МАСАЖУВАТИ<br>
-                <span style="font-size:0.8em">+3 см</span><br>
-                <span class="cd" id="cd-massage">Готово!</span>
-            </button>
-            
-            <button id="btn-exercise">
-                🏋️ ТРЕНУВАТИ<br>
-                <span style="font-size:0.8em">+8 см</span><br>
-                <span class="cd" id="cd-exercise">Готово!</span>
-            </button>
-        </div>
-        
-        <button class="reset-btn" onclick="resetGame()">СКИНУТИ ГРУ</button>
-    </div>
+    <h1>🍆 ВИРОЩУВАЧ ЧЛЕНА ДЛЯ TELEGRAM БОТА</h1>
+    <p>Тепер гра повністю для Telegram! Кожен користувач має свій член, є глобальний ТОП-15, змагайтеся з друзями через /top</p>
+    <p class="warning">Пасивний ріст 0.4 см/годину навіть коли бот вимкнений!</p>
 
-    <!-- WIN MODAL -->
-    <div id="win-modal">
-        <div class="modal-content">
-            <h2>🎉 ЧЕМПІОН! 🎉</h2>
-            <p style="font-size:1.4em; margin:20px 0;">Твій член досягнув<br><span style="color:#ffff00; font-size:1.6em;">1000 СМ!!!</span></p>
-            <p>Ти — легендарний вирощувач бота 🍆🏆</p>
-            <button onclick="closeWin()" style="margin-top:25px; padding:18px 40px; font-size:1.3em;">ПРОДОВЖИТИ РОСТИ (ще більше!)</button>
-        </div>
-    </div>
+    <h2>Як запустити за 3 хвилини:</h2>
+    <ol style="max-width:700px; margin:0 auto; text-align:left;">
+        <li>Напиши @BotFather → /newbot → придумай назву (наприклад MyDickGrowerBot) → отримай TOKEN</li>
+        <li>Встав цей TOKEN у код замість <code>YOUR_TOKEN_HERE</code></li>
+        <li>Встанови Python 3.10+ і виконай у терміналі: <code>pip install aiogram</code></li>
+        <li>Збережи код нижче як <code>bot.py</code></li>
+        <li>Запусти: <code>python bot.py</code></li>
+        <li>Додай бота до чату з друзями або надішли їм посилання — і змагайтеся!</li>
+    </ol>
 
-    <script>
-        let currentLength = 0;
-        let lastSave = Date.now();
-        const PASSIVE_PER_HOUR = 0.4; // природний ріст бота
+    <h2>Команди бота:</h2>
+    <p><b>/start</b> — головне меню з кнопками<br>
+       <b>/top</b> — глобальний рейтинг (топ-15)<br>
+       Кнопки: ПІДКАЧАТИ, ПОБРИТИ, МАСАЖ, ТРЕНУВАННЯ</p>
 
-        const actions = {
-            pump: { cooldown: 4 * 3600 * 1000, boost: 50, lastTime: 0, name: "pump" },
-            shave: { cooldown: 24 * 3600 * 1000, boost: 20, lastTime: 0, name: "shave" },
-            massage: { cooldown: 30 * 60 * 1000, boost: 3, lastTime: 0, name: "massage" },
-            exercise: { cooldown: 60 * 60 * 1000, boost: 8, lastTime: 0, name: "exercise" }
-        };
+<pre><code>import asyncio
+import json
+import os
+import time
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
-        function loadGame() {
-            const saved = localStorage.getItem("dickGrower2025");
-            if (saved) {
-                const data = JSON.parse(saved);
-                currentLength = parseFloat(data.length) || 0;
-                lastSave = data.lastSave || Date.now();
-                
-                Object.keys(actions).forEach(key => {
-                    if (data[key + "Last"] !== undefined) {
-                        actions[key].lastTime = data[key + "Last"];
-                    }
-                });
+BOT_TOKEN = "YOUR_TOKEN_HERE"   # ←←← ЗАМІНИ НА СВІЙ ТОКЕН
 
-                // Офлайн-ріст
-                const now = Date.now();
-                const hoursOffline = (now - lastSave) / (1000 * 3600);
-                currentLength += hoursOffline * PASSIVE_PER_HOUR;
-            }
+bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
+dp = Dispatcher()
+
+DATA_FILE = "dick_growers.json"
+users = {}
+
+PASSIVE_PER_HOUR = 0.4
+COOLDOWNS = {"pump": 4*3600, "shave": 24*3600, "massage": 30*60, "exercise": 3600}
+BOOSTS = {"pump": 50, "shave": 20, "massage": 3, "exercise": 8}
+
+def load_data():
+    global users
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                users = json.load(f)
+        except:
+            users = {}
+    else:
+        users = {}
+
+def save_data():
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(users, f, ensure_ascii=False, indent=2)
+
+async def show_status(chat_id: int, user_id: str, to_edit: types.Message = None):
+    user = users[user_id]
+    length = round(user["length"], 1)
+    percent = min(100, length / 10)
+    filled = int(percent / 5)
+    bar = "█" * filled + "░" * (20 - filled)
+    
+    status = " 🏆 ЛЕГЕНДА 1000+ см!" if length >= 1000 else ""
+    
+    text = f"""🍆 <b>Вирощувач Члена</b>{status}
+
+<b>Довжина:</b> {length} см
+Прогрес до 1000 см: [{bar}] {percent:.0f}%
+
+Обери дію:"""
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💦 ПІДКАЧАТИ (+50см, 4г)", callback_data="pump")],
+        [InlineKeyboardButton(text="🪒 ПОБРИТИ (+20см, 24г)", callback_data="shave")],
+        [InlineKeyboardButton(text="🖐️ МАСАЖ (+3см, 30хв)", callback_data="massage")],
+        [InlineKeyboardButton(text="🏋️ ТРЕНУВАТИ (+8см, 1г)", callback_data="exercise")],
+    ])
+
+    if to_edit:
+        await to_edit.edit_text(text, reply_markup=keyboard)
+    else:
+        await bot.send_message(chat_id, text, reply_markup=keyboard)
+
+@dp.message(Command("start"))
+async def cmd_start(message: types.Message):
+    user_id = str(message.from_user.id)
+    full_name = message.from_user.full_name
+
+    if user_id not in users:
+        users[user_id] = {
+            "length": 0.0,
+            "last_check": time.time(),
+            "last_pump": 0,
+            "last_shave": 0,
+            "last_massage": 0,
+            "last_exercise": 0,
+            "display_name": full_name
         }
+    else:
+        users[user_id]["display_name"] = full_name
 
-        function saveGame() {
-            const data = {
-                length: currentLength,
-                lastSave: Date.now()
-            };
-            Object.keys(actions).forEach(key => {
-                data[key + "Last"] = actions[key].lastTime;
-            });
-            localStorage.setItem("dickGrower2025", JSON.stringify(data));
+    # пасивний ріст офлайн
+    now = time.time()
+    last_check = users[user_id].get("last_check", now)
+    hours_off = (now - last_check) / 3600
+    users[user_id]["length"] += hours_off * PASSIVE_PER_HOUR
+    users[user_id]["last_check"] = now
+
+    save_data()
+    await show_status(message.chat.id, user_id)
+
+@dp.callback_query(lambda c: c.data in ["pump", "shave", "massage", "exercise"])
+async def handle_action(callback: CallbackQuery):
+    user_id = str(callback.from_user.id)
+    full_name = callback.from_user.full_name
+    action = callback.data
+
+    if user_id not in users:
+        users[user_id] = {
+            "length": 0.0,
+            "last_check": time.time(),
+            "last_pump": 0, "last_shave": 0,
+            "last_massage": 0, "last_exercise": 0,
+            "display_name": full_name
         }
+    else:
+        users[user_id]["display_name"] = full_name
 
-        function performAction(key) {
-            const action = actions[key];
-            const now = Date.now();
-            
-            if (now - action.lastTime < action.cooldown) {
-                alert("⏳ Ще рано! Зачекай, поки бот відновиться.");
-                return;
-            }
-            
-            currentLength += action.boost;
-            action.lastTime = now;
-            
-            saveGame();
-            updateUI();
-            drawPenis();
-            checkWin();
-        }
+    now = time.time()
 
-        function getRemaining(key) {
-            const action = actions[key];
-            return Math.max(0, action.cooldown - (Date.now() - action.lastTime));
-        }
+    # пасивний ріст
+    last_check = users[user_id].get("last_check", now)
+    hours_off = (now - last_check) / 3600
+    users[user_id]["length"] += hours_off * PASSIVE_PER_HOUR
+    users[user_id]["last_check"] = now
 
-        function formatTime(ms) {
-            if (ms <= 0) return "Готово!";
-            const h = Math.floor(ms / 3600000);
-            const m = Math.floor((ms % 3600000) / 60000);
-            const s = Math.floor((ms % 60000) / 1000);
-            if (h > 0) return `${h}г ${m}хв`;
-            if (m > 0) return `${m}хв ${s}с`;
-            return `${s}с`;
-        }
+    # перевірка кулдауну
+    last_time = users[user_id].get(f"last_{action}", 0)
+    cd = COOLDOWNS[action]
+    if now - last_time < cd:
+        remain = cd - (now - last_time)
+        h = int(remain // 3600)
+        m = int((remain % 3600) // 60)
+        await callback.answer(f"⏳ Ще рано! Чекай {h}г {m}хв", show_alert=True)
+        return
 
-        function updateCooldowns() {
-            Object.keys(actions).forEach(key => {
-                const rem = getRemaining(key);
-                const el = document.getElementById(`cd-${key}`);
-                if (el) el.textContent = formatTime(rem);
-            });
-        }
+    # виконуємо дію
+    boost = BOOSTS[action]
+    users[user_id]["length"] += boost
+    users[user_id][f"last_{action}"] = now
+    users[user_id]["last_check"] = now
 
-        function updateUI() {
-            const lenEl = document.getElementById("length");
-            lenEl.textContent = currentLength.toFixed(1) + " см";
-            
-            const prog = document.getElementById("progress");
-            prog.value = Math.min(currentLength, 1000);
-        }
+    save_data()
 
-        function checkWin() {
-            if (currentLength >= 1000) {
-                document.getElementById("win-modal").style.display = "flex";
-            }
-        }
+    await callback.answer(f"✅ +{boost} см! Тепер {round(users[user_id]['length'],1)} см 🍆", show_alert=False)
+    await show_status(callback.message.chat.id, user_id, callback.message)
 
-        function closeWin() {
-            document.getElementById("win-modal").style.display = "none";
-        }
+@dp.message(Command("top"))
+async def cmd_top(message: types.Message):
+    if not users:
+        await message.answer("Поки ніхто не росте 😢 Почни першим!")
+        return
 
-        function drawPenis() {
-            const canvas = document.getElementById("canvas");
-            const ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, 320, 520);
+    top_list = sorted(users.items(), key=lambda x: x[1]["length"], reverse=True)[:15]
 
-            const maxH = 410;
-            let height = 80 + Math.min((currentLength / 1000) * maxH, maxH);
-            const width = 48 + (currentLength / 1000) * 22;
-            const x = 160;
+    text = "🏆 <b>ГЛОБАЛЬНИЙ ТОП-15 ВИРОЩУВАЧІВ</b>\n\n"
+    for rank, (uid, data) in enumerate(top_list, 1):
+        name = data.get("display_name", "Анон")
+        length = round(data["length"], 1)
+        text += f"<b>{rank}.</b> {name} — <b>{length}</b> см\n"
 
-            // Яйця
-            ctx.fillStyle = "#4a2c1a";
-            ctx.beginPath();
-            ctx.ellipse(x - 38, 465, 32, 28, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(x + 38, 465, 32, 28, 0, 0, Math.PI * 2);
-            ctx.fill();
+    text += "\n\nЗмагайся з друзями! Надішли їм посилання на бота 👇"
+    await message.answer(text, disable_web_page_preview=True)
 
-            // Стовбур
-            ctx.fillStyle = "#e8a070";
-            ctx.fillRect(x - width/2, 460 - height, width, height);
+async def main():
+    load_data()
+    print("🚀 Бот запущено! Вирощуй і змагайся!")
+    await dp.start_polling(bot)
 
-            // Вени
-            ctx.strokeStyle = "#c66a40";
-            ctx.lineWidth = 7;
-            ctx.beginPath();
-            ctx.moveTo(x - 12, 460 - height + 60);
-            ctx.quadraticCurveTo(x - 25, 460 - height/1.6, x + 15, 460 - height + 140);
-            ctx.stroke();
+if __name__ == "__main__":
+    asyncio.run(main())
+</code></pre>
 
-            // Головка
-            ctx.fillStyle = "#ff5e5e";
-            const headW = width * 1.18;
-            const headH = 52;
-            ctx.fillRect(x - headW/2, 460 - height - headH + 8, headW, headH);
-
-            // Блиск на головці
-            ctx.fillStyle = "#ff9999";
-            ctx.fillRect(x - headW/2 + 8, 460 - height - headH + 15, headW - 22, 14);
-        }
-
-        function resetGame() {
-            if (confirm("🔄 Справді скинути весь прогрес бота?")) {
-                localStorage.removeItem("dickGrower2025");
-                location.reload();
-            }
-        }
-
-        // Ініціалізація
-        window.onload = function() {
-            loadGame();
-            updateUI();
-            drawPenis();
-            updateCooldowns();
-
-            // Кнопки
-            document.getElementById("btn-pump").onclick = () => performAction("pump");
-            document.getElementById("btn-shave").onclick = () => performAction("shave");
-            document.getElementById("btn-massage").onclick = () => performAction("massage");
-            document.getElementById("btn-exercise").onclick = () => performAction("exercise");
-
-            // Оновлення кожну секунду
-            setInterval(() => {
-                updateCooldowns();
-            }, 1000);
-
-            // Автозбереження кожні 25 секунд
-            setInterval(() => {
-                saveGame();
-            }, 25000);
-
-            // Невеликий постійний ріст поки відкрита вкладка
-            setInterval(() => {
-                currentLength += 0.012; // \~0.43 см за хвилину
-                updateUI();
-                drawPenis();
-                checkWin();
-            }, 1700);
-
-            console.log("%cГру завантажено! Вирощуй на максимум 🍆", "color:#ff00ff; font-size:16px");
-        };
-    </script>
+<p><b>Готово!</b> Після запуску просто напиши боту /start і починай рости. Друзі теж запускають — і дивіться /top 🔥</p>
+<p>Хочеш додати щось (наприклад приватні челенджі між друзями або картинку члена) — пиши, зроблю за 5 хвилин.</p>
 </body>
 </html>
+```
