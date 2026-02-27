@@ -1,200 +1,368 @@
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-    tg.MainButton.setText("Поділитись членом 🔥").show();
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍆 ВИРОЩУВАЧ ЧЛЕНА 1000см</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            background: linear-gradient(180deg, #1a001a, #330033);
+            color: #ffccff;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            image-rendering: pixelated;
+        }
+        h1 {
+            font-size: 2.8em;
+            text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+            margin: 10px 0 5px;
+        }
+        .subtitle {
+            font-size: 1.1em;
+            color: #ff99ff;
+            margin-bottom: 20px;
+        }
+        #game {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.6);
+            border: 8px solid #ff00aa;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 0 50px #ff00ff;
+        }
+        #length {
+            font-size: 3.5em;
+            color: #ffff00;
+            text-shadow: 0 0 15px #ffff00;
+            margin: 15px 0;
+        }
+        progress {
+            width: 90%;
+            height: 35px;
+            accent-color: #ff00ff;
+            border: 4px solid #ff99ff;
+        }
+        canvas {
+            background: #110022;
+            border: 6px solid #ff00aa;
+            border-radius: 15px;
+            margin: 25px auto;
+            box-shadow: 0 0 40px #ff00ff;
+            image-rendering: crisp-edges;
+        }
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            max-width: 620px;
+            margin: 0 auto;
+        }
+        button {
+            background: linear-gradient(#ff3399, #cc0066);
+            color: white;
+            border: 6px solid #ffff00;
+            border-radius: 15px;
+            padding: 18px 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.15em;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 8px 0 #990033;
+        }
+        button:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #990033;
+        }
+        button:disabled {
+            background: #555;
+            border-color: #777;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+        .cd {
+            font-size: 0.85em;
+            color: #ffff99;
+            margin-top: 8px;
+            display: block;
+        }
+        .info {
+            margin: 25px 0 10px;
+            font-size: 1.1em;
+            color: #ffccff;
+        }
+        #win-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .modal-content {
+            background: #220033;
+            border: 10px solid #ff00ff;
+            padding: 40px 50px;
+            text-align: center;
+            box-shadow: 0 0 60px #ff00ff;
+            max-width: 90%;
+        }
+        .modal-content h2 {
+            font-size: 2.5em;
+            color: #ffff00;
+            text-shadow: 0 0 20px #ffff00;
+        }
+        .reset-btn {
+            margin-top: 30px;
+            background: #990033;
+            padding: 12px 30px;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <h1>🍆 ВИРОЩУВАЧ ЧЛЕНА</h1>
+        <div class="subtitle">від 0 до 1000 см у віртуальному боті</div>
+        
+        <div class="info">Поточна довжина:</div>
+        <div id="length">0.0 см</div>
+        
+        <progress id="progress" value="0" max="1000"></progress>
+        
+        <canvas id="canvas" width="320" height="520"></canvas>
+        
+        <div class="actions">
+            <button id="btn-pump">
+                💦 ПІДКАЧАТИ<br>
+                <span style="font-size:0.8em">+50 см</span><br>
+                <span class="cd" id="cd-pump">Готово!</span>
+            </button>
+            
+            <button id="btn-shave">
+                🪒 ПОБРИТИ<br>
+                <span style="font-size:0.8em">+20 см</span><br>
+                <span class="cd" id="cd-shave">Готово!</span>
+            </button>
+            
+            <button id="btn-massage">
+                🖐️ МАСАЖУВАТИ<br>
+                <span style="font-size:0.8em">+3 см</span><br>
+                <span class="cd" id="cd-massage">Готово!</span>
+            </button>
+            
+            <button id="btn-exercise">
+                🏋️ ТРЕНУВАТИ<br>
+                <span style="font-size:0.8em">+8 см</span><br>
+                <span class="cd" id="cd-exercise">Готово!</span>
+            </button>
+        </div>
+        
+        <button class="reset-btn" onclick="resetGame()">СКИНУТИ ГРУ</button>
+    </div>
 
-    const canvas = document.getElementById('c');
-    const ctx = canvas.getContext('2d');
+    <!-- WIN MODAL -->
+    <div id="win-modal">
+        <div class="modal-content">
+            <h2>🎉 ЧЕМПІОН! 🎉</h2>
+            <p style="font-size:1.4em; margin:20px 0;">Твій член досягнув<br><span style="color:#ffff00; font-size:1.6em;">1000 СМ!!!</span></p>
+            <p>Ти — легендарний вирощувач бота 🍆🏆</p>
+            <button onclick="closeWin()" style="margin-top:25px; padding:18px 40px; font-size:1.3em;">ПРОДОВЖИТИ РОСТИ (ще більше!)</button>
+        </div>
+    </div>
 
-    let w = canvas.width = window.innerWidth;
-    let h = canvas.height = window.innerHeight;
+    <script>
+        let currentLength = 0;
+        let lastSave = Date.now();
+        const PASSIVE_PER_HOUR = 0.4; // природний ріст бота
 
-    // Дані гри
-    let length = 5;
-    let lastTime = Date.now();
-    let waterCooldownEnd = 0;     // timestamp коли можна знову підливати
-    let shaveCooldownEnd = 0;     // timestamp коли можна знову голити
-    let hair = true;
+        const actions = {
+            pump: { cooldown: 4 * 3600 * 1000, boost: 50, lastTime: 0, name: "pump" },
+            shave: { cooldown: 24 * 3600 * 1000, boost: 20, lastTime: 0, name: "shave" },
+            massage: { cooldown: 30 * 60 * 1000, boost: 3, lastTime: 0, name: "massage" },
+            exercise: { cooldown: 60 * 60 * 1000, boost: 8, lastTime: 0, name: "exercise" }
+        };
 
-    // Завантаження
-    if (localStorage.getItem('penisGame')) {
-        const saved = JSON.parse(localStorage.getItem('penisGame'));
-        length = saved.length || 5;
-        lastTime = saved.lastTime || Date.now();
-        waterCooldownEnd = saved.waterCooldownEnd || 0;
-        shaveCooldownEnd = saved.shaveCooldownEnd || 0;
-        hair = saved.hair !== false;
-    }
+        function loadGame() {
+            const saved = localStorage.getItem("dickGrower2025");
+            if (saved) {
+                const data = JSON.parse(saved);
+                currentLength = parseFloat(data.length) || 0;
+                lastSave = data.lastSave || Date.now();
+                
+                Object.keys(actions).forEach(key => {
+                    if (data[key + "Last"] !== undefined) {
+                        actions[key].lastTime = data[key + "Last"];
+                    }
+                });
 
-    function calculateOffline() {
-        const now = Date.now();
-        const secondsPassed = (now - lastTime) / 1000;
-        let rate = 0.0008; // \~2.88 см/год базово
-
-        if (now < waterCooldownEnd) rate *= 3;     // буст від останнього поливу
-        if (now < shaveCooldownEnd) rate *= 2.5;
-        if (!hair) rate *= 1.4;
-
-        length += secondsPassed * rate;
-        if (length > 200) length = 2000; // новий максимум 200 см
-
-        lastTime = now;
-        saveGame();
-    }
-
-    function saveGame() {
-        localStorage.setItem('penisGame', JSON.stringify({
-            length, lastTime, waterCooldownEnd, shaveCooldownEnd, hair
-        }));
-    }
-
-    // Малювання (те саме, тільки max height адаптовано)
-    function draw() {
-        ctx.clearRect(0, 0, w, h);
-        ctx.fillStyle = '#87CEEB';
-        ctx.fillRect(0, 0, w, h*0.6);
-        ctx.fillStyle = '#4CAF50';
-        ctx.fillRect(0, h*0.6, w, h);
-
-        ctx.fillStyle = '#FFEB3B';
-        ctx.beginPath(); ctx.arc(w*0.8, h*0.15, 40, 0, Math.PI*2); ctx.fill();
-
-        const scale = Math.min(1, length / 100); // масштаб до 200 см
-        const penisHeight = 180 + scale * 400;   // від 180 до \~580px
-        const centerX = w / 2;
-        const baseY = h * 0.75;
-
-        ctx.fillStyle = '#C68642';
-        ctx.beginPath();
-        ctx.ellipse(centerX - 28, baseY + 20, 32, 25, 0, 0, Math.PI*2);
-        ctx.ellipse(centerX + 28, baseY + 20, 32, 25, 0, 0, Math.PI*2);
-        ctx.fill();
-
-        ctx.fillStyle = '#D38E5F';
-        ctx.fillRect(centerX - 22, baseY - penisHeight + 30, 44, penisHeight);
-
-        ctx.fillStyle = '#E07A5F';
-        ctx.beginPath();
-        ctx.ellipse(centerX, baseY - penisHeight + 25, 26, 18, 0, 0, Math.PI*2);
-        ctx.fill();
-
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.beginPath();
-        ctx.ellipse(centerX-8, baseY - penisHeight + 22, 10, 6, 0, 0, Math.PI*2);
-        ctx.fill();
-
-        if (hair && length > 8) {
-            ctx.strokeStyle = '#3D2B1F';
-            ctx.lineWidth = 6;
-            for (let i = -20; i <= 20; i += 8) {
-                ctx.beginPath();
-                ctx.moveTo(centerX + i, baseY - 40);
-                ctx.lineTo(centerX + i + (Math.random()*6-3), baseY - 80);
-                ctx.stroke();
+                // Офлайн-ріст
+                const now = Date.now();
+                const hoursOffline = (now - lastSave) / (1000 * 3600);
+                currentLength += hoursOffline * PASSIVE_PER_HOUR;
             }
         }
 
-        ctx.fillStyle = '#2E7D32';
-        ctx.fillRect(0, baseY + 45, w, h - baseY - 45);
-    }
-
-    const waterBtn = document.getElementById('water');
-    const shaveBtn = document.getElementById('shave');
-
-    function updateButtons() {
-        const now = Date.now();
-
-        // Підлити
-        if (now < waterCooldownEnd) {
-            const remain = Math.ceil((waterCooldownEnd - now) / 1000);
-            const hours = Math.floor(remain / 3600);
-            const mins = Math.floor((remain % 3600) / 60);
-            const secs = remain % 60;
-            waterBtn.textContent = `Підлити через \( {hours}: \){mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
-            waterBtn.disabled = true;
-            waterBtn.style.background = '#555';
-        } else {
-            waterBtn.textContent = '💧 Підлити';
-            waterBtn.disabled = false;
-            waterBtn.style.background = 'var(--tg-theme-button-color, #2481cc)';
+        function saveGame() {
+            const data = {
+                length: currentLength,
+                lastSave: Date.now()
+            };
+            Object.keys(actions).forEach(key => {
+                data[key + "Last"] = actions[key].lastTime;
+            });
+            localStorage.setItem("dickGrower2025", JSON.stringify(data));
         }
 
-        // Побрити
-        if (now < shaveCooldownEnd) {
-            const remain = Math.ceil((shaveCooldownEnd - now) / 1000);
-            const mins = Math.floor(remain / 60);
-            const secs = remain % 60;
-            shaveBtn.textContent = `Побрити через \( {mins}: \){secs.toString().padStart(2,'0')}`;
-            shaveBtn.disabled = true;
-            shaveBtn.style.background = '#555';
-        } else {
-            shaveBtn.textContent = '✂️ Побрити';
-            shaveBtn.disabled = false;
-            shaveBtn.style.background = 'var(--tg-theme-button-color, #2481cc)';
-        }
-    }
-
-    function loop() {
-        calculateOffline();
-        updateButtons();
-
-        const now = Date.now();
-        let status = "Росте сам по собі...";
-        if (now < waterCooldownEnd) status = "💧 Підсилений поливом!";
-        else if (now < shaveCooldownEnd) status = "✂️ Після гоління росте швидше!";
-        else if (!hair) status = "Голий = росте швидше!";
-
-        document.getElementById('length').textContent = `Член: ${length.toFixed(1)} см`;
-        document.getElementById('status').textContent = status;
-
-        draw();
-        requestAnimationFrame(loop);
-    }
-
-    // Підлити
-    waterBtn.addEventListener('click', () => {
-        const now = Date.now();
-        if (now < waterCooldownEnd) {
-            tg.HapticFeedback.notificationOccurred('error');
-            return;
+        function performAction(key) {
+            const action = actions[key];
+            const now = Date.now();
+            
+            if (now - action.lastTime < action.cooldown) {
+                alert("⏳ Ще рано! Зачекай, поки бот відновиться.");
+                return;
+            }
+            
+            currentLength += action.boost;
+            action.lastTime = now;
+            
+            saveGame();
+            updateUI();
+            drawPenis();
+            checkWin();
         }
 
-        tg.HapticFeedback.impactOccurred('heavy');
-        length += 5;  // більший бонус, бо рідко
-        waterCooldownEnd = now + 4 * 60 * 60 * 1000; // 4 години
-        if (length > 200) length = 200;
-        saveGame();
-    });
-
-    // Побрити
-    shaveBtn.addEventListener('click', () => {
-        const now = Date.now();
-        if (now < shaveCooldownEnd) {
-            tg.HapticFeedback.notificationOccurred('error');
-            return;
+        function getRemaining(key) {
+            const action = actions[key];
+            return Math.max(0, action.cooldown - (Date.now() - action.lastTime));
         }
 
-        tg.HapticFeedback.impactOccurred('medium');
-        length += 2.5;
-        hair = false;
-        shaveCooldownEnd = now + 30 * 60 * 1000; // 30 хвилин кулдаун
-        setTimeout(() => { hair = true; saveGame(); updateButtons(); }, 30 * 60 * 1000);
+        function formatTime(ms) {
+            if (ms <= 0) return "Готово!";
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            if (h > 0) return `${h}г ${m}хв`;
+            if (m > 0) return `${m}хв ${s}с`;
+            return `${s}с`;
+        }
 
-        if (length > 200) length = 200;
-        saveGame();
-    });
+        function updateCooldowns() {
+            Object.keys(actions).forEach(key => {
+                const rem = getRemaining(key);
+                const el = document.getElementById(`cd-${key}`);
+                if (el) el.textContent = formatTime(rem);
+            });
+        }
 
-    tg.MainButton.onClick(() => {
-        tg.sendData(JSON.stringify({ length: length.toFixed(1), action: "share" }));
-        tg.showAlert(`Твій член ${length.toFixed(1)} см 🔥\nПоділись з друзями!`);
-    });
+        function updateUI() {
+            const lenEl = document.getElementById("length");
+            lenEl.textContent = currentLength.toFixed(1) + " см";
+            
+            const prog = document.getElementById("progress");
+            prog.value = Math.min(currentLength, 1000);
+        }
 
-    calculateOffline();
-    loop();
+        function checkWin() {
+            if (currentLength >= 1000) {
+                document.getElementById("win-modal").style.display = "flex";
+            }
+        }
 
-    window.addEventListener('resize', () => {
-        w = canvas.width = window.innerWidth;
-        h = canvas.height = window.innerHeight;
-    });
-</script>
+        function closeWin() {
+            document.getElementById("win-modal").style.display = "none";
+        }
+
+        function drawPenis() {
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, 320, 520);
+
+            const maxH = 410;
+            let height = 80 + Math.min((currentLength / 1000) * maxH, maxH);
+            const width = 48 + (currentLength / 1000) * 22;
+            const x = 160;
+
+            // Яйця
+            ctx.fillStyle = "#4a2c1a";
+            ctx.beginPath();
+            ctx.ellipse(x - 38, 465, 32, 28, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + 38, 465, 32, 28, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Стовбур
+            ctx.fillStyle = "#e8a070";
+            ctx.fillRect(x - width/2, 460 - height, width, height);
+
+            // Вени
+            ctx.strokeStyle = "#c66a40";
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.moveTo(x - 12, 460 - height + 60);
+            ctx.quadraticCurveTo(x - 25, 460 - height/1.6, x + 15, 460 - height + 140);
+            ctx.stroke();
+
+            // Головка
+            ctx.fillStyle = "#ff5e5e";
+            const headW = width * 1.18;
+            const headH = 52;
+            ctx.fillRect(x - headW/2, 460 - height - headH + 8, headW, headH);
+
+            // Блиск на головці
+            ctx.fillStyle = "#ff9999";
+            ctx.fillRect(x - headW/2 + 8, 460 - height - headH + 15, headW - 22, 14);
+        }
+
+        function resetGame() {
+            if (confirm("🔄 Справді скинути весь прогрес бота?")) {
+                localStorage.removeItem("dickGrower2025");
+                location.reload();
+            }
+        }
+
+        // Ініціалізація
+        window.onload = function() {
+            loadGame();
+            updateUI();
+            drawPenis();
+            updateCooldowns();
+
+            // Кнопки
+            document.getElementById("btn-pump").onclick = () => performAction("pump");
+            document.getElementById("btn-shave").onclick = () => performAction("shave");
+            document.getElementById("btn-massage").onclick = () => performAction("massage");
+            document.getElementById("btn-exercise").onclick = () => performAction("exercise");
+
+            // Оновлення кожну секунду
+            setInterval(() => {
+                updateCooldowns();
+            }, 1000);
+
+            // Автозбереження кожні 25 секунд
+            setInterval(() => {
+                saveGame();
+            }, 25000);
+
+            // Невеликий постійний ріст поки відкрита вкладка
+            setInterval(() => {
+                currentLength += 0.012; // \~0.43 см за хвилину
+                updateUI();
+                drawPenis();
+                checkWin();
+            }, 1700);
+
+            console.log("%cГру завантажено! Вирощуй на максимум 🍆", "color:#ff00ff; font-size:16px");
+        };
+    </script>
+</body>
+</html>
