@@ -348,48 +348,48 @@
   const STORAGE_PER_LEVEL = { wheat: 500, flour: 400, water: 300, sugar: 200, eggs: 200, butter: 200, dough: 300, bread: 400, cookies: 300, buns: 300, pies: 200, cake: 200, coins: 0 };
 
   const BUILDINGS = [
-    { id: 'storage', name: 'Склад', desc: 'Місце для пшениці, борошна тощо. Покращуй, щоб зберігати більше.', resource: 'storage', costRes: 'coins', cost: 50, costMult: 1.2, prod: 0, isStorage: true },
-    { id: 'wheat_farm', name: 'Ферма пшениці', desc: 'Вирощує пшеницю', resource: 'wheat', costRes: 'coins', cost: 10, costMult: 1.15, prod: 0.5 },
-    { id: 'stall', name: 'Ларчик з зерном', desc: '15 пшениці→1 монета', resource: 'coins', costRes: 'wheat', cost: 100, costMult: 1.2, prod: 0.1, consumes: { wheat: 1.5 } },
-    { id: 'mill', name: 'Млин', desc: '10 пшениці→1 борошно', resource: 'flour', costRes: 'coins', cost: 100, costMult: 1.15, prod: 0.5, consumes: { wheat: 5 } },
-    { id: 'well', name: 'Криниця', desc: 'Добуває воду', resource: 'water', costRes: 'coins', cost: 55, costMult: 1.15, prod: 0.5 },
-    { id: 'baker', name: 'Пекарня', desc: '5 борошна+3 води→1 хліб', resource: 'bread', costRes: 'coins', cost: 80, costMult: 1.15, prod: 0.5, consumes: { flour: 2.5, water: 1.5 } },
-    { id: 'bread_shop', name: 'Ларчик з хлібом', desc: '4 хліби→1 монета', resource: 'coins', costRes: 'bread', cost: 50, costMult: 1.2, prod: 0.2, consumes: { bread: 0.8 } },
-    { id: 'sugar_factory', name: 'Цукровий завод', desc: 'Виробляє цукор', resource: 'sugar', costRes: 'coins', cost: 400, costMult: 1.15, prod: 0.3 },
-    { id: 'chicken_coop', name: 'Курник', desc: 'Несе яйця', resource: 'eggs', costRes: 'coins', cost: 350, costMult: 1.15, prod: 0.2 },
-    { id: 'dairy_farm', name: 'Молочна ферма', desc: 'Корови→Масло', resource: 'butter', costRes: 'coins', cost: 1200, costMult: 1.15, prod: 0.15 },
-    { id: 'mixer', name: 'Міксер', desc: '3 борошна+2 води+1 цукор+1 яйце→1 тісто', resource: 'dough', costRes: 'coins', cost: 2000, costMult: 1.15, prod: 0.2, consumes: { flour: 0.6, water: 0.4, sugar: 0.2, eggs: 0.2 } },
-    { id: 'oven', name: 'Піч для печива', desc: '4 тіста+2 масла→1 печиво', resource: 'cookies', costRes: 'coins', cost: 5000, costMult: 1.15, prod: 0.1, consumes: { dough: 0.4, butter: 0.2 } },
-    { id: 'cookie_market', name: 'Ринок печива', desc: '3 печива→1 монета', resource: 'coins', costRes: 'cookies', cost: 100, costMult: 1.15, prod: 0.4, consumes: { cookies: 1.2 } },
-    { id: 'buns_oven', name: 'Піч для булочок', desc: '5 тіста+2 масла+1 цукор→1 булочка', resource: 'buns', costRes: 'coins', cost: 12000, costMult: 1.15, prod: 0.08, consumes: { dough: 0.4, butter: 0.16, sugar: 0.08 } },
-    { id: 'buns_shop', name: 'Ларчик з булочками', desc: '2 булочки→1 монета', resource: 'coins', costRes: 'buns', cost: 200, costMult: 1.15, prod: 0.5, consumes: { buns: 1 } },
-    { id: 'pies_oven', name: 'Піч для пиріжків', desc: '6 тіста+3 масла+2 яйця→1 пиріжок', resource: 'pies', costRes: 'coins', cost: 25000, costMult: 1.15, prod: 0.06, consumes: { dough: 0.36, butter: 0.18, eggs: 0.12 } },
-    { id: 'pies_shop', name: 'Ларчик з пиріжками', desc: '1 пиріжок→1 монета', resource: 'coins', costRes: 'pies', cost: 400, costMult: 1.15, prod: 0.8, consumes: { pies: 0.8 } },
-    { id: 'confectionery', name: 'Кондитерська', desc: '8 тіста+4 масла+3 цукру+3 яйця→1 торт', resource: 'cake', costRes: 'coins', cost: 35000, costMult: 1.15, prod: 0.05, consumes: { dough: 0.4, butter: 0.2, sugar: 0.15, eggs: 0.15 } },
-    { id: 'cake_shop', name: 'Ларчик з тортами', desc: '1 торт→1 монета', resource: 'coins', costRes: 'cake', cost: 500, costMult: 1.15, prod: 0.5, consumes: { cake: 0.5 } },
-    { id: 'water_mill', name: 'Водяний млин', desc: '8 пшениці+0.5 води→1 борошно', resource: 'flour', costRes: 'coins', cost: 600, costMult: 1.15, prod: 1.5, consumes: { wheat: 12, water: 0.75 } },
-    { id: 'steam_mill', name: 'Паровий млин', desc: '6 пшениці+1 вода→1 борошно', resource: 'flour', costRes: 'coins', cost: 1800, costMult: 1.15, prod: 4, consumes: { wheat: 24, water: 4 } }
+    { id: 'storage', name: 'Склад', desc: 'Місце для пшениці, борошна тощо.', resource: 'storage', costRes: 'coins', cost: 50, costMult: 1.2, prod: 0, isStorage: true },
+    { id: 'wheat_farm', name: 'Ферма пшениці', desc: 'Вирощує пшеницю (вартість 0.1)', resource: 'wheat', costRes: 'coins', cost: 10, costMult: 1.15, prod: 0.5 },
+    { id: 'stall', name: 'Ларчик з зерном', desc: '10 пшениці→1 монета', resource: 'coins', costRes: 'wheat', cost: 80, costMult: 1.2, prod: 0.1, consumes: { wheat: 1 } },
+    { id: 'mill', name: 'Млин', desc: '3 пшениці→1 борошно (3×0.1×1.3=0.39)', resource: 'flour', costRes: 'coins', cost: 80, costMult: 1.15, prod: 0.5, consumes: { wheat: 1.5 } },
+    { id: 'well', name: 'Криниця', desc: 'Добуває воду (вартість 0.05)', resource: 'water', costRes: 'coins', cost: 40, costMult: 1.15, prod: 0.5 },
+    { id: 'baker', name: 'Пекарня', desc: '2 борошна+1 вода→1 хліб (1.08)', resource: 'bread', costRes: 'coins', cost: 100, costMult: 1.15, prod: 0.5, consumes: { flour: 1, water: 0.5 } },
+    { id: 'bread_shop', name: 'Ларчик з хлібом', desc: '2 хліби→1 монета', resource: 'coins', costRes: 'bread', cost: 60, costMult: 1.2, prod: 0.25, consumes: { bread: 0.5 } },
+    { id: 'sugar_factory', name: 'Цукровий завод', desc: 'Виробляє цукор (вартість 0.15)', resource: 'sugar', costRes: 'coins', cost: 200, costMult: 1.15, prod: 0.3 },
+    { id: 'chicken_coop', name: 'Курник', desc: 'Несе яйця (вартість 0.2)', resource: 'eggs', costRes: 'coins', cost: 180, costMult: 1.15, prod: 0.2 },
+    { id: 'dairy_farm', name: 'Молочна ферма', desc: 'Корови→Масло (вартість 0.3)', resource: 'butter', costRes: 'coins', cost: 500, costMult: 1.15, prod: 0.15 },
+    { id: 'mixer', name: 'Міксер', desc: '1 борошно+0.5 води+0.3 цукру+0.3 яйця→1 тісто', resource: 'dough', costRes: 'coins', cost: 800, costMult: 1.15, prod: 0.2, consumes: { flour: 0.2, water: 0.1, sugar: 0.06, eggs: 0.06 } },
+    { id: 'oven', name: 'Піч для печива', desc: '0.4 тіста+0.2 масла→1 печиво', resource: 'cookies', costRes: 'coins', cost: 1500, costMult: 1.15, prod: 0.15, consumes: { dough: 0.06, butter: 0.03 } },
+    { id: 'cookie_market', name: 'Ринок печива', desc: '3 печива→1 монета', resource: 'coins', costRes: 'cookies', cost: 120, costMult: 1.15, prod: 0.33, consumes: { cookies: 1 } },
+    { id: 'buns_oven', name: 'Піч для булочок', desc: '0.4 тіста+0.2 масла+0.1 цукру→1 булочка', resource: 'buns', costRes: 'coins', cost: 3000, costMult: 1.15, prod: 0.1, consumes: { dough: 0.04, butter: 0.02, sugar: 0.01 } },
+    { id: 'buns_shop', name: 'Ларчик з булочками', desc: '2 булочки→1 монета', resource: 'coins', costRes: 'buns', cost: 180, costMult: 1.15, prod: 0.5, consumes: { buns: 1 } },
+    { id: 'pies_oven', name: 'Піч для пиріжків', desc: '0.4 тіста+0.25 масла+0.15 яєць→1 пиріжок', resource: 'pies', costRes: 'coins', cost: 6000, costMult: 1.15, prod: 0.08, consumes: { dough: 0.032, butter: 0.02, eggs: 0.012 } },
+    { id: 'pies_shop', name: 'Ларчик з пиріжками', desc: '1 пиріжок→1 монета', resource: 'coins', costRes: 'pies', cost: 350, costMult: 1.15, prod: 0.8, consumes: { pies: 0.8 } },
+    { id: 'confectionery', name: 'Кондитерська', desc: '0.5 тіста+0.25 масла+0.2 цукру+0.2 яєць→1 торт', resource: 'cake', costRes: 'coins', cost: 12000, costMult: 1.15, prod: 0.06, consumes: { dough: 0.03, butter: 0.015, sugar: 0.012, eggs: 0.012 } },
+    { id: 'cake_shop', name: 'Ларчик з тортами', desc: '0.5 торта→1 монета', resource: 'coins', costRes: 'cake', cost: 400, costMult: 1.15, prod: 0.5, consumes: { cake: 0.25 } },
+    { id: 'water_mill', name: 'Водяний млин', desc: '2.5 пшениці+0.3 води→1 борошно', resource: 'flour', costRes: 'coins', cost: 400, costMult: 1.15, prod: 1.2, consumes: { wheat: 3, water: 0.36 } },
+    { id: 'steam_mill', name: 'Паровий млин', desc: '2 пшениці+0.4 води→1 борошно', resource: 'flour', costRes: 'coins', cost: 1200, costMult: 1.15, prod: 3, consumes: { wheat: 6, water: 1.2 } }
   ];
 
   const UPGRADES = [
-    { id: 'u1', name: 'Міцніші мішки', desc: '×2 пшениці', cost: 100, costRes: 'coins', target: 'wheat', mult: 2 },
-    { id: 'u1b', name: 'Ячмінні жорна', desc: '×1.5 борошна (за пшеницю)', cost: 200, costRes: 'wheat', target: 'flour', mult: 1.5 },
-    { id: 'u2', name: 'Жорна', desc: '×2 борошна', cost: 500, costRes: 'coins', target: 'flour', mult: 2 },
-    { id: 'u2b', name: 'Дріжджі', desc: '×2 хліба', cost: 300, costRes: 'coins', target: 'bread', mult: 2 },
-    { id: 'u3', name: 'Кран', desc: '×2 води', cost: 300, costRes: 'coins', target: 'water', mult: 2 },
-    { id: 'u4', name: 'Фермерські курки', desc: '×2 яєць', cost: 800, costRes: 'coins', target: 'eggs', mult: 2 },
-    { id: 'u5', name: 'Солодка печка', desc: '×2 печива', cost: 2000, costRes: 'coins', target: 'cookies', mult: 2 },
-    { id: 'u6', name: 'Торгівельна ліцензія', desc: '×2 монет', cost: 1000, costRes: 'coins', target: 'coins', mult: 2 },
-    { id: 'u7', name: 'Булочки свіжі', desc: '×2 булочок', cost: 5000, costRes: 'coins', target: 'buns', mult: 2 },
-    { id: 'u8', name: 'Пиріжки смачні', desc: '×2 пиріжок', cost: 10000, costRes: 'coins', target: 'pies', mult: 2 },
-    { id: 'u9', name: 'Торти преміум', desc: '×2 тортів', cost: 15000, costRes: 'coins', target: 'cake', mult: 2 },
-    { id: 'u10', name: 'Золоті жорна', desc: '×2 пшениці', cost: 500, costRes: 'coins', target: 'wheat', mult: 2 },
-    { id: 'uc1', name: 'Гострий серп', desc: '+5% з кліку (копай)', cost: 300, costRes: 'wheat', clickPercent: 5 },
-    { id: 'uc2', name: 'Міцні лопати', desc: '+5% з кліку', cost: 500, costRes: 'coins', clickPercent: 5 },
-    { id: 'uc3', name: 'Залізне лопата', desc: '+10% з кліку', cost: 2000, costRes: 'coins', clickPercent: 10 },
-    { id: 'uc4', name: 'Борошняний удар', desc: '+5% з кліку', cost: 800, costRes: 'flour', clickPercent: 5 },
-    { id: 'uc5', name: 'Золоте лопато', desc: '+10% з кліку', cost: 8000, costRes: 'coins', clickPercent: 10 },
-    { id: 'uc6', name: 'Легенда копальні', desc: '+15% з кліку', cost: 25000, costRes: 'coins', clickPercent: 15 }
+    { id: 'u1', name: 'Міцніші мішки', desc: '×2 пшениці', cost: 80, costRes: 'coins', target: 'wheat', mult: 2 },
+    { id: 'u1b', name: 'Ячмінні жорна', desc: '×1.5 борошна (за пшеницю)', cost: 120, costRes: 'wheat', target: 'flour', mult: 1.5 },
+    { id: 'u2', name: 'Жорна', desc: '×2 борошна', cost: 200, costRes: 'coins', target: 'flour', mult: 2 },
+    { id: 'u2b', name: 'Дріжджі', desc: '×2 хліба', cost: 150, costRes: 'coins', target: 'bread', mult: 2 },
+    { id: 'u3', name: 'Кран', desc: '×2 води', cost: 120, costRes: 'coins', target: 'water', mult: 2 },
+    { id: 'u4', name: 'Фермерські курки', desc: '×2 яєць', cost: 350, costRes: 'coins', target: 'eggs', mult: 2 },
+    { id: 'u5', name: 'Солодка печка', desc: '×2 печива', cost: 800, costRes: 'coins', target: 'cookies', mult: 2 },
+    { id: 'u6', name: 'Торгівельна ліцензія', desc: '×2 монет', cost: 500, costRes: 'coins', target: 'coins', mult: 2 },
+    { id: 'u7', name: 'Булочки свіжі', desc: '×2 булочок', cost: 1500, costRes: 'coins', target: 'buns', mult: 2 },
+    { id: 'u8', name: 'Пиріжки смачні', desc: '×2 пиріжок', cost: 3500, costRes: 'coins', target: 'pies', mult: 2 },
+    { id: 'u9', name: 'Торти преміум', desc: '×2 тортів', cost: 6000, costRes: 'coins', target: 'cake', mult: 2 },
+    { id: 'u10', name: 'Золоті жорна', desc: '×2 пшениці', cost: 200, costRes: 'coins', target: 'wheat', mult: 2 },
+    { id: 'uc1', name: 'Гострий серп', desc: '+5% з кліку (копай)', cost: 120, costRes: 'wheat', clickPercent: 5 },
+    { id: 'uc2', name: 'Міцні лопати', desc: '+5% з кліку', cost: 200, costRes: 'coins', clickPercent: 5 },
+    { id: 'uc3', name: 'Залізне лопата', desc: '+10% з кліку', cost: 800, costRes: 'coins', clickPercent: 10 },
+    { id: 'uc4', name: 'Борошняний удар', desc: '+5% з кліку', cost: 300, costRes: 'flour', clickPercent: 5 },
+    { id: 'uc5', name: 'Золоте лопато', desc: '+10% з кліку', cost: 3000, costRes: 'coins', clickPercent: 10 },
+    { id: 'uc6', name: 'Легенда копальні', desc: '+15% з кліку', cost: 10000, costRes: 'coins', clickPercent: 15 }
   ];
 
   const ACHIEVEMENTS = [
@@ -565,9 +565,9 @@
         cps[r] = (cps[r] || 0) - (consumption[r] || 0);
       });
       if ((s.wheat || 0) > 10000) {
-        const wheatExcessPerSec = 5;
+        const wheatExcessPerSec = 3;
         cps.wheat = (cps.wheat || 0) - wheatExcessPerSec;
-        cps.flour = (cps.flour || 0) + wheatExcessPerSec * 0.5;
+        cps.flour = (cps.flour || 0) + wheatExcessPerSec / 3;
       }
       return cps;
     },
@@ -603,10 +603,10 @@
 
       if ((this.state.wheat || 0) > 10000) {
         const have = this.state.wheat || 0;
-        const excess = Math.min(have - 8000, 5 * dt, have);
+        const excess = Math.min(have - 8000, 3 * dt, have);
         if (excess > 0) {
           this.spend('wheat', excess);
-          this.add('flour', excess * 0.5);
+          this.add('flour', excess / 3);
         }
       }
       const resList = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake', 'coins'];
