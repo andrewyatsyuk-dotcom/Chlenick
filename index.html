@@ -188,7 +188,21 @@
   </div>
 
   <div id="view-trade" class="view">
-    <div class="section"><h2>🏪 Торгова площадка</h2><p style="font-size:0.8rem;opacity:0.8;margin-bottom:10px;">Обмін ресурсів за фіксованими курсами.</p><div id="trades-list"></div></div>
+    <div class="section">
+      <h2>🏪 Ринок</h2>
+      <p style="font-size:0.8rem;opacity:0.8;margin-bottom:8px;">Пропозиції інших гравців. Приймай угоду — ти віддаєш «Хочу», отримуєш «Віддаю».</p>
+      <button class="btn-buy" style="margin-bottom:8px" onclick="Game.loadMarket()">🔄 Оновити</button>
+      <div id="market-list"></div>
+    </div>
+    <div class="section">
+      <h2>📋 Мій обмін</h2>
+      <div id="my-offers-list"></div>
+    </div>
+    <div class="section">
+      <h2>➕ Виставити пропозицію</h2>
+      <p style="font-size:0.8rem;opacity:0.8;margin-bottom:6px;">Віддаю (ресурс + кількість) → Хочу отримати (ресурс + кількість).</p>
+      <div id="create-offer-form"></div>
+    </div>
   </div>
 
   <div id="view-gifts" class="view">
@@ -220,20 +234,13 @@
 (function() {
   const LS_KEY = 'bakery_game_v2';
   const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com';
-  const BOT_USERNAME = '@NeAntonina_bot'; // Заміни на username бота для посилань подарунків
+  const BOT_USERNAME = 'YOUR_BOT_USERNAME'; // Заміни на username бота для посилань подарунків
   const OFFLINE_MAX_SEC = 86400;
   const SAVE_INTERVAL_MS = 30000;
   const BOOST_DURATION_MS = 30 * 60 * 1000;
   const BOOST_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
-  const TRADES = [
-    { id: 't1', give: { wheat: 50 }, get: { coins: 12 }, desc: '50 🌾 → 12 🪙' },
-    { id: 't2', give: { wheat: 200 }, get: { coins: 55 }, desc: '200 🌾 → 55 🪙' },
-    { id: 't3', give: { flour: 80 }, get: { coins: 40 }, desc: '80 🫙 борошна → 40 🪙' },
-    { id: 't4', give: { bread: 30 }, get: { coins: 25 }, desc: '30 🍞 → 25 🪙' },
-    { id: 't5', give: { coins: 100 }, get: { wheat: 300 }, desc: '100 🪙 → 300 🌾' },
-    { id: 't6', give: { coins: 60 }, get: { water: 100 }, desc: '60 🪙 → 100 💧' }
-  ];
+  const TRADE_RESOURCES = ['wheat', 'flour', 'water', 'sugar', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake', 'coins'];
 
   function format(val) {
     const n = typeof val === 'object' && val.toNumber ? val.toNumber() : +val;
@@ -653,15 +660,107 @@
         .catch(() => {});
     },
 
-    doTrade(trade) {
-      const s = this.getState();
-      for (const [res, amt] of Object.entries(trade.give)) {
-        if ((s[res] || 0) < amt) return;
+    loadMarket() {
+      const marketEl = document.getElementById('market-list');
+      const myEl = document.getElementById('my-offers-list');
+      if (!FIREBASE_URL || !marketEl) return;
+      if (/^anon_/.test(this.userId)) {
+        marketEl.innerHTML = '<p style="opacity:0.8;font-size:0.9rem;">Увійди через Telegram, щоб торгувати з іншими гравцями.</p>';
+        if (myEl) myEl.innerHTML = '';
+        const formEl = document.getElementById('create-offer-form');
+        if (formEl) formEl.innerHTML = '';
+        return;
       }
-      for (const [res, amt] of Object.entries(trade.give)) this.spend(res, amt);
-      for (const [res, amt] of Object.entries(trade.get)) this.add(res, amt);
-      this.save();
-      this.render();
+      marketEl.innerHTML = 'Завантаження...';
+      fetch(`${FIREBASE_URL}/market.json`).then(r => r.json()).then(data => {
+        const offers = data ? Object.entries(data).map(([id, o]) => ({ id, ...o })) : [];
+        const others = offers.filter(o => o.fromUserId !== this.userId);
+        const mine = offers.filter(o => o.fromUserId === this.userId);
+        marketEl.innerHTML = others.length === 0
+          ? '<p style="opacity:0.7;font-size:0.85rem;">Поки немає пропозицій. Вистав свою!</p>'
+          : others.map(o => {
+              const giveStr = Object.entries(o.give || {}).map(([r, a]) => format(a) + ' ' + (RESOURCES[r]?.icon || r)).join(', ');
+              const getStr = Object.entries(o.get || {}).map(([r, a]) => format(a) + ' ' + (RESOURCES[r]?.icon || r)).join(', ');
+              let can = true;
+              for (const [res, amt] of Object.entries(o.get || {})) { if ((this.getState()[res] || 0) < amt) can = false; }
+              const safeId = (o.id || '').replace(/'/g, "\\'");
+              return `<div class="trade-row"><span class="trade-desc">${(o.fromUserName || 'Гравець').replace(/</g, '&lt;')}: віддає ${giveStr} → хоче ${getStr}</span><button class="btn-buy" ${!can ? 'disabled' : ''} onclick="Game.acceptOffer('${safeId}')">Прийняти</button></div>`;
+            }).join('');
+        myEl.innerHTML = mine.length === 0
+          ? '<p style="opacity:0.7;font-size:0.85rem;">Твоїх пропозицій немає.</p>'
+          : mine.map(o => {
+              const giveStr = Object.entries(o.give || {}).map(([r, a]) => format(a) + ' ' + (RESOURCES[r]?.icon || r)).join(', ');
+              const getStr = Object.entries(o.get || {}).map(([r, a]) => format(a) + ' ' + (RESOURCES[r]?.icon || r)).join(', ');
+              const safeId = (o.id || '').replace(/'/g, "\\'");
+              return `<div class="trade-row"><span class="trade-desc">${giveStr} → ${getStr}</span><button class="btn-buy" onclick="Game.cancelOffer('${safeId}')">Зняти</button></div>`;
+            }).join('');
+        const formEl = document.getElementById('create-offer-form');
+        if (formEl) {
+          const opts = TRADE_RESOURCES.map(r => `<option value="${r}">${RESOURCES[r]?.icon || ''} ${RESOURCES[r]?.name || r}</option>`).join('');
+          formEl.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;">
+            <span>Віддаю:</span><select id="offer-give-res">${opts}</select><input type="number" id="offer-give-amt" min="1" value="100" style="width:70px">
+            <span>→ Хочу:</span><select id="offer-get-res">${opts}</select><input type="number" id="offer-get-amt" min="1" value="50" style="width:70px">
+            </div>
+            <button class="btn-buy" onclick="Game.createMarketOffer(document.getElementById('offer-give-res').value, document.getElementById('offer-give-amt').value, document.getElementById('offer-get-res').value, document.getElementById('offer-get-amt').value)">Виставити пропозицію</button>`;
+        }
+      }).catch(() => { marketEl.innerHTML = 'Помилка завантаження'; });
+    },
+
+    createMarketOffer(giveRes, giveAmt, getRes, getAmt) {
+      const s = this.getState();
+      giveAmt = Math.floor(+giveAmt); getAmt = Math.floor(+getAmt);
+      if (giveAmt < 1 || getAmt < 1) { alert('Мінімум 1'); return; }
+      if ((s[giveRes] || 0) < giveAmt) { alert('Не вистачає ресурсу'); return; }
+      if (giveRes === getRes) { alert('Обери різні ресурси'); return; }
+      this.spend(giveRes, giveAmt);
+      const offerId = 'o' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      const payload = { fromUserId: this.userId, fromUserName: this.userName, give: { [giveRes]: giveAmt }, get: { [getRes]: getAmt }, createdAt: Date.now() };
+      fetch(`${FIREBASE_URL}/market/${offerId}.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(() => {
+        this.save();
+        this.render();
+        this.loadMarket();
+      }).catch(() => { this.add(giveRes, giveAmt); alert('Помилка'); });
+    },
+
+    acceptOffer(offerId) {
+      if (!FIREBASE_URL || !offerId) return;
+      fetch(`${FIREBASE_URL}/market/${offerId}.json`).then(r => r.json()).then(offer => {
+        if (!offer || offer.fromUserId === this.userId) return;
+        const getRes = Object.keys(offer.get || {})[0], getAmt = offer.get[getRes];
+        const giveRes = Object.keys(offer.give || {})[0], giveAmt = offer.give[giveRes];
+        const myState = this.getState();
+        if ((myState[getRes] || 0) < getAmt) { alert('Не вистачає ресурсів'); return; }
+        fetch(`${FIREBASE_URL}/market/${offerId}.json`, { method: 'DELETE' }).then(() => {
+          this.spend(getRes, getAmt);
+          this.add(giveRes, giveAmt);
+          const ownerId = offer.fromUserId;
+          fetch(`${FIREBASE_URL}/players/${ownerId}/save.json`).then(r => r.json()).then(save => {
+            if (!save) return;
+            const state = save.state || {};
+            state[getRes] = (state[getRes] || 0) + getAmt;
+            save.state = state;
+            fetch(`${FIREBASE_URL}/players/${ownerId}/save.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(save) }).catch(() => {});
+          }).catch(() => {});
+          this.save();
+          this.render();
+          this.loadMarket();
+          alert('Угоду прийнято!');
+        });
+      });
+    },
+
+    cancelOffer(offerId) {
+      if (!FIREBASE_URL || !offerId) return;
+      fetch(`${FIREBASE_URL}/market/${offerId}.json`).then(r => r.json()).then(offer => {
+        if (!offer || offer.fromUserId !== this.userId) return;
+        const give = offer.give || {};
+        for (const [res, amt] of Object.entries(give)) this.add(res, amt);
+        fetch(`${FIREBASE_URL}/market/${offerId}.json`, { method: 'DELETE' }).then(() => {
+          this.save();
+          this.render();
+          this.loadMarket();
+        });
+      });
     },
 
     createGift(resource, amount) {
@@ -775,6 +874,7 @@
       document.querySelector('.clicker-wrap').style.display = tab === 'main' ? 'flex' : 'none';
       if (tab === 'leaderboard') this.loadLeaderboard();
       if (tab === 'gifts') this.renderFriends();
+      if (tab === 'trade') this.loadMarket();
     },
 
     render() {
@@ -843,14 +943,6 @@
         return `<div class="achieve-item ${un ? 'unlocked' : ''}"><span class="badge">${a.icon}</span><div><div class="upgrade-name">${a.name}</div><div class="upgrade-desc">${a.desc}</div></div>${un ? '✅' : '🔒'}</div>`;
       }).join('');
 
-      const tradeList = document.getElementById('trades-list');
-      if (tradeList) {
-        tradeList.innerHTML = TRADES.map((t, i) => {
-          let can = true;
-          for (const [res, amt] of Object.entries(t.give)) { if ((s[res] || 0) < amt) can = false; }
-          return `<div class="trade-row"><span class="trade-desc">${t.desc}</span><button class="btn-buy" ${!can ? 'disabled' : ''} onclick="Game.doTrade(TRADES_DATA[${i}])">Обміняти</button></div>`;
-        }).join('');
-      }
       const giftForm = document.getElementById('gift-form');
       if (giftForm) {
         const opts = ['wheat', 'flour', 'bread', 'coins'].map(r => `<option value="${r}">${RESOURCES[r]?.icon || ''} ${RESOURCES[r]?.name || r}</option>`).join('');
@@ -872,8 +964,6 @@
       }).catch(() => { el.innerHTML = 'Помилка завантаження'; });
     }
   };
-
-  window.TRADES_DATA = TRADES;
 
   window.BUILDINGS_DATA = BUILDINGS;
   window.UPGRADES_DATA = UPGRADES;
