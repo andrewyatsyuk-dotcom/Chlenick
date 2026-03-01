@@ -192,7 +192,7 @@
 
   <script>
     const LS_KEY = 'cookie_clicker_v3';
-    const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com';  // https://YOUR_PROJECT-default-rtdb.firebaseio.com
+    const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com';  // без слеша в кінці
 
     let state = {
       cookies: 0,
@@ -229,23 +229,80 @@
     const NEWBIE_THRESHOLD = 5000;
     const NEWBIE_DAYS = 3;
 
+    const CLOUD_SAVE_KEYS = ['cookies', 'sugar', 'gold', 'fingers', 'cursors', 'grandmas', 'bakers', 'farms', 'mines', 'factories', 'lastSave', 'firstPlay', 'totalEarned'];
+
     function save() {
       state.lastSave = Date.now();
       localStorage.setItem(LS_KEY, JSON.stringify(state));
     }
 
-    function load() {
+    function getStateForCloud() {
+      const o = {};
+      CLOUD_SAVE_KEYS.forEach(k => { if (state[k] !== undefined) o[k] = state[k]; });
+      return o;
+    }
+
+    function mergeState(cloud) {
+      if (!cloud || typeof cloud !== 'object') return;
+      CLOUD_SAVE_KEYS.forEach(k => {
+        if (cloud[k] === undefined) return;
+        if (k === 'firstPlay') state[k] = Math.min(state[k] || Infinity, cloud[k]);
+        else if (k === 'lastSave' || k === 'cookies' || k === 'sugar' || k === 'gold' || k === 'totalEarned') state[k] = Math.max(state[k] || 0, cloud[k] || 0);
+        else if (['fingers','cursors','grandmas','bakers','farms','mines','factories'].includes(k)) state[k] = Math.max(state[k] || 0, cloud[k] || 0);
+        else state[k] = cloud[k];
+      });
+    }
+
+    let lastCloudSave = 0;
+    function saveToCloud() {
+      if (!FIREBASE_URL || Date.now() - lastCloudSave < 6000) return;
+      if (/^anon_/.test(userId)) return;
+      lastCloudSave = Date.now();
+      const payload = { ...getStateForCloud(), userName, updatedAt: Date.now() };
+      fetch(`${FIREBASE_URL}/saves/${userId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    }
+
+    async function loadFromCloud() {
+      if (!FIREBASE_URL || /^anon_/.test(userId)) return;
+      try {
+        const r = await fetch(`${FIREBASE_URL}/saves/${userId}.json`);
+        if (!r.ok) return;
+        const cloud = await r.json();
+        if (!cloud) return;
+        mergeState(cloud);
+        const now = Date.now();
+        const offlineSec = Math.min((now - (state.lastSave || now)) / 1000, 86400);
+        calcPerSec();
+        state.cookies += state.perSec * offlineSec;
+        state.sugar = (state.sugar || 0) + (state.sugarPerSec || 0) * offlineSec;
+        state.gold = (state.gold || 0) + (state.goldPerSec || 0) * offlineSec;
+        state.totalEarned = (state.totalEarned || 0) + state.perSec * offlineSec;
+        state.lastSave = now;
+        save();
+        updateUI();
+      } catch(e) {}
+    }
+
+    function applyOffline() {
+      const offlineSec = Math.min((Date.now() - (state.lastSave || Date.now())) / 1000, 86400);
+      calcPerSec();
+      state.cookies += (state.perSec || 0) * offlineSec;
+      state.sugar = (state.sugar || 0) + (state.sugarPerSec || 0) * offlineSec;
+      state.gold = (state.gold || 0) + (state.goldPerSec || 0) * offlineSec;
+      state.totalEarned = (state.totalEarned || 0) + (state.perSec || 0) * offlineSec;
+    }
+
+    function load(skipOffline) {
       try {
         const d = localStorage.getItem(LS_KEY);
         if (d) {
           const loaded = JSON.parse(d);
           state = { ...state, ...loaded };
-          const offlineSec = Math.min((Date.now() - state.lastSave) / 1000, 86400);
-          const ps = state.perSec || 0, ss = state.sugarPerSec || 0, gs = state.goldPerSec || 0;
-          state.cookies += ps * offlineSec;
-          state.sugar = (state.sugar || 0) + ss * offlineSec;
-          state.gold = (state.gold || 0) + gs * offlineSec;
-          state.totalEarned = (state.totalEarned || 0) + ps * offlineSec;
+          if (!skipOffline) applyOffline();
         }
       } catch(e) {}
     }
@@ -389,6 +446,7 @@
       state.totalEarned = (state.totalEarned || 0) + state.perSec * dt;
       save();
       syncLeaderboard();
+      saveToCloud();
       updateUI();
     }
 
@@ -414,7 +472,7 @@
       }
       el.innerHTML = '<div class="lb-empty">Завантаження...</div>';
       try {
-        const r = await fetch(`${FIREBASE_URL}/players.json?orderBy="cookies"&limitToLast=50`);
+        const r = await fetch(`${FIREBASE_URL}/players.json`);
         if (!r.ok) throw new Error('fetch');
         const data = await r.json();
         if (!data) { el.innerHTML = '<div class="lb-empty">Ніхто ще не грав. Будь першим!</div>'; return; }
@@ -453,13 +511,19 @@
           }
         }
       } catch(e) {}
-      load();
+      const isTelegramUser = !/^anon_/.test(userId);
+      load(isTelegramUser);
       if (state.fingers === undefined && state.cursors === 0 && state.grandmas === 0) state.fingers = 1;
       state.sugar = state.sugar || 0;
       state.gold = state.gold || 0;
       state.totalEarned = state.totalEarned || state.cookies;
       state.firstPlay = state.firstPlay || Date.now();
       calcPerSec();
+      if (isTelegramUser) {
+        loadFromCloud().then(() => { state.lastSave = Date.now(); save(); updateUI(); });
+      } else {
+        save();
+      }
       updateUI();
       setInterval(gameLoop, 500);
     }
