@@ -69,7 +69,9 @@
     margin-top: 4px;
     color: var(--text);
   }
-  #size-display span { color: var(--accent); font-size: 1.3rem; }
+  #size-display span { color: var(--accent); font-size: 1.3rem; transition: transform 0.15s ease-out; }
+  #size-display span.grow-pop { animation: growPop 0.4s ease-out; }
+  @keyframes growPop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
   #status-text {
     font-size: 0.8rem;
     opacity: 0.7;
@@ -251,7 +253,7 @@
     height: 100%;
     background: linear-gradient(90deg, #FF6B35, #FFD700, #4CAF50);
     border-radius: 20px;
-    transition: width 1s ease;
+    transition: width 0.5s ease-out;
     min-width: 2px;
   }
 
@@ -345,7 +347,7 @@
         <button class="action-btn" id="btn-water" onclick="doWater()">💧 Water<br><small id="water-cd">Ready!</small></button>
         <button class="action-btn" id="btn-shave" onclick="doShave()">✂️ Shave<br><small id="shave-cd">Ready!</small></button>
       </div>
-      <button class="action-btn" id="btn-share" onclick="doShare()">🔥 Share My Size</button>
+      <button class="action-btn" id="btn-share" onclick="doShare()">🔥 Share<br><small id="share-cd">Ready!</small></button>
     </div>
   </div>
 
@@ -376,6 +378,7 @@ const BASE_GROWTH_PER_HOUR = 2.88;
 const MAX_LENGTH = 200;
 const WATER_COOLDOWN = 4 * 3600 * 1000;
 const SHAVE_COOLDOWN = 30 * 60 * 1000;
+const SHARE_COOLDOWN = 60 * 1000; // 1 min
 const WATER_BONUS = 8;
 const SHAVE_BONUS = 3;
 const WATER_MULTIPLIER = 3;
@@ -393,10 +396,13 @@ let state = {
   lastSaved: Date.now(),
   lastWater: 0,
   lastShave: 0,
+  lastShare: 0,
   waterBoostUntil: 0,
   shaveBoostUntil: 0,
   milestonesReached: []
 };
+let displayLength = 1.0;   // smoothed value for animation
+let growthBurst = 0;       // 0..1, pulse when growing
 let userId = 'anon';
 let userName = 'Anonymous';
 let tg = null;
@@ -555,7 +561,8 @@ function drawCloud(ctx, x, y, r) {
   ctx.fill();
 }
 
-function drawScene(len) {
+function drawScene(len, burst) {
+  burst = burst || 0;
   const W = canvas.width, H = canvas.height;
   if (!W || !H) return;
   ctx.clearRect(0,0,W,H);
@@ -587,14 +594,21 @@ function drawScene(len) {
   ctx.lineTo(W, H); ctx.lineTo(0, H);
   ctx.fill();
 
-  // Dick
+  const cx = W / 2, baseY = H * 0.75 - 2;
   const maxH = H * 0.68, minH = 18;
   const t = Math.min(len / MAX_LENGTH, 1);
   const height = lerp(minH, maxH, t);
   const baseWidth = lerp(8, 28, t);
-  const cx = W / 2, baseY = H * 0.75 - 2, topY = baseY - height;
+  const topY = baseY - height;
   const w = Math.sin(wobble) * Math.min(4, height * 0.06);
   wobble = wobble > 0 ? wobble - 0.12 : 0;
+
+  // Growth burst: scale the dick upward (1 + burst * 0.3)
+  const burstScale = 1 + burst * 0.3;
+  ctx.save();
+  ctx.translate(cx, baseY);
+  ctx.scale(1, burstScale);
+  ctx.translate(-cx, -baseY);
 
   if (ctx.ellipse) {
     ctx.beginPath();
@@ -626,6 +640,8 @@ function drawScene(len) {
   ctx.ellipse(cx, topY, baseWidth*0.5, baseWidth*0.4, 0, 0, Math.PI*2);
   ctx.fillStyle = '#e8b090';
   ctx.fill();
+
+  ctx.restore();
 }
 
 // ════════════════════════════════════════════════════════
@@ -675,6 +691,13 @@ function showMilestone(text) {
 // ════════════════════════════════════════════════════════
 function canWater() { return Date.now() - state.lastWater >= WATER_COOLDOWN; }
 function canShave() { return Date.now() - state.lastShave >= SHAVE_COOLDOWN; }
+function canShare() { return Date.now() - state.lastShare >= SHARE_COOLDOWN; }
+
+function triggerGrowthAnimation() {
+  growthBurst = 1;
+  const el = document.getElementById('length-val');
+  if (el) { el.classList.add('grow-pop'); setTimeout(() => el.classList.remove('grow-pop'), 450); }
+}
 
 function doWater() {
   if (!canWater()) { haptic('error'); return; }
@@ -684,6 +707,7 @@ function doWater() {
   state.waterBoostUntil = Date.now() + WATER_BOOST_DURATION;
   state.lastSaved = Date.now();
   wobble = 1.2;
+  triggerGrowthAnimation();
   saveLocal();
   updateLeaderboard();
   updateUI();
@@ -698,6 +722,7 @@ function doShave() {
   state.shaveBoostUntil = Date.now() + SHAVE_BOOST_DURATION;
   state.lastSaved = Date.now();
   wobble = 1.2;
+  triggerGrowthAnimation();
   saveLocal();
   updateLeaderboard();
   updateUI();
@@ -716,6 +741,10 @@ function checkMilestones() {
 async function updateLeaderboard() { if (FIREBASE_ENABLED) await saveToFirebase(state); }
 
 function doShare() {
+  if (!canShare()) { haptic('error'); return; }
+  haptic('impact');
+  state.lastShare = Date.now();
+  saveLocal();
   const msg = `🔥 My dick is ${state.length.toFixed(1)} cm! Can you beat me? 🌱`;
   if (tg) {
     tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(location.href)}&text=${encodeURIComponent(msg)}`);
@@ -726,7 +755,7 @@ function doShare() {
     document.getElementById('status-text').textContent = 'Copied!';
     setTimeout(() => updateStatusText(), 2000);
   }
-  haptic('impact');
+  updateUI();
 }
 
 // ════════════════════════════════════════════════════════
@@ -755,16 +784,19 @@ function updateStatusText() {
 }
 
 function updateUI() {
-  document.getElementById('length-val').textContent = state.length.toFixed(1);
-  document.getElementById('progress-bar').style.width = Math.min(100, (state.length / MAX_LENGTH) * 100) + '%';
+  const lenEl = document.getElementById('length-val');
+  lenEl.textContent = displayLength.toFixed(1);
+  document.getElementById('progress-bar').style.width = Math.min(100, (displayLength / MAX_LENGTH) * 100) + '%';
   document.getElementById('boost-water').classList.toggle('active', state.waterBoostUntil > Date.now());
   document.getElementById('boost-shave').classList.toggle('active', state.shaveBoostUntil > Date.now());
   document.getElementById('btn-water').disabled = !canWater();
   document.getElementById('btn-shave').disabled = !canShave();
+  document.getElementById('btn-share').disabled = !canShare();
   document.getElementById('water-cd').textContent = canWater() ? 'Ready!' : formatTime(Math.max(0, WATER_COOLDOWN - (Date.now() - state.lastWater)));
   document.getElementById('shave-cd').textContent = canShave() ? 'Ready!' : formatTime(Math.max(0, SHAVE_COOLDOWN - (Date.now() - state.lastShave)));
+  document.getElementById('share-cd').textContent = canShare() ? 'Ready!' : formatTime(Math.max(0, SHARE_COOLDOWN - (Date.now() - state.lastShare)));
   updateStatusText();
-  drawScene(state.length);
+  drawScene(displayLength, growthBurst);
 }
 
 function switchTab(tab) {
@@ -823,6 +855,7 @@ async function init() {
   saveLocal();
   updateLeaderboard();
 
+  displayLength = state.length;
   hideLoading();
   updateUI();
   let lastLen = state.length;
@@ -831,7 +864,13 @@ async function init() {
     if (Math.abs(state.length - lastLen) > 0.01) { lastLen = state.length; saveLocal(); updateLeaderboard(); }
     updateUI();
   }, 2000);
-  requestAnimationFrame(function loop() { drawScene(state.length); requestAnimationFrame(loop); });
+  requestAnimationFrame(function loop() {
+    displayLength = displayLength + (state.length - displayLength) * 0.12;
+    if (Math.abs(displayLength - state.length) < 0.02) displayLength = state.length;
+    growthBurst = Math.max(0, growthBurst - 0.03);
+    updateUI();
+    requestAnimationFrame(loop);
+  });
 }
 
 init().catch(e => { document.getElementById('loading').innerHTML = 'Error: ' + e.message; });
