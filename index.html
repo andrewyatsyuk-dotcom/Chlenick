@@ -64,19 +64,25 @@
     .stat-val { font-weight: 800; color: var(--gold); font-size: 0.9rem; }
     .stat-cps { font-size: 0.65rem; opacity: 0.7; color: var(--success); }
 
+    .clicker-wrap {
+      flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center; padding: 10px 0 6px;
+      margin-bottom: 4px;
+    }
+    .clicker-hint { font-size: 0.75rem; opacity: 0.7; margin-top: 4px; }
     .clicker {
-      width: 140px; height: 140px;
-      background: linear-gradient(145deg, #ffeaa7, #fdcb6e);
+      width: 120px; height: 120px;
+      background: linear-gradient(145deg, #2d5016, #4a7c23);
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 4rem; cursor: pointer; user-select: none;
-      box-shadow: 0 8px 32px rgba(253,203,110,0.4); transition: transform 0.08s;
-      margin: 12px 0; border: 5px solid #f9ca24; -webkit-tap-highlight-color: transparent;
+      font-size: 3.2rem; cursor: pointer; user-select: none;
+      box-shadow: 0 6px 24px rgba(74,124,35,0.5); transition: transform 0.08s;
+      border: 4px solid #5a9c2a; -webkit-tap-highlight-color: transparent;
     }
     .clicker:active { transform: scale(0.92); }
 
     .section {
-      width: 100%; background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px;
-      border: 1px solid var(--border); max-height: 280px; overflow-y: auto;
+      width: 100%; background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px;
+      border: 1px solid var(--border); max-height: min(65vh, 520px); overflow-y: auto;
     }
     .section h2 { font-size: 0.95rem; margin-bottom: 10px; opacity: 0.9; }
     .building, .upgrade-item, .achieve-item {
@@ -126,7 +132,6 @@
   <div class="app-content">
   <div id="view-main" class="view active">
     <div class="stats-panel" id="stats-panel"></div>
-    <div class="clicker" id="clicker" onclick="Game.click()">🌾</div>
     <p style="font-size:0.8rem;opacity:0.7;">Початок: пшениця. Потім борошно → хліб → печиво → булочки → пиріжки.</p>
   </div>
 
@@ -146,6 +151,11 @@
     <div class="lb-list"><div id="lb-global" class="lb-empty">Завантаження...</div></div>
     <button class="lb-refresh" onclick="Game.loadLeaderboard()">🔄 Оновити</button>
   </div>
+  </div>
+
+  <div class="clicker-wrap">
+    <div class="clicker" id="clicker" onclick="Game.click()">⛏️</div>
+    <span class="clicker-hint">Збирай пшеницю</span>
   </div>
 
   <div class="tabs">
@@ -188,7 +198,11 @@
     coins: { key: 'coins', name: 'Монети', icon: '🪙', cps: 0 }
   };
 
+  const STORAGE_BASE = { wheat: 500, flour: 400, water: 300, sugar: 200, eggs: 200, butter: 200, dough: 300, bread: 400, cookies: 300, buns: 300, pies: 200, coins: 1e9 };
+  const STORAGE_PER_LEVEL = { wheat: 500, flour: 400, water: 300, sugar: 200, eggs: 200, butter: 200, dough: 300, bread: 400, cookies: 300, buns: 300, pies: 200, coins: 0 };
+
   const BUILDINGS = [
+    { id: 'storage', name: 'Склад', desc: 'Місце для пшениці, борошна тощо. Покращуй, щоб зберігати більше.', resource: 'storage', costRes: 'coins', cost: 50, costMult: 1.2, prod: 0, isStorage: true },
     { id: 'wheat_farm', name: 'Ферма пшениці', desc: 'Вирощує пшеницю', resource: 'wheat', costRes: 'coins', cost: 10, costMult: 1.15, prod: 0.5 },
     { id: 'stall', name: 'Ларчик з зерном', desc: 'Пшениця→Монети', resource: 'coins', costRes: 'wheat', cost: 100, costMult: 1.2, prod: 0.1, consumes: { wheat: 0.5 } },
     { id: 'mill', name: 'Млин', desc: 'Пшениця→Борошно', resource: 'flour', costRes: 'coins', cost: 100, costMult: 1.15, prod: 0.5, consumes: { wheat: 1 } },
@@ -287,8 +301,18 @@
       this.state[res] = (this.state[res] || 0) - amount;
     },
 
+    getStorageCap(res) {
+      if (res === 'coins') return 1e9;
+      const base = STORAGE_BASE[res] || 500;
+      const perLevel = STORAGE_PER_LEVEL[res] || 500;
+      const levels = this.getCount('storage') || 0;
+      return base + perLevel * levels;
+    },
+
     add(res, amount) {
-      this.state[res] = (this.state[res] || 0) + amount;
+      const cap = this.getStorageCap(res);
+      const cur = this.state[res] || 0;
+      this.state[res] = Math.min(cap, cur + amount);
     },
 
     calcCPS() {
@@ -296,6 +320,7 @@
       const cps = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, coins: 0 };
 
       BUILDINGS.forEach(b => {
+        if (b.isStorage) return;
         const n = this.getCount(b.id);
         if (n <= 0) return;
         const mult = UPGRADES.filter(u => this.boughtUpgrades.has(u.id) && u.target === b.resource).reduce((m, u) => m * u.mult, 1);
@@ -319,6 +344,7 @@
       const s = this.state;
 
       BUILDINGS.forEach(b => {
+        if (b.isStorage) return;
         const n = this.getCount(b.id);
         if (n <= 0) return;
         const mult = UPGRADES.filter(u => this.boughtUpgrades.has(u.id) && u.target === b.resource).reduce((m, u) => m * u.mult, 1);
@@ -494,6 +520,7 @@
       document.querySelector(`.tab[onclick*="'${tab}'"]`)?.classList.add('active');
       const v = document.getElementById('view-' + tab);
       if (v) v.classList.add('active');
+      document.querySelector('.clicker-wrap').style.display = tab === 'main' ? 'flex' : 'none';
       if (tab === 'leaderboard') this.loadLeaderboard();
     },
 
@@ -506,7 +533,9 @@
         .slice(-9)
         .map(r => {
           const res = RESOURCES[r] || { name: r, icon: '📦' };
-          return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}</div>${res.icon} ${res.name}<div class="stat-cps">+${(cps[r] || 0).toFixed(1)}/с</div></div>`;
+          const cap = r !== 'coins' ? this.getStorageCap(r) : null;
+          const capStr = cap != null && cap < 1e8 ? ` / ${format(cap)}` : '';
+          return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}${capStr}</div>${res.icon} ${res.name}<div class="stat-cps">+${(cps[r] || 0).toFixed(1)}/с</div></div>`;
         }).join('');
       document.getElementById('stats-panel').innerHTML = statsHtml || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
 
@@ -515,11 +544,14 @@
         const canBuy = this.canAfford(b.costRes, cost);
         const count = this.getCount(b.id);
         const res = RESOURCES[b.resource];
+        const stats = b.isStorage
+          ? `Місце: +${(STORAGE_PER_LEVEL.wheat || 500)}/рівень на ресурс`
+          : `+${b.prod} ${res?.icon || ''}/с`;
         return `<div class="building">
           <div class="building-info">
             <div class="building-name">${b.name} × ${count}</div>
             <div class="building-desc">${b.desc}</div>
-            <div class="building-stats">+${b.prod} ${res?.icon || ''}/с</div>
+            <div class="building-stats">${stats}</div>
           </div>
           <button class="btn-buy" ${!canBuy ? 'disabled' : ''} onclick="Game.buyBuilding(BUILDINGS_DATA[${BUILDINGS.indexOf(b)}])">${format(cost)} ${(RESOURCES[b.costRes] || { icon: '🪙' }).icon}</button>
         </div>`;
