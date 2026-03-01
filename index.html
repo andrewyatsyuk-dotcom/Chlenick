@@ -86,6 +86,9 @@
     .status-bar-wrap { height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; }
     .status-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; min-width: 2px; }
 
+    .settings-row { width: 100%; text-align: center; margin-top: 8px; }
+    .btn-reset { padding: 6px 12px; font-size: 0.75rem; background: rgba(233,69,96,0.3); border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); cursor: pointer; }
+
     .clicker-wrap {
       flex-shrink: 0;
       display: flex; flex-direction: column; align-items: center; padding: 10px 0 6px;
@@ -189,6 +192,9 @@
       <div id="status-bars-list"></div>
     </div>
     <div class="storage-timer" id="storage-timer"></div>
+    <div class="settings-row">
+      <button class="btn-reset" onclick="Game.resetProgress()" title="Обнулити прогрес">🔄 Обнулити</button>
+    </div>
   </div>
 
   <div id="view-production" class="view">
@@ -258,6 +264,44 @@
   const BOOST_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
   const TRADE_RESOURCES = ['wheat', 'flour', 'water', 'sugar', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake', 'coins'];
+
+  let _audioCtx = null;
+  function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return _audioCtx;
+  }
+  function playSound(type) {
+    try {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      if (type === 'click') {
+        osc.frequency.setValueAtTime(400, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.08);
+      } else if (type === 'buy') {
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.12);
+      } else if (type === 'achievement') {
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.setValueAtTime(554, ctx.currentTime + 0.08);
+        osc.frequency.setValueAtTime(659, ctx.currentTime + 0.16);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+      }
+    } catch(e) {}
+  }
 
   function format(val) {
     const n = typeof val === 'object' && val.toNumber ? val.toNumber() : +val;
@@ -479,6 +523,7 @@
     calcCPS() {
       const s = this.getState();
       const cps = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, cake: 0, coins: 0 };
+      const consumption = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, cake: 0, coins: 0 };
 
       BUILDINGS.forEach(b => {
         if (b.isStorage) return;
@@ -486,18 +531,29 @@
         if (n <= 0) return;
         const mult = UPGRADES.filter(u => this.boughtUpgrades.has(u.id) && u.target === b.resource).reduce((m, u) => m * u.mult, 1);
         let prod = b.prod * n * mult;
+        let bn = 1;
         if (b.consumes) {
-          let bn = 1;
           for (const [res, req] of Object.entries(b.consumes)) {
             const avail = s[res] || 0;
             const needPerSec = req * n;
             if (needPerSec > 0 && avail < needPerSec * 2) bn = Math.min(bn, Math.max(0.1, avail / (needPerSec * 2)));
           }
           prod *= bn;
+          for (const [res, req] of Object.entries(b.consumes)) {
+            if (consumption[res] !== undefined) consumption[res] += req * n * bn;
+          }
         }
         cps[b.resource] += prod;
       });
 
+      ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake', 'coins'].forEach(r => {
+        cps[r] = (cps[r] || 0) - (consumption[r] || 0);
+      });
+      if ((s.wheat || 0) > 10000) {
+        const wheatExcessPerSec = 5;
+        cps.wheat = (cps.wheat || 0) - wheatExcessPerSec;
+        cps.flour = (cps.flour || 0) + wheatExcessPerSec * 0.5;
+      }
       return cps;
     },
 
@@ -568,7 +624,8 @@
       this.showFloating(gained.length ? '+' + (s.clickBonusPercent || 10) + '% ' + gained.slice(0, 5).join(' ') : '+копай!');
       try {
         if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-      } catch(e) {}
+        playSound('click');
+      } catch(e) { playSound('click'); }
       this.save();
       this.render();
     },
@@ -593,6 +650,7 @@
         const name = prompt('Назви свою пекарню:', '') || 'Моя пекарня';
         if (name) this.state.bakeryName = String(name).slice(0, 30);
       }
+      playSound('buy');
       this.save();
       this.render();
     },
@@ -603,6 +661,7 @@
       this.spend(u.costRes, u.cost);
       this.boughtUpgrades.add(u.id);
       if (u.clickPercent) this.state.clickBonusPercent = (this.getState().clickBonusPercent || 10) + u.clickPercent;
+      playSound('buy');
       this.save();
       this.render();
     },
@@ -614,8 +673,30 @@
       s.breadCps = cps.bread;
       s.cookiesCps = cps.cookies;
       ACHIEVEMENTS.forEach(a => {
-        if (!this.achievements.has(a.id) && a.check(s)) this.achievements.add(a.id);
+        if (!this.achievements.has(a.id) && a.check(s)) {
+          this.achievements.add(a.id);
+          playSound('achievement');
+        }
       });
+    },
+
+    resetProgress() {
+      if (!confirm('Обнулити весь прогрес? Це не можна скасувати.')) return;
+      this.state = {};
+      this.purchased = {};
+      this.boughtUpgrades = new Set();
+      this.achievements = new Set();
+      this.state.coins = 15;
+      this.state.seenIntro = false;
+      this.state.bakeryName = '';
+      this.lastSave = 0;
+      try {
+        const data = { state: this.state, purchased: {}, boughtUpgrades: [], achievements: [] };
+        localStorage.setItem(LS_KEY, JSON.stringify(data));
+      } catch(e) {}
+      document.getElementById('intro-modal').classList.remove('hidden');
+      this.render();
+      this.switchTab('main');
     },
 
     applyOffline() {
@@ -947,7 +1028,8 @@
           let cpsVal = (cps[r] || 0);
           if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) cpsVal *= s.boostMultiplier;
           const boostTag = (s.boostActiveUntil || 0) > Date.now() ? ' ×2' : '';
-          return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}${capStr}</div>${res.icon} ${res.name}<div class="stat-cps">+${cpsVal.toFixed(1)}/с${boostTag}</div></div>`;
+          const cpsStr = cpsVal >= 0 ? `+${cpsVal.toFixed(1)}/с` : `${cpsVal.toFixed(1)}/с`;
+          return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}${capStr}</div>${res.icon} ${res.name}<div class="stat-cps" style="${cpsVal < 0 ? 'color:var(--accent)' : ''}">${cpsStr}${boostTag}</div></div>`;
         }).join('');
       document.getElementById('stats-panel').innerHTML = statsHtml || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
       const titleEl = document.getElementById('app-title');
@@ -980,9 +1062,11 @@
           const cur = Math.max(0, s[r] || 0);
           const cap = r === 'coins' ? 10000 : this.getStorageCap(r);
           const pct = cap > 0 ? Math.min(100, (cur / cap) * 100) : 0;
-          const rate = (cpsDisplay[r] || 0).toFixed(1);
+          const rateVal = cpsDisplay[r] || 0;
+          const rate = (rateVal >= 0 ? '+' : '') + rateVal.toFixed(1) + '/с';
+          const rateColor = rateVal >= 0 ? 'var(--success)' : 'var(--accent)';
           return `<div class="status-bar-row">
-            <div class="status-bar-label"><span>${res.icon} ${res.name}</span><span style="color:var(--success)">+${rate}/с</span></div>
+            <div class="status-bar-label"><span>${res.icon} ${res.name}</span><span style="color:${rateColor}">${rate}</span></div>
             <div class="status-bar-wrap"><div class="status-bar-fill" style="width:${pct}%;background:${barColors[r] || '#00b894'}"></div></div>
           </div>`;
         }).join('');
