@@ -218,7 +218,7 @@
 
   <div class="clicker-wrap">
     <div class="clicker" id="clicker" onclick="Game.click()">⛏️</div>
-    <span class="clicker-hint">Збирай пшеницю</span>
+    <span class="clicker-hint">Бог дав дві лопати — копай!</span>
   </div>
 
   <div class="tabs">
@@ -234,7 +234,7 @@
 (function() {
   const LS_KEY = 'bakery_game_v2';
   const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com';
-  const BOT_USERNAME = 'YOUR_BOT_USERNAME'; // Заміни на username бота для посилань подарунків
+  const BOT_USERNAME = 'NeAntonina_bot';
   const OFFLINE_MAX_SEC = 86400;
   const SAVE_INTERVAL_MS = 30000;
   const BOOST_DURATION_MS = 30 * 60 * 1000;
@@ -513,17 +513,26 @@
     click() {
       const s = this.getState();
       const cps = this.calcCPS();
-      const wheatCps = cps.wheat || 0;
-      let baseWheat = wheatCps < 0.5 ? 1 : Math.max(1, Math.floor(wheatCps * 0.1) + 1);
-      if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) baseWheat *= s.boostMultiplier;
-      this.add('wheat', baseWheat);
-      const coinsCps = cps.coins || 0;
-      if (coinsCps < 0.3) {
-        this.add('coins', 0.3);
-        this.showFloating('+' + baseWheat + ' 🌾 +0.3 🪙');
-      } else {
-        this.showFloating('+' + baseWheat + ' 🌾');
-      }
+      const mult = (s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1 ? s.boostMultiplier : 1;
+      const resources = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake', 'coins'];
+      const gained = [];
+      resources.forEach(res => {
+        const rate = cps[res] || 0;
+        let amount = rate < 0.1 ? (res === 'wheat' ? 1 : 0) : 0.1 * rate;
+        if (amount > 0) {
+          amount *= mult;
+          if (res !== 'coins') amount = Math.max(0, Math.floor(amount));
+          else amount = Math.max(0, (amount * 10) / 10);
+          if (amount > 0) {
+            this.add(res, amount);
+            const icon = (RESOURCES[res] || {}).icon || '📦';
+            const show = res === 'coins' && amount < 10 ? amount.toFixed(1) : (amount >= 1e6 ? (amount/1e6).toFixed(1) + 'M' : amount >= 1e3 ? (amount/1e3).toFixed(1) + 'K' : Math.floor(amount));
+            gained.push(icon + ' ' + show);
+          }
+        }
+      });
+      if ((cps.coins || 0) < 0.3 && mult >= 1) this.add('coins', 0.3);
+      this.showFloating(gained.length ? '+10% ' + gained.slice(0, 5).join(' ') : '+копай!');
       try {
         if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
       } catch(e) {}
