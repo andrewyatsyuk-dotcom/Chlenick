@@ -88,6 +88,9 @@
 
     .settings-row { width: 100%; text-align: center; margin-top: 8px; }
     .btn-reset { padding: 6px 12px; font-size: 0.75rem; background: rgba(233,69,96,0.3); border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); cursor: pointer; }
+    .btn-cheats { padding: 6px 12px; font-size: 0.75rem; background: rgba(46,213,115,0.3); border: 1px solid var(--success); border-radius: 8px; color: var(--success); cursor: pointer; margin-left: 6px; }
+    .cheats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+    .btn-cheats-action { padding: 8px 12px; font-size: 0.8rem; background: rgba(46,213,115,0.2); border: 1px solid var(--success); border-radius: 8px; color: var(--success); cursor: pointer; }
 
     .clicker-wrap {
       flex-shrink: 0;
@@ -181,19 +184,31 @@
     </div>
   </div>
 
+  <div id="cheats-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2>🔓 Чіти</h2>
+      <div class="cheats-grid">
+        <button class="btn-cheats-action" onclick="Game.cheatAddCoins()">🪙 +10K монет</button>
+        <button class="btn-cheats-action" onclick="Game.cheatAddResources()">📦 Всі ресурси +1K</button>
+        <button class="btn-cheats-action" onclick="Game.cheatUnlockUpgrades()">⬆️ Всі апгрейди</button>
+        <button class="btn-cheats-action" onclick="Game.cheatUnlockAchievements()">🏆 Всі досягнення</button>
+        <button class="btn-cheats-action" onclick="Game.cheatMaxBuildings()">🏭 Макс будівлі</button>
+        <button class="btn-cheats-action" onclick="Game.cheatStorage()">📦 Макс склад</button>
+      </div>
+      <button class="modal-btn" onclick="Game.closeCheats()">Закрити</button>
+    </div>
+  </div>
+
   <div class="app-header">
     <h1 id="app-title">🍞 Пекарня</h1>
   </div>
   <div class="app-content">
   <div id="view-main" class="view active">
     <div class="stats-panel" id="stats-panel"></div>
-    <div class="status-bars" id="status-bars">
-      <h3>📊 Виробництво основних ресурсів</h3>
-      <div id="status-bars-list"></div>
-    </div>
     <div class="storage-timer" id="storage-timer"></div>
     <div class="settings-row">
       <button class="btn-reset" onclick="Game.resetProgress()" title="Обнулити прогрес">🔄 Обнулити</button>
+      <button class="btn-cheats" onclick="Game.openCheats()" title="Чіти">🔓 Чіти</button>
     </div>
   </div>
 
@@ -699,6 +714,39 @@
       this.switchTab('main');
     },
 
+    openCheats() {
+      document.getElementById('cheats-modal')?.classList.remove('hidden');
+    },
+    closeCheats() {
+      document.getElementById('cheats-modal')?.classList.add('hidden');
+    },
+    cheatAddCoins() {
+      this.add('coins', 10000);
+      this.save(); this.render(); playSound('achievement');
+    },
+    cheatAddResources() {
+      ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake'].forEach(r => this.add(r, 1000));
+      this.add('coins', 5000);
+      this.save(); this.render(); playSound('achievement');
+    },
+    cheatUnlockUpgrades() {
+      UPGRADES.forEach(u => this.boughtUpgrades.add(u.id));
+      this.save(); this.render(); playSound('achievement');
+    },
+    cheatUnlockAchievements() {
+      ACHIEVEMENTS.forEach(a => this.achievements.add(a.id));
+      this.save(); this.render(); playSound('achievement');
+    },
+    cheatMaxBuildings() {
+      BUILDINGS.filter(b => !b.isStorage).forEach(b => { this.purchased[b.id] = (this.purchased[b.id] || 0) + 50; });
+      this.purchased['storage'] = (this.purchased['storage'] || 0) + 20;
+      this.save(); this.render(); playSound('achievement');
+    },
+    cheatStorage() {
+      this.purchased['storage'] = (this.purchased['storage'] || 0) + 50;
+      this.save(); this.render(); playSound('achievement');
+    },
+
     applyOffline() {
       const offline = Math.min((Date.now() - (this.lastSave || Date.now())) / 1000, OFFLINE_MAX_SEC);
       if (offline <= 0) return;
@@ -1046,30 +1094,6 @@
         } else {
           timerEl.style.display = 'none';
         }
-      }
-
-      const mainRes = ['wheat', 'flour', 'water', 'bread', 'dough', 'cookies', 'coins'];
-      const barColors = { wheat: '#c4a35a', flour: '#e8dcc4', water: '#5dade2', bread: '#e8b86d', dough: '#b8a99a', cookies: '#c9a87c', coins: '#f1c40f' };
-      const barsList = document.getElementById('status-bars-list');
-      if (barsList) {
-        let cpsDisplay = cps;
-        if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) {
-          cpsDisplay = {};
-          mainRes.forEach(r => { cpsDisplay[r] = (cps[r] || 0) * s.boostMultiplier; });
-        } else { cpsDisplay = cps; }
-        barsList.innerHTML = mainRes.map(r => {
-          const res = RESOURCES[r] || { name: r, icon: '📦' };
-          const cur = Math.max(0, s[r] || 0);
-          const cap = r === 'coins' ? 10000 : this.getStorageCap(r);
-          const pct = cap > 0 ? Math.min(100, (cur / cap) * 100) : 0;
-          const rateVal = cpsDisplay[r] || 0;
-          const rate = (rateVal >= 0 ? '+' : '') + rateVal.toFixed(1) + '/с';
-          const rateColor = rateVal >= 0 ? 'var(--success)' : 'var(--accent)';
-          return `<div class="status-bar-row">
-            <div class="status-bar-label"><span>${res.icon} ${res.name}</span><span style="color:${rateColor}">${rate}</span></div>
-            <div class="status-bar-wrap"><div class="status-bar-fill" style="width:${pct}%;background:${barColors[r] || '#00b894'}"></div></div>
-          </div>`;
-        }).join('');
       }
 
       document.getElementById('buildings-list').innerHTML = BUILDINGS.map(b => {
