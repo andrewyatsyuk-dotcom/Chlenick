@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🍪 Пекарня — Multi-Resource Cookie Game</title>
+  <title>🍞 Пекарня — Хліб → Печиво → Булочки → Пиріжки</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,8 +28,25 @@
       padding: 12px;
       overflow-x: hidden;
     }
+    .app-header { flex-shrink: 0; }
     h1 { font-size: 1.3rem; margin-bottom: 8px; color: white; text-align: center; }
-    .tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
+    .app-content {
+      flex: 1;
+      width: 100%;
+      max-width: 400px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 10px 0 20px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      flex-wrap: wrap;
+      justify-content: center;
+      flex-shrink: 0;
+    }
     .tab {
       padding: 8px 14px; border: 1px solid var(--border); border-radius: 10px;
       background: var(--card); color: var(--text); font-weight: 600; cursor: pointer;
@@ -103,19 +120,14 @@
   </style>
 </head>
 <body>
-  <h1>🍪 Пекарня — Multi-Resource</h1>
-  <div class="tabs">
-    <button class="tab active" onclick="Game.switchTab('main')">🎮 Гра</button>
-    <button class="tab" onclick="Game.switchTab('production')">🏭 Виробництво</button>
-    <button class="tab" onclick="Game.switchTab('upgrades')">⬆️ Апгрейди</button>
-    <button class="tab" onclick="Game.switchTab('achievements')">🏆 Досягнення</button>
-    <button class="tab" onclick="Game.switchTab('leaderboard')">📊 Топ</button>
+  <div class="app-header">
+    <h1>🍞 Пекарня</h1>
   </div>
-
+  <div class="app-content">
   <div id="view-main" class="view active">
     <div class="stats-panel" id="stats-panel"></div>
-    <div class="clicker" id="clicker" onclick="Game.click()">🍪</div>
-    <p style="font-size:0.8rem;opacity:0.7;">Клік — печиво (ранні етапи) / бонуси (пізніше)</p>
+    <div class="clicker" id="clicker" onclick="Game.click()">🌾</div>
+    <p style="font-size:0.8rem;opacity:0.7;">Початок: пшениця. Потім борошно → хліб → печиво → булочки → пиріжки.</p>
   </div>
 
   <div id="view-production" class="view">
@@ -134,10 +146,19 @@
     <div class="lb-list"><div id="lb-global" class="lb-empty">Завантаження...</div></div>
     <button class="lb-refresh" onclick="Game.loadLeaderboard()">🔄 Оновити</button>
   </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="Game.switchTab('main')">🎮 Гра</button>
+    <button class="tab" onclick="Game.switchTab('production')">🏭 Виробництво</button>
+    <button class="tab" onclick="Game.switchTab('upgrades')">⬆️ Апгрейди</button>
+    <button class="tab" onclick="Game.switchTab('achievements')">🏆 Досягнення</button>
+    <button class="tab" onclick="Game.switchTab('leaderboard')">📊 Топ</button>
+  </div>
 
 <script>
 (function() {
-  const LS_KEY = 'bakery_game_v1';
+  const LS_KEY = 'bakery_game_v2';
   const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com';
   const OFFLINE_MAX_SEC = 86400;
   const SAVE_INTERVAL_MS = 30000;
@@ -160,27 +181,39 @@
     eggs: { key: 'eggs', name: 'Яйця', icon: '🥚', cps: 0 },
     butter: { key: 'butter', name: 'Масло', icon: '🧈', cps: 0 },
     dough: { key: 'dough', name: 'Тісто', icon: '🥣', cps: 0 },
-    cookies: { key: 'cookies', name: 'Печиво', icon: '🍪', cps: 0 },
+    bread: { key: 'bread', name: 'Хліб', icon: '🍞', cps: 0, stage: 1 },
+    cookies: { key: 'cookies', name: 'Печиво', icon: '🍪', cps: 0, stage: 2 },
+    buns: { key: 'buns', name: 'Булочки', icon: '🥐', cps: 0, stage: 3 },
+    pies: { key: 'pies', name: 'Пиріжки', icon: '🥟', cps: 0, stage: 4 },
     coins: { key: 'coins', name: 'Монети', icon: '🪙', cps: 0 }
   };
 
   const BUILDINGS = [
     { id: 'wheat_farm', name: 'Ферма пшениці', desc: 'Вирощує пшеницю', resource: 'wheat', costRes: 'coins', cost: 10, costMult: 1.15, prod: 0.5 },
+    { id: 'stall', name: 'Ларчик з зерном', desc: 'Пшениця→Монети', resource: 'coins', costRes: 'wheat', cost: 100, costMult: 1.2, prod: 0.1, consumes: { wheat: 0.5 } },
     { id: 'mill', name: 'Млин', desc: 'Пшениця→Борошно', resource: 'flour', costRes: 'coins', cost: 100, costMult: 1.15, prod: 0.5, consumes: { wheat: 1 } },
-    { id: 'well', name: 'Криниця', desc: 'Добуває воду', resource: 'water', costRes: 'coins', cost: 200, costMult: 1.15, prod: 0.5 },
-    { id: 'sugar_factory', name: 'Цукровий завод', desc: 'Виробляє цукор', resource: 'sugar', costRes: 'coins', cost: 500, costMult: 1.15, prod: 0.3 },
-    { id: 'chicken_coop', name: 'Курник', desc: 'Несе яйця', resource: 'eggs', costRes: 'coins', cost: 400, costMult: 1.15, prod: 0.2 },
-    { id: 'dairy_farm', name: 'Молочна ферма', desc: 'Корови→Масло', resource: 'butter', costRes: 'coins', cost: 1500, costMult: 1.15, prod: 0.15 },
-    { id: 'mixer', name: 'Міксер', desc: 'Борошно+Вода+Цукор+Яйця→Тісто', resource: 'dough', costRes: 'coins', cost: 3000, costMult: 1.15, prod: 0.2, consumes: { flour: 0.5, water: 0.5, sugar: 0.25, eggs: 0.25 } },
-    { id: 'oven', name: 'Піч «Бабусин затишок»', desc: 'Тісто+Масло→Печиво', resource: 'cookies', costRes: 'coins', cost: 10000, costMult: 1.15, prod: 0.1, consumes: { dough: 0.5, butter: 0.3 } },
-    { id: 'market', name: 'Ринок', desc: 'Печиво→Монети', resource: 'coins', costRes: 'cookies', cost: 500, costMult: 1.15, prod: 0.2, consumes: { cookies: 0.5 } },
-    { id: 'water_mill', name: 'Водяний млин', desc: 'Більше борошна', resource: 'flour', costRes: 'coins', cost: 800, costMult: 1.15, prod: 1.5, consumes: { wheat: 2, water: 0.5 } },
-    { id: 'steam_mill', name: 'Паровий млин', desc: 'Ще більше борошна', resource: 'flour', costRes: 'coins', cost: 2000, costMult: 1.15, prod: 4, consumes: { wheat: 4, water: 1 } }
+    { id: 'well', name: 'Криниця', desc: 'Добуває воду', resource: 'water', costRes: 'coins', cost: 150, costMult: 1.15, prod: 0.5 },
+    { id: 'baker', name: 'Пекарня', desc: 'Борошно+Вода→Хліб (ет.1)', resource: 'bread', costRes: 'coins', cost: 80, costMult: 1.15, prod: 0.5, consumes: { flour: 0.3, water: 0.2 } },
+    { id: 'bread_shop', name: 'Ларчик з хлібом', desc: 'Хліб→Монети', resource: 'coins', costRes: 'bread', cost: 50, costMult: 1.2, prod: 0.2, consumes: { bread: 0.2 } },
+    { id: 'sugar_factory', name: 'Цукровий завод', desc: 'Виробляє цукор', resource: 'sugar', costRes: 'coins', cost: 400, costMult: 1.15, prod: 0.3 },
+    { id: 'chicken_coop', name: 'Курник', desc: 'Несе яйця', resource: 'eggs', costRes: 'coins', cost: 350, costMult: 1.15, prod: 0.2 },
+    { id: 'dairy_farm', name: 'Молочна ферма', desc: 'Корови→Масло', resource: 'butter', costRes: 'coins', cost: 1200, costMult: 1.15, prod: 0.15 },
+    { id: 'mixer', name: 'Міксер', desc: 'Борошно+Вода+Цукор+Яйця→Тісто', resource: 'dough', costRes: 'coins', cost: 2000, costMult: 1.15, prod: 0.2, consumes: { flour: 0.5, water: 0.5, sugar: 0.25, eggs: 0.25 } },
+    { id: 'oven', name: 'Піч для печива', desc: 'Тісто+Масло→Печиво (ет.2)', resource: 'cookies', costRes: 'coins', cost: 5000, costMult: 1.15, prod: 0.1, consumes: { dough: 0.5, butter: 0.3 } },
+    { id: 'cookie_market', name: 'Ринок печива', desc: 'Печиво→Монети', resource: 'coins', costRes: 'cookies', cost: 100, costMult: 1.15, prod: 0.4, consumes: { cookies: 0.3 } },
+    { id: 'buns_oven', name: 'Піч для булочок', desc: 'Тісто+Масло+Цукор→Булочки (ет.3)', resource: 'buns', costRes: 'coins', cost: 12000, costMult: 1.15, prod: 0.08, consumes: { dough: 0.4, butter: 0.2, sugar: 0.1 } },
+    { id: 'buns_shop', name: 'Ларчик з булочками', desc: 'Булочки→Монети', resource: 'coins', costRes: 'buns', cost: 200, costMult: 1.15, prod: 0.5, consumes: { buns: 0.2 } },
+    { id: 'pies_oven', name: 'Піч для пиріжків', desc: 'Тісто+Масло+Яйця→Пиріжки (ет.4)', resource: 'pies', costRes: 'coins', cost: 25000, costMult: 1.15, prod: 0.06, consumes: { dough: 0.5, butter: 0.3, eggs: 0.2 } },
+    { id: 'pies_shop', name: 'Ларчик з пиріжками', desc: 'Пиріжки→Монети', resource: 'coins', costRes: 'pies', cost: 400, costMult: 1.15, prod: 0.8, consumes: { pies: 0.2 } },
+    { id: 'water_mill', name: 'Водяний млин', desc: 'Більше борошна', resource: 'flour', costRes: 'coins', cost: 600, costMult: 1.15, prod: 1.5, consumes: { wheat: 2, water: 0.5 } },
+    { id: 'steam_mill', name: 'Паровий млин', desc: 'Ще більше борошна', resource: 'flour', costRes: 'coins', cost: 1800, costMult: 1.15, prod: 4, consumes: { wheat: 4, water: 1 } }
   ];
 
   const UPGRADES = [
     { id: 'u1', name: 'Міцніші мішки', desc: '×2 пшениці', cost: 100, costRes: 'coins', target: 'wheat', mult: 2 },
+    { id: 'u1b', name: 'Ячмінні жорна', desc: '×1.5 борошна (за пшеницю)', cost: 200, costRes: 'wheat', target: 'flour', mult: 1.5 },
     { id: 'u2', name: 'Жорна', desc: '×2 борошна', cost: 500, costRes: 'coins', target: 'flour', mult: 2 },
+    { id: 'u2b', name: 'Дріжджі', desc: '×2 хліба', cost: 300, costRes: 'coins', target: 'bread', mult: 2 },
     { id: 'u3', name: 'Кран', desc: '×2 води', cost: 300, costRes: 'coins', target: 'water', mult: 2 },
     { id: 'u4', name: 'Фермерські курки', desc: '×2 яєць', cost: 800, costRes: 'coins', target: 'eggs', mult: 2 },
     { id: 'u5', name: 'Солодка печка', desc: '×2 печива', cost: 2000, costRes: 'coins', target: 'cookies', mult: 2 },
@@ -190,10 +223,12 @@
   const ACHIEVEMENTS = [
     { id: 'a1', name: 'Перша пшениця', desc: '1K пшениці', icon: '🌾', check: s => s.wheat >= 1e3 },
     { id: 'a2', name: 'Мельник', desc: '1K борошна', icon: '🫙', check: s => s.flour >= 1e3 },
-    { id: 'a3', name: 'Пекар', desc: '100 печива', icon: '🍪', check: s => s.cookies >= 100 },
+    { id: 'a2b', name: 'Пекар хліба', desc: '100 хліба', icon: '🍞', check: s => s.bread >= 100 },
+    { id: 'a3', name: 'Пекар печива', desc: '100 печива', icon: '🍪', check: s => s.cookies >= 100 },
+    { id: 'a3b', name: 'Булочник', desc: '50 булочок', icon: '🥐', check: s => s.buns >= 50 },
     { id: 'a4', name: 'Тисячник', desc: '1K монет', icon: '🪙', check: s => s.coins >= 1e3 },
     { id: 'a5', name: 'Магнат', desc: '1M монет', icon: '💰', check: s => s.coins >= 1e6 },
-    { id: 'a6', name: 'Швидка рука', desc: '10 печива/сек', icon: '⚡', check: s => s.cookiesCps >= 10 }
+    { id: 'a6', name: 'Швидка рука', desc: '5 пшениці/сек', icon: '⚡', check: s => (s.wheatCps || 0) >= 5 }
   ];
 
   const Game = {
@@ -230,7 +265,7 @@
 
     getState() {
       const s = this.state;
-      const def = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, cookies: 0, coins: 0 };
+      const def = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, coins: 0 };
       return { ...def, ...s };
     },
 
@@ -258,7 +293,7 @@
 
     calcCPS() {
       const s = this.getState();
-      const cps = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, cookies: 0, coins: 0 };
+      const cps = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, coins: 0 };
 
       BUILDINGS.forEach(b => {
         const n = this.getCount(b.id);
@@ -282,7 +317,6 @@
 
     tick(dt) {
       const s = this.state;
-      const cps = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, cookies: 0, coins: 0 };
 
       BUILDINGS.forEach(b => {
         const n = this.getCount(b.id);
@@ -315,15 +349,17 @@
     },
 
     click() {
-      const s = this.getState();
       const cps = this.calcCPS();
-      const cookiesCps = cps.cookies || 0;
+      const wheatCps = cps.wheat || 0;
+      const baseWheat = wheatCps < 0.5 ? 1 : Math.max(1, Math.floor(wheatCps * 0.1) + 1);
+      this.add('wheat', baseWheat);
       const coinsCps = cps.coins || 0;
-      const baseCookies = cookiesCps < 0.5 ? 1 : Math.max(1, Math.floor(cookiesCps * 0.1) + 1);
-      this.add('cookies', baseCookies);
-      const baseCoins = coinsCps < 0.5 ? 0.2 : 0;
-      if (baseCoins > 0) this.add('coins', baseCoins);
-      this.showFloating('+' + baseCookies + ' 🍪');
+      if (coinsCps < 0.3) {
+        this.add('coins', 0.3);
+        this.showFloating('+' + baseWheat + ' 🌾 +0.3 🪙');
+      } else {
+        this.showFloating('+' + baseWheat + ' 🌾');
+      }
       try {
         if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
       } catch(e) {}
@@ -362,7 +398,10 @@
 
     checkAchievements() {
       const s = this.getState();
-      s.cookiesCps = this.calcCPS().cookies;
+      const cps = this.calcCPS();
+      s.wheatCps = cps.wheat;
+      s.breadCps = cps.bread;
+      s.cookiesCps = cps.cookies;
       ACHIEVEMENTS.forEach(a => {
         if (!this.achievements.has(a.id) && a.check(s)) this.achievements.add(a.id);
       });
@@ -401,7 +440,7 @@
           this.lastSave = data.state?.lastSave;
         }
         const s = this.getState();
-        if ((s.coins || 0) === 0 && (s.cookies || 0) === 0 && Object.keys(this.purchased).length === 0) {
+        if ((s.coins || 0) === 0 && (s.wheat || 0) === 0 && Object.keys(this.purchased).length === 0) {
           this.state.coins = 15;
         }
       } catch(e) {}
@@ -462,14 +501,14 @@
       const s = this.getState();
       const cps = this.calcCPS();
 
-      const statsHtml = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'cookies', 'coins']
+      const statsHtml = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'coins']
         .filter(r => (s[r] || 0) > 0 || (cps[r] || 0) > 0)
         .slice(-9)
         .map(r => {
           const res = RESOURCES[r] || { name: r, icon: '📦' };
           return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}</div>${res.icon} ${res.name}<div class="stat-cps">+${(cps[r] || 0).toFixed(1)}/с</div></div>`;
         }).join('');
-      document.getElementById('stats-panel').innerHTML = statsHtml || '<div class="stat" style="grid-column:1/-1">Клікай печиво — отримай ресурси</div>';
+      document.getElementById('stats-panel').innerHTML = statsHtml || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
 
       document.getElementById('buildings-list').innerHTML = BUILDINGS.map(b => {
         const cost = this.getCost(b);
@@ -482,7 +521,7 @@
             <div class="building-desc">${b.desc}</div>
             <div class="building-stats">+${b.prod} ${res?.icon || ''}/с</div>
           </div>
-          <button class="btn-buy" ${!canBuy ? 'disabled' : ''} onclick="Game.buyBuilding(BUILDINGS_DATA[${BUILDINGS.indexOf(b)}])">${format(cost)} ${b.costRes === 'coins' ? '🪙' : '🍪'}</button>
+          <button class="btn-buy" ${!canBuy ? 'disabled' : ''} onclick="Game.buyBuilding(BUILDINGS_DATA[${BUILDINGS.indexOf(b)}])">${format(cost)} ${(RESOURCES[b.costRes] || { icon: '🪙' }).icon}</button>
         </div>`;
       }).join('');
 
@@ -494,7 +533,7 @@
             <div class="upgrade-name">${u.name} ${bought ? '✓' : ''}</div>
             <div class="upgrade-desc">${u.desc}</div>
           </div>
-          <button class="btn-buy" ${!canBuy ? 'disabled' : ''} onclick="Game.buyUpgrade(UPGRADES_DATA[${UPGRADES.indexOf(u)}])">${bought ? 'Куплено' : format(u.cost) + ' 🪙'}</button>
+          <button class="btn-buy" ${!canBuy ? 'disabled' : ''} onclick="Game.buyUpgrade(UPGRADES_DATA[${UPGRADES.indexOf(u)}])">${bought ? 'Куплено' : format(u.cost) + ' ' + (RESOURCES[u.costRes] || { icon: '🪙' }).icon}</button>
         </div>`;
       }).join('');
 
