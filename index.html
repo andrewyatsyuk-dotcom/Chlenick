@@ -672,8 +672,14 @@
         return;
       }
       marketEl.innerHTML = 'Завантаження...';
-      fetch(`${FIREBASE_URL}/market.json`).then(r => r.json()).then(data => {
-        const offers = data ? Object.entries(data).map(([id, o]) => ({ id, ...o })) : [];
+      fetch(`${FIREBASE_URL}/market.json`).then(r => {
+        if (!r.ok) throw new Error('Сервер: ' + r.status);
+        return r.json();
+      }).then(data => {
+        const raw = (data && typeof data === 'object' && !Array.isArray(data))
+          ? Object.entries(data).map(([id, o]) => ({ id, ...(o || {}) }))
+          : [];
+        const offers = raw.filter(o => o && o.give && o.get && typeof o.give === 'object' && typeof o.get === 'object' && Object.keys(o.give).length > 0 && Object.keys(o.get).length > 0);
         const others = offers.filter(o => o.fromUserId !== this.userId);
         const mine = offers.filter(o => o.fromUserId === this.userId);
         marketEl.innerHTML = others.length === 0
@@ -703,7 +709,7 @@
             </div>
             <button class="btn-buy" onclick="Game.createMarketOffer(document.getElementById('offer-give-res').value, document.getElementById('offer-give-amt').value, document.getElementById('offer-get-res').value, document.getElementById('offer-get-amt').value)">Виставити пропозицію</button>`;
         }
-      }).catch(() => { marketEl.innerHTML = 'Помилка завантаження'; });
+      }).catch(e => { marketEl.innerHTML = 'Помилка: ' + (e.message || 'завантаження'); });
     },
 
     createMarketOffer(giveRes, giveAmt, getRes, getAmt) {
@@ -715,22 +721,30 @@
       this.spend(giveRes, giveAmt);
       const offerId = 'o' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
       const payload = { fromUserId: this.userId, fromUserName: this.userName, give: { [giveRes]: giveAmt }, get: { [getRes]: getAmt }, createdAt: Date.now() };
-      fetch(`${FIREBASE_URL}/market/${offerId}.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(() => {
-        this.save();
-        this.render();
-        this.loadMarket();
-      }).catch(() => { this.add(giveRes, giveAmt); alert('Помилка'); });
+      const url = `${FIREBASE_URL}/market/${encodeURIComponent(offerId)}.json`;
+      fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        .then(r => {
+          if (!r.ok) throw new Error(r.status + '');
+          this.save();
+          this.render();
+          this.loadMarket();
+        })
+        .catch(e => {
+          this.add(giveRes, giveAmt);
+          alert('Не вдалося виставити. Перевір правила Firebase для /market (читання та запис). Помилка: ' + (e.message || 'мережа'));
+        });
     },
 
     acceptOffer(offerId) {
       if (!FIREBASE_URL || !offerId) return;
-      fetch(`${FIREBASE_URL}/market/${offerId}.json`).then(r => r.json()).then(offer => {
+      const url = `${FIREBASE_URL}/market/${encodeURIComponent(offerId)}.json`;
+      fetch(url).then(r => r.json()).then(offer => {
         if (!offer || offer.fromUserId === this.userId) return;
         const getRes = Object.keys(offer.get || {})[0], getAmt = offer.get[getRes];
         const giveRes = Object.keys(offer.give || {})[0], giveAmt = offer.give[giveRes];
         const myState = this.getState();
         if ((myState[getRes] || 0) < getAmt) { alert('Не вистачає ресурсів'); return; }
-        fetch(`${FIREBASE_URL}/market/${offerId}.json`, { method: 'DELETE' }).then(() => {
+        fetch(`${FIREBASE_URL}/market/${encodeURIComponent(offerId)}.json`, { method: 'DELETE' }).then(() => {
           this.spend(getRes, getAmt);
           this.add(giveRes, giveAmt);
           const ownerId = offer.fromUserId;
@@ -751,11 +765,12 @@
 
     cancelOffer(offerId) {
       if (!FIREBASE_URL || !offerId) return;
-      fetch(`${FIREBASE_URL}/market/${offerId}.json`).then(r => r.json()).then(offer => {
+      const url = `${FIREBASE_URL}/market/${encodeURIComponent(offerId)}.json`;
+      fetch(url).then(r => r.json()).then(offer => {
         if (!offer || offer.fromUserId !== this.userId) return;
         const give = offer.give || {};
         for (const [res, amt] of Object.entries(give)) this.add(res, amt);
-        fetch(`${FIREBASE_URL}/market/${offerId}.json`, { method: 'DELETE' }).then(() => {
+        fetch(url, { method: 'DELETE' }).then(() => {
           this.save();
           this.render();
           this.loadMarket();
