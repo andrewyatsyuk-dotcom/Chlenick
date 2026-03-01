@@ -3,16 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🍪 Печиво-Клікер</title>
+  <title>🍪 Пекарня — Multi-Resource Cookie Game</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-      --card: rgba(255,255,255,0.95);
-      --accent: #ff6b6b;
-      --text: #2d3436;
+      --bg: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      --card: rgba(255,255,255,0.08);
+      --card-hover: rgba(255,255,255,0.12);
+      --text: #e8e8e8;
+      --accent: #e94560;
       --gold: #fdcb6e;
+      --success: #00b894;
+      --border: rgba(255,255,255,0.1);
     }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -22,513 +25,491 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
+      padding: 12px;
       overflow-x: hidden;
     }
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 8px;
-      text-align: center;
-      color: white;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    h1 { font-size: 1.3rem; margin-bottom: 8px; color: white; text-align: center; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
+    .tab {
+      padding: 8px 14px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--card); color: var(--text); font-weight: 600; cursor: pointer;
+      font-size: 0.85rem; transition: all 0.2s;
     }
-    .score-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 16px 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      text-align: center;
+    .tab:hover, .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .view { display: none; width: 100%; max-width: 400px; flex-direction: column; align-items: center; }
+    .view.active { display: flex; }
+
+    .stats-panel {
+      width: 100%; background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px;
+      border: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
     }
-    .score-label { font-size: 0.85rem; opacity: 0.7; }
-    .score-value { font-size: 1.4rem; font-weight: 900; color: var(--gold); }
-    .score-value span { font-size: 0.95rem; opacity: 0.9; }
-    .score-value.sugar { color: #a29bfe; }
-    .score-value.gold { color: #fdcb6e; }
-    .currencies { display: flex; flex-wrap: wrap; gap: 12px 20px; justify-content: center; margin-bottom: 4px; }
-    .curr { text-align: center; }
-    .curr .score-label { font-size: 0.7rem; }
-    .per-sec { font-size: 0.8rem; color: #00b894; margin-top: 4px; }
+    .stat { text-align: center; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 0.75rem; }
+    .stat-val { font-weight: 800; color: var(--gold); font-size: 0.9rem; }
+    .stat-cps { font-size: 0.65rem; opacity: 0.7; color: var(--success); }
 
     .clicker {
-      width: 180px;
-      height: 180px;
+      width: 140px; height: 140px;
       background: linear-gradient(145deg, #ffeaa7, #fdcb6e);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 5rem;
-      cursor: pointer;
-      user-select: none;
-      box-shadow: 0 10px 40px rgba(253,203,110,0.5);
-      transition: transform 0.08s;
-      margin: 20px 0;
-      border: 6px solid #f9ca24;
-      -webkit-tap-highlight-color: transparent;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 4rem; cursor: pointer; user-select: none;
+      box-shadow: 0 8px 32px rgba(253,203,110,0.4); transition: transform 0.08s;
+      margin: 12px 0; border: 5px solid #f9ca24; -webkit-tap-highlight-color: transparent;
     }
     .clicker:active { transform: scale(0.92); }
 
-    .shop {
-      width: 100%;
-      max-width: 340px;
-      background: var(--card);
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    .section {
+      width: 100%; background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 10px;
+      border: 1px solid var(--border); max-height: 280px; overflow-y: auto;
     }
-    .shop h2 { font-size: 1rem; margin-bottom: 12px; opacity: 0.8; }
-    .upgrade {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px;
-      margin-bottom: 8px;
-      background: #f8f9fa;
-      border-radius: 12px;
-      transition: background 0.2s;
+    .section h2 { font-size: 0.95rem; margin-bottom: 10px; opacity: 0.9; }
+    .building, .upgrade-item, .achieve-item {
+      display: flex; align-items: center; justify-content: space-between; padding: 10px;
+      margin-bottom: 6px; background: rgba(0,0,0,0.2); border-radius: 10px;
+      transition: background 0.2s; gap: 8px;
     }
-    .upgrade:last-child { margin-bottom: 0; }
-    .upgrade:hover { background: #f1f3f5; }
-    .upgrade-info { flex: 1; }
-    .upgrade-name { font-weight: 700; font-size: 0.95rem; }
-    .upgrade-desc { font-size: 0.75rem; opacity: 0.6; }
-    .upgrade-stats { font-size: 0.8rem; color: #00b894; font-weight: 600; }
-    .upgrade-btn {
-      padding: 10px 16px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: transform 0.1s;
+    .building:hover, .upgrade-item:hover { background: var(--card-hover); }
+    .building-info, .upgrade-info { flex: 1; min-width: 0; }
+    .building-name, .upgrade-name { font-weight: 700; font-size: 0.9rem; }
+    .building-desc, .upgrade-desc { font-size: 0.7rem; opacity: 0.6; }
+    .building-stats { font-size: 0.7rem; color: var(--success); }
+    .btn-buy {
+      padding: 8px 12px; background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 0.8rem;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
     }
-    .upgrade-btn:active { transform: scale(0.95); }
-    .upgrade-btn:disabled {
-      background: #b2bec3;
-      cursor: not-allowed;
-      transform: none;
-    }
+    .btn-buy:disabled { background: #555; cursor: not-allowed; opacity: 0.7; }
+    .btn-buy:active:not(:disabled) { transform: scale(0.95); }
 
     .floating-coin {
-      position: fixed;
-      pointer-events: none;
-      font-size: 1.5rem;
-      animation: floatUp 0.8s ease-out forwards;
-      z-index: 100;
+      position: fixed; pointer-events: none; font-size: 1.2rem; font-weight: 800; color: var(--gold);
+      animation: floatUp 0.8s ease-out forwards; z-index: 100;
     }
     @keyframes floatUp {
       0% { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
+      100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
     }
 
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-    .tab { padding: 10px 16px; border: none; border-radius: 12px; background: rgba(255,255,255,0.3); color: white; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-    .tab.active { background: white; color: #667eea; }
-    .tab:hover:not(.active) { background: rgba(255,255,255,0.5); }
+    .lb-list { width: 100%; background: var(--card); border-radius: 12px; overflow: hidden; }
+    .lb-row { display: flex; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; }
+    .lb-row.me { background: rgba(233,69,96,0.2); }
+    .lb-rank { font-weight: 900; width: 28px; text-align: center; }
+    .lb-name { flex: 1; font-weight: 600; font-size: 0.9rem; }
+    .lb-score { font-weight: 800; color: var(--gold); font-size: 0.9rem; }
+    .lb-empty { padding: 20px; text-align: center; opacity: 0.6; font-size: 0.9rem; }
+    .lb-refresh { width: 100%; padding: 12px; margin-top: 8px; background: var(--accent); border: none; border-radius: 10px; color: white; font-weight: 700; cursor: pointer; }
 
-    .view { display: none; width: 100%; max-width: 340px; }
-    .view.active { display: flex; flex-direction: column; align-items: center; }
-
-    .newbie-badge {
-      background: linear-gradient(135deg, #00b894, #00cec9);
-      color: white;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .lb-list { width: 100%; background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
-    .lb-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #eee; gap: 12px; }
-    .lb-row:last-child { border-bottom: none; }
-    .lb-row.me { background: rgba(102,126,234,0.15); }
-    .lb-rank { font-size: 1.2rem; font-weight: 900; width: 36px; text-align: center; }
-    .lb-rank.gold { color: #fdcb6e; }
-    .lb-rank.silver { color: #b2bec3; }
-    .lb-rank.bronze { color: #e17055; }
-    .lb-name { flex: 1; font-weight: 600; }
-    .lb-score { font-weight: 800; color: var(--gold); }
-    .lb-empty { padding: 24px; text-align: center; opacity: 0.6; }
-    .lb-refresh { width: 100%; padding: 12px; margin-top: 8px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 12px; color: white; font-weight: 700; cursor: pointer; }
+    .achieve-item.unlocked { border-left: 4px solid var(--success); }
+    .achieve-item .badge { font-size: 1.2rem; margin-right: 8px; }
   </style>
 </head>
 <body>
-  <h1>🍪 Печиво-Клікер</h1>
-  <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-bottom: 8px;">Тапай печиво, збирай монети!</p>
-
+  <h1>🍪 Пекарня — Multi-Resource</h1>
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('game')">🎮 Гра</button>
-    <button class="tab" onclick="switchTab('global')">🏆 Глобальний топ</button>
+    <button class="tab active" onclick="Game.switchTab('main')">🎮 Гра</button>
+    <button class="tab" onclick="Game.switchTab('production')">🏭 Виробництво</button>
+    <button class="tab" onclick="Game.switchTab('upgrades')">⬆️ Апгрейди</button>
+    <button class="tab" onclick="Game.switchTab('achievements')">🏆 Досягнення</button>
+    <button class="tab" onclick="Game.switchTab('leaderboard')">📊 Топ</button>
   </div>
 
-  <div id="view-game" class="view active">
-  <div id="newbie-badge" class="newbie-badge" style="display:none;">🚀 Бонус новачка: ×2 до виробництва!</div>
-  <div class="score-card">
-    <div class="currencies">
-      <div class="curr"><span class="score-label">Печива</span><div class="score-value"><span id="cookies">0</span> 🍪</div></div>
-      <div class="curr"><span class="score-label">Цукор</span><div class="score-value sugar"><span id="sugar">0</span> 🧂</div></div>
-      <div class="curr"><span class="score-label">Золото</span><div class="score-value gold"><span id="gold">0</span> 💛</div></div>
-    </div>
-    <div class="per-sec">+<span id="per-sec">0</span> 🍪/сек</div>
+  <div id="view-main" class="view active">
+    <div class="stats-panel" id="stats-panel"></div>
+    <div class="clicker" id="clicker" onclick="Game.click()">🍪</div>
+    <p style="font-size:0.8rem;opacity:0.7;">Клік — печиво (ранні етапи) / бонуси (пізніше)</p>
   </div>
 
-  <div class="clicker" id="cookie" onclick="clickCookie()">🍪</div>
-
-  <div class="shop">
-    <h2>🛒 Крамниця</h2>
-    <div id="upgrades"></div>
-  </div>
+  <div id="view-production" class="view">
+    <div class="section"><h2>🏭 Будівлі</h2><div id="buildings-list"></div></div>
   </div>
 
-  <div id="view-global" class="view">
-    <h2 style="margin-bottom:12px;color:white;">🏆 Глобальний топ</h2>
+  <div id="view-upgrades" class="view">
+    <div class="section"><h2>⬆️ Покращення</h2><div id="upgrades-list"></div></div>
+  </div>
+
+  <div id="view-achievements" class="view">
+    <div class="section"><h2>🏆 Досягнення</h2><div id="achievements-list"></div></div>
+  </div>
+
+  <div id="view-leaderboard" class="view">
     <div class="lb-list"><div id="lb-global" class="lb-empty">Завантаження...</div></div>
-    <button class="lb-refresh" onclick="loadLeaderboard('global')">🔄 Оновити</button>
+    <button class="lb-refresh" onclick="Game.loadLeaderboard()">🔄 Оновити</button>
   </div>
 
-  <script>
-    const LS_KEY = 'cookie_clicker_v3';
-    const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com';  // без слеша в кінці
+<script>
+(function() {
+  const LS_KEY = 'bakery_game_v1';
+  const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com';
+  const OFFLINE_MAX_SEC = 86400;
+  const SAVE_INTERVAL_MS = 30000;
 
-    let state = {
-      cookies: 0,
-      sugar: 0,
-      gold: 0,
-      perSec: 0,
-      sugarPerSec: 0,
-      goldPerSec: 0,
-      fingers: 0,
-      cursors: 0,
-      grandmas: 0,
-      bakers: 0,
-      farms: 0,
-      mines: 0,
-      factories: 0,
-      lastSave: Date.now(),
-      firstPlay: Date.now(),
-      totalEarned: 0
-    };
+  function format(val) {
+    const n = typeof val === 'object' && val.toNumber ? val.toNumber() : +val;
+    if (n >= 1e15) return (n / 1e15).toFixed(1) + 'Qd';
+    if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return Math.floor(n).toString();
+  }
 
-    let userId = 'anon_' + Math.random().toString(36).slice(2, 10);
-    let userName = 'Гравець';
+  const RESOURCES = {
+    wheat: { key: 'wheat', name: 'Пшениця', icon: '🌾', cps: 0 },
+    flour: { key: 'flour', name: 'Борошно', icon: '🫙', cps: 0 },
+    sugar: { key: 'sugar', name: 'Цукор', icon: '🧂', cps: 0 },
+    water: { key: 'water', name: 'Вода', icon: '💧', cps: 0 },
+    eggs: { key: 'eggs', name: 'Яйця', icon: '🥚', cps: 0 },
+    butter: { key: 'butter', name: 'Масло', icon: '🧈', cps: 0 },
+    dough: { key: 'dough', name: 'Тісто', icon: '🥣', cps: 0 },
+    cookies: { key: 'cookies', name: 'Печиво', icon: '🍪', cps: 0 },
+    coins: { key: 'coins', name: 'Монети', icon: '🪙', cps: 0 }
+  };
 
-    const upgrades = [
-      { id: 'fingers', name: '👆 Пальчик', desc: 'Ти натискаєш сам', cost: 0, costSugar: 0, costGold: 0, costMult: 1.2, prod: 0.01, sugarProd: 0, goldProd: 0, key: 'fingers', max: 1 },
-      { id: 'cursors', name: '🖱️ Курсор', desc: 'Автоматично кликає', cost: 15, costSugar: 0, costGold: 0, costMult: 1.15, prod: 0.1, sugarProd: 0, goldProd: 0, key: 'cursors' },
-      { id: 'grandmas', name: '👵 Бабуся', desc: 'Пече печиво вдома', cost: 100, costSugar: 0, costGold: 0, costMult: 1.15, prod: 1, sugarProd: 0, goldProd: 0, key: 'grandmas' },
-      { id: 'bakers', name: '🧑‍🍳 Пекар', desc: 'Пече у печі', cost: 500, costSugar: 0, costGold: 0, costMult: 1.15, prod: 4, sugarProd: 0, goldProd: 0, key: 'bakers' },
-      { id: 'farms', name: '🌾 Ферма', desc: 'Пшениця і цукор', cost: 1200, costSugar: 0, costGold: 0, costMult: 1.15, prod: 8, sugarProd: 2, goldProd: 0, key: 'farms' },
-      { id: 'mines', name: '⛏️ Шахта', desc: 'Цукор з цукрової тростини', cost: 5000, costSugar: 50, costGold: 0, costMult: 1.15, prod: 47, sugarProd: 5, goldProd: 0, key: 'mines' },
-      { id: 'factories', name: '🏭 Фабрика', desc: 'Масове виробництво печива', cost: 20000, costSugar: 200, costGold: 0, costMult: 1.15, prod: 260, sugarProd: 10, goldProd: 1, key: 'factories' }
-    ];
+  const BUILDINGS = [
+    { id: 'wheat_farm', name: 'Ферма пшениці', desc: 'Вирощує пшеницю', resource: 'wheat', costRes: 'coins', cost: 10, costMult: 1.15, prod: 0.5 },
+    { id: 'mill', name: 'Млин', desc: 'Пшениця→Борошно', resource: 'flour', costRes: 'coins', cost: 100, costMult: 1.15, prod: 0.5, consumes: { wheat: 1 } },
+    { id: 'well', name: 'Криниця', desc: 'Добуває воду', resource: 'water', costRes: 'coins', cost: 200, costMult: 1.15, prod: 0.5 },
+    { id: 'sugar_factory', name: 'Цукровий завод', desc: 'Виробляє цукор', resource: 'sugar', costRes: 'coins', cost: 500, costMult: 1.15, prod: 0.3 },
+    { id: 'chicken_coop', name: 'Курник', desc: 'Несе яйця', resource: 'eggs', costRes: 'coins', cost: 400, costMult: 1.15, prod: 0.2 },
+    { id: 'dairy_farm', name: 'Молочна ферма', desc: 'Корови→Масло', resource: 'butter', costRes: 'coins', cost: 1500, costMult: 1.15, prod: 0.15 },
+    { id: 'mixer', name: 'Міксер', desc: 'Борошно+Вода+Цукор+Яйця→Тісто', resource: 'dough', costRes: 'coins', cost: 3000, costMult: 1.15, prod: 0.2, consumes: { flour: 0.5, water: 0.5, sugar: 0.25, eggs: 0.25 } },
+    { id: 'oven', name: 'Піч «Бабусин затишок»', desc: 'Тісто+Масло→Печиво', resource: 'cookies', costRes: 'coins', cost: 10000, costMult: 1.15, prod: 0.1, consumes: { dough: 0.5, butter: 0.3 } },
+    { id: 'market', name: 'Ринок', desc: 'Печиво→Монети', resource: 'coins', costRes: 'cookies', cost: 500, costMult: 1.15, prod: 0.2, consumes: { cookies: 0.5 } },
+    { id: 'water_mill', name: 'Водяний млин', desc: 'Більше борошна', resource: 'flour', costRes: 'coins', cost: 800, costMult: 1.15, prod: 1.5, consumes: { wheat: 2, water: 0.5 } },
+    { id: 'steam_mill', name: 'Паровий млин', desc: 'Ще більше борошна', resource: 'flour', costRes: 'coins', cost: 2000, costMult: 1.15, prod: 4, consumes: { wheat: 4, water: 1 } }
+  ];
 
-    const NEWBIE_THRESHOLD = 5000;
-    const NEWBIE_DAYS = 3;
+  const UPGRADES = [
+    { id: 'u1', name: 'Міцніші мішки', desc: '×2 пшениці', cost: 100, costRes: 'coins', target: 'wheat', mult: 2 },
+    { id: 'u2', name: 'Жорна', desc: '×2 борошна', cost: 500, costRes: 'coins', target: 'flour', mult: 2 },
+    { id: 'u3', name: 'Кран', desc: '×2 води', cost: 300, costRes: 'coins', target: 'water', mult: 2 },
+    { id: 'u4', name: 'Фермерські курки', desc: '×2 яєць', cost: 800, costRes: 'coins', target: 'eggs', mult: 2 },
+    { id: 'u5', name: 'Солодка печка', desc: '×2 печива', cost: 2000, costRes: 'coins', target: 'cookies', mult: 2 },
+    { id: 'u6', name: 'Торгівельна ліцензія', desc: '×2 монет', cost: 1000, costRes: 'coins', target: 'coins', mult: 2 }
+  ];
 
-    const CLOUD_SAVE_KEYS = ['cookies', 'sugar', 'gold', 'fingers', 'cursors', 'grandmas', 'bakers', 'farms', 'mines', 'factories', 'lastSave', 'firstPlay', 'totalEarned'];
+  const ACHIEVEMENTS = [
+    { id: 'a1', name: 'Перша пшениця', desc: '1K пшениці', icon: '🌾', check: s => s.wheat >= 1e3 },
+    { id: 'a2', name: 'Мельник', desc: '1K борошна', icon: '🫙', check: s => s.flour >= 1e3 },
+    { id: 'a3', name: 'Пекар', desc: '100 печива', icon: '🍪', check: s => s.cookies >= 100 },
+    { id: 'a4', name: 'Тисячник', desc: '1K монет', icon: '🪙', check: s => s.coins >= 1e3 },
+    { id: 'a5', name: 'Магнат', desc: '1M монет', icon: '💰', check: s => s.coins >= 1e6 },
+    { id: 'a6', name: 'Швидка рука', desc: '10 печива/сек', icon: '⚡', check: s => s.cookiesCps >= 10 }
+  ];
 
-    function save() {
-      state.lastSave = Date.now();
-      localStorage.setItem(LS_KEY, JSON.stringify(state));
-    }
+  const Game = {
+    state: {},
+    purchased: {},
+    boughtUpgrades: new Set(),
+    achievements: new Set(),
+    lastSave: 0,
+    _lastTick: 0,
+    _raf: null,
+    userId: 'anon_' + Math.random().toString(36).slice(2, 10),
+    userName: 'Гравець',
 
-    function getStateForCloud() {
-      const o = {};
-      CLOUD_SAVE_KEYS.forEach(k => { if (state[k] !== undefined) o[k] = state[k]; });
-      return o;
-    }
-
-    function mergeState(cloud) {
-      if (!cloud || typeof cloud !== 'object') return;
-      CLOUD_SAVE_KEYS.forEach(k => {
-        if (cloud[k] === undefined) return;
-        if (k === 'firstPlay') state[k] = Math.min(state[k] || Infinity, cloud[k]);
-        else if (k === 'lastSave' || k === 'cookies' || k === 'sugar' || k === 'gold' || k === 'totalEarned') state[k] = Math.max(state[k] || 0, cloud[k] || 0);
-        else if (['fingers','cursors','grandmas','bakers','farms','mines','factories'].includes(k)) state[k] = Math.max(state[k] || 0, cloud[k] || 0);
-        else state[k] = cloud[k];
-      });
-    }
-
-    let lastCloudSave = 0;
-    function saveToCloud() {
-      if (!FIREBASE_URL || Date.now() - lastCloudSave < 6000) return;
-      if (/^anon_/.test(userId)) return;
-      lastCloudSave = Date.now();
-      const payload = { ...getStateForCloud(), userName, updatedAt: Date.now() };
-      fetch(`${FIREBASE_URL}/saves/${userId}.json`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(() => {});
-    }
-
-    async function loadFromCloud() {
-      if (!FIREBASE_URL || /^anon_/.test(userId)) return;
-      try {
-        const r = await fetch(`${FIREBASE_URL}/saves/${userId}.json`);
-        if (!r.ok) return;
-        const cloud = await r.json();
-        if (!cloud) return;
-        mergeState(cloud);
-        const now = Date.now();
-        const offlineSec = Math.min((now - (state.lastSave || now)) / 1000, 86400);
-        calcPerSec();
-        state.cookies += state.perSec * offlineSec;
-        state.sugar = (state.sugar || 0) + (state.sugarPerSec || 0) * offlineSec;
-        state.gold = (state.gold || 0) + (state.goldPerSec || 0) * offlineSec;
-        state.totalEarned = (state.totalEarned || 0) + state.perSec * offlineSec;
-        state.lastSave = now;
-        save();
-        updateUI();
-      } catch(e) {}
-    }
-
-    function applyOffline() {
-      const offlineSec = Math.min((Date.now() - (state.lastSave || Date.now())) / 1000, 86400);
-      calcPerSec();
-      state.cookies += (state.perSec || 0) * offlineSec;
-      state.sugar = (state.sugar || 0) + (state.sugarPerSec || 0) * offlineSec;
-      state.gold = (state.gold || 0) + (state.goldPerSec || 0) * offlineSec;
-      state.totalEarned = (state.totalEarned || 0) + (state.perSec || 0) * offlineSec;
-    }
-
-    function load(skipOffline) {
-      try {
-        const d = localStorage.getItem(LS_KEY);
-        if (d) {
-          const loaded = JSON.parse(d);
-          state = { ...state, ...loaded };
-          if (!skipOffline) applyOffline();
-        }
-      } catch(e) {}
-    }
-
-    function getNewbieMultiplier() {
-      const total = state.totalEarned || 0;
-      const daysSince = (Date.now() - (state.firstPlay || Date.now())) / (24 * 3600000);
-      if (total < NEWBIE_THRESHOLD || daysSince < NEWBIE_DAYS) return 2;
-      if (total < NEWBIE_THRESHOLD * 2 || daysSince < NEWBIE_DAYS * 2) return 1.5;
-      return 1;
-    }
-
-    function calcPerSec() {
-      let cookieTotal = 0, sugarTotal = 0, goldTotal = 0;
-      upgrades.forEach(u => {
-        const n = state[u.key] || 0;
-        cookieTotal += n * u.prod;
-        sugarTotal += n * (u.sugarProd || 0);
-        goldTotal += n * (u.goldProd || 0);
-      });
-      const mult = getNewbieMultiplier();
-      state.perSec = cookieTotal * mult;
-      state.sugarPerSec = sugarTotal;
-      state.goldPerSec = goldTotal;
-    }
-
-    function getCost(upgrade) {
-      const count = state[upgrade.key] || 0;
-      const mult = Math.pow(upgrade.costMult, count);
-      return {
-        cookies: Math.floor(upgrade.cost * mult),
-        sugar: Math.floor((upgrade.costSugar || 0) * mult),
-        gold: Math.floor((upgrade.costGold || 0) * mult)
-      };
-    }
-
-    function clickCookie() {
-      state.cookies += 1;
-      state.totalEarned = (state.totalEarned || 0) + 1;
-      haptic();
-      showFloating('+1');
-      save();
-      updateUI();
-    }
-
-    function buyUpgrade(upgrade) {
-      const cost = getCost(upgrade);
-      const max = upgrade.max != null ? upgrade.max : Infinity;
-      if ((state[upgrade.key] || 0) >= max) return;
-      if (state.cookies < cost.cookies || state.sugar < cost.sugar || state.gold < cost.gold) return;
-      state.cookies -= cost.cookies;
-      state.sugar -= cost.sugar;
-      state.gold -= cost.gold;
-      state[upgrade.key] = (state[upgrade.key] || 0) + 1;
-      calcPerSec();
-      haptic();
-      save();
-      renderUpgrades();
-      updateUI();
-    }
-
-    function showFloating(text) {
-      const el = document.createElement('div');
-      el.className = 'floating-coin';
-      el.textContent = text;
-      el.style.left = (window.innerWidth / 2 - 20 + (Math.random() - 0.5) * 40) + 'px';
-      el.style.top = '45%';
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 800);
-    }
-
-    function haptic() {
-      try {
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        } else if (navigator.vibrate) navigator.vibrate(20);
-      } catch(e) {}
-    }
-
-    function format(n) {
-      if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
-      if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-      return Math.floor(n).toString();
-    }
-
-    function costStr(c) {
-      const parts = [];
-      if (c.cookies > 0) parts.push(format(c.cookies) + ' 🍪');
-      if (c.sugar > 0) parts.push(format(c.sugar) + ' 🧂');
-      if (c.gold > 0) parts.push(format(c.gold) + ' 💛');
-      return parts.length ? parts.join(' + ') : 'безкоштовно';
-    }
-
-    function renderUpgrades() {
-      document.getElementById('upgrades').innerHTML = upgrades.map(u => {
-        const count = state[u.key] || 0;
-        const cost = getCost(u);
-        const atMax = u.max != null && count >= u.max;
-        const canBuy = !atMax && state.cookies >= cost.cookies && state.sugar >= cost.sugar && state.gold >= cost.gold;
-        let stats = '+' + u.prod + ' 🍪/с';
-        if (u.sugarProd) stats += ', +' + u.sugarProd + ' 🧂/с';
-        if (u.goldProd) stats += ', +' + u.goldProd + ' 💛/с';
-        return `<div class="upgrade">
-          <div class="upgrade-info">
-            <div class="upgrade-name">${u.name} × ${count}</div>
-            <div class="upgrade-desc">${u.desc}</div>
-            <div class="upgrade-stats">${stats}</div>
-          </div>
-          <button class="upgrade-btn" ${!canBuy ? 'disabled' : ''} onclick="buyUpgrade(upgradesData[${upgrades.indexOf(u)}])">
-            ${costStr(cost)}
-          </button>
-        </div>`;
-      }).join('');
-    }
-
-    const upgradesData = upgrades;
-
-    function updateUI() {
-      document.getElementById('cookies').textContent = format(state.cookies);
-      document.getElementById('sugar').textContent = format(state.sugar || 0);
-      document.getElementById('gold').textContent = format(state.gold || 0);
-      calcPerSec();
-      document.getElementById('per-sec').textContent = state.perSec.toFixed(1);
-      renderUpgrades();
-      const m = getNewbieMultiplier();
-      const badge = document.getElementById('newbie-badge');
-      if (m > 1) {
-        badge.style.display = 'block';
-        badge.textContent = '🚀 Бонус новачка: ×' + m + ' до виробництва!';
-      } else badge.style.display = 'none';
-    }
-
-    function gameLoop() {
-      const now = Date.now();
-      const dt = (now - (state._lastTick || now)) / 1000;
-      state._lastTick = now;
-      state.cookies += state.perSec * dt;
-      state.sugar = (state.sugar || 0) + (state.sugarPerSec || 0) * dt;
-      state.gold = (state.gold || 0) + (state.goldPerSec || 0) * dt;
-      state.totalEarned = (state.totalEarned || 0) + state.perSec * dt;
-      save();
-      syncLeaderboard();
-      saveToCloud();
-      updateUI();
-    }
-
-    let lastSync = 0;
-    function syncLeaderboard() {
-      if (!FIREBASE_URL || Date.now() - lastSync < 5000) return;
-      lastSync = Date.now();
-      const score = Math.floor(state.cookies);
-      try {
-        fetch(`${FIREBASE_URL}/players/${userId}.json`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userName, cookies: score, updatedAt: Date.now() })
-        }).catch(() => {});
-      } catch(e) {}
-    }
-
-    async function loadLeaderboard() {
-      const el = document.getElementById('lb-global');
-      if (!FIREBASE_URL) {
-        el.innerHTML = '<div class="lb-empty">Додай FIREBASE_URL у код для топу</div>';
-        return;
-      }
-      el.innerHTML = '<div class="lb-empty">Завантаження...</div>';
-      try {
-        const r = await fetch(`${FIREBASE_URL}/players.json`);
-        if (!r.ok) throw new Error('fetch');
-        const data = await r.json();
-        if (!data) { el.innerHTML = '<div class="lb-empty">Ніхто ще не грав. Будь першим!</div>'; return; }
-        let players = Object.entries(data).map(([uid, v]) => ({ uid, ...v }));
-        players.sort((a, b) => (b.cookies || 0) - (a.cookies || 0));
-        const rankEmoji = ['🥇', '🥈', '🥉'];
-        el.innerHTML = players.slice(0, 10).map((p, i) => {
-          const isMe = p.uid === userId;
-          const rk = i < 3 ? `<span class="lb-rank ${['gold','silver','bronze'][i]}">${rankEmoji[i]}</span>` : `<span class="lb-rank">#${i+1}</span>`;
-          return `<div class="lb-row${isMe?' me':''}">${rk}<div class="lb-name">${escapeHtml(p.userName||'Гравець')}</div><div class="lb-score">${format(p.cookies||0)} 🍪</div></div>`;
-        }).join('');
-      } catch(e) { el.innerHTML = '<div class="lb-empty">Не вдалось завантажити</div>'; }
-    }
-
-    function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-    function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
-      document.getElementById('view-' + tab).classList.add('active');
-      if (tab === 'global') loadLeaderboard();
-    }
-
-    function init() {
+    init() {
       try {
         const tg = window.Telegram?.WebApp;
         if (tg) {
           tg.ready();
           tg.expand();
-          document.body.style.background = tg.themeParams?.bg_color || 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)';
           const u = tg.initDataUnsafe?.user;
           if (u) {
-            userId = String(u.id);
-            userName = (u.first_name || 'Гравець') + (u.last_name ? ' ' + u.last_name[0] + '.' : '');
+            this.userId = String(u.id);
+            this.userName = (u.first_name || '') + (u.last_name ? ' ' + u.last_name[0] + '.' : '');
           }
         }
       } catch(e) {}
-      const isTelegramUser = !/^anon_/.test(userId);
-      load(isTelegramUser);
-      if (state.fingers === undefined && state.cursors === 0 && state.grandmas === 0) state.fingers = 1;
-      state.sugar = state.sugar || 0;
-      state.gold = state.gold || 0;
-      state.totalEarned = state.totalEarned || state.cookies;
-      state.firstPlay = state.firstPlay || Date.now();
-      calcPerSec();
-      if (isTelegramUser) {
-        loadFromCloud().then(() => { state.lastSave = Date.now(); save(); updateUI(); });
-      } else {
-        save();
-      }
-      updateUI();
-      setInterval(gameLoop, 500);
-    }
+      this.load();
+      this.applyOffline();
+      this.render();
+      this.startLoop();
+      setInterval(() => this.save(), SAVE_INTERVAL_MS);
+      window.addEventListener('beforeunload', () => this.save());
+    },
 
-    init();
-  </script>
+    getState() {
+      const s = this.state;
+      const def = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, cookies: 0, coins: 0 };
+      return { ...def, ...s };
+    },
+
+    getCount(id) {
+      return this.purchased[id] || 0;
+    },
+
+    getCost(b) {
+      const n = this.getCount(b.id);
+      return Math.floor(b.cost * Math.pow(b.costMult, n));
+    },
+
+    canAfford(res, amount) {
+      const s = this.getState();
+      return (s[res] || 0) >= amount;
+    },
+
+    spend(res, amount) {
+      this.state[res] = (this.state[res] || 0) - amount;
+    },
+
+    add(res, amount) {
+      this.state[res] = (this.state[res] || 0) + amount;
+    },
+
+    calcCPS() {
+      const s = this.getState();
+      const cps = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, cookies: 0, coins: 0 };
+
+      BUILDINGS.forEach(b => {
+        const n = this.getCount(b.id);
+        if (n <= 0) return;
+        const mult = UPGRADES.filter(u => this.boughtUpgrades.has(u.id) && u.target === b.resource).reduce((m, u) => m * u.mult, 1);
+        let prod = b.prod * n * mult;
+        if (b.consumes) {
+          let bn = 1;
+          for (const [res, req] of Object.entries(b.consumes)) {
+            const avail = s[res] || 0;
+            const needPerSec = req * n;
+            if (needPerSec > 0 && avail < needPerSec * 2) bn = Math.min(bn, Math.max(0.1, avail / (needPerSec * 2)));
+          }
+          prod *= bn;
+        }
+        cps[b.resource] += prod;
+      });
+
+      return cps;
+    },
+
+    tick(dt) {
+      const s = this.state;
+      const cps = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, cookies: 0, coins: 0 };
+
+      BUILDINGS.forEach(b => {
+        const n = this.getCount(b.id);
+        if (n <= 0) return;
+        const mult = UPGRADES.filter(u => this.boughtUpgrades.has(u.id) && u.target === b.resource).reduce((m, u) => m * u.mult, 1);
+        let prod = b.prod * n * mult * dt;
+
+        if (b.consumes) {
+          let minScale = 1;
+          for (const [res, req] of Object.entries(b.consumes)) {
+            const avail = s[res] || 0;
+            const need = req * n * dt;
+            if (need > 0 && avail < need) minScale = Math.min(minScale, Math.max(0.1, avail / need));
+          }
+          prod *= minScale;
+          for (const [res, req] of Object.entries(b.consumes)) {
+            const take = req * n * dt * minScale;
+            if (take > 0) this.spend(res, take);
+          }
+        }
+
+        this.add(b.resource, prod);
+      });
+
+      if ((s.wheat || 0) > 10000) {
+        const excess = Math.min((s.wheat || 0) - 8000, 5 * dt);
+        this.spend('wheat', excess);
+        this.add('flour', excess * 0.5);
+      }
+    },
+
+    click() {
+      const s = this.getState();
+      const cps = this.calcCPS();
+      const cookiesCps = cps.cookies || 0;
+      const coinsCps = cps.coins || 0;
+      const baseCookies = cookiesCps < 0.5 ? 1 : Math.max(1, Math.floor(cookiesCps * 0.1) + 1);
+      this.add('cookies', baseCookies);
+      const baseCoins = coinsCps < 0.5 ? 0.2 : 0;
+      if (baseCoins > 0) this.add('coins', baseCoins);
+      this.showFloating('+' + baseCookies + ' 🍪');
+      try {
+        if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      } catch(e) {}
+      this.save();
+      this.render();
+    },
+
+    showFloating(text) {
+      const el = document.createElement('div');
+      el.className = 'floating-coin';
+      el.textContent = text;
+      el.style.left = (window.innerWidth / 2 - 30 + (Math.random() - 0.5) * 40) + 'px';
+      el.style.top = '42%';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    },
+
+    buyBuilding(b) {
+      const cost = this.getCost(b);
+      const res = b.costRes;
+      if (!this.canAfford(res, cost)) return;
+      this.spend(res, cost);
+      this.purchased[b.id] = (this.purchased[b.id] || 0) + 1;
+      this.save();
+      this.render();
+    },
+
+    buyUpgrade(u) {
+      if (this.boughtUpgrades.has(u.id)) return;
+      if (!this.canAfford(u.costRes, u.cost)) return;
+      this.spend(u.costRes, u.cost);
+      this.boughtUpgrades.add(u.id);
+      this.save();
+      this.render();
+    },
+
+    checkAchievements() {
+      const s = this.getState();
+      s.cookiesCps = this.calcCPS().cookies;
+      ACHIEVEMENTS.forEach(a => {
+        if (!this.achievements.has(a.id) && a.check(s)) this.achievements.add(a.id);
+      });
+    },
+
+    applyOffline() {
+      const offline = Math.min((Date.now() - (this.lastSave || Date.now())) / 1000, OFFLINE_MAX_SEC);
+      if (offline <= 0) return;
+      this.tick(offline);
+      this.lastSave = Date.now();
+      this.save();
+    },
+
+    save() {
+      this.state.lastSave = Date.now();
+      this.lastSave = Date.now();
+      const data = {
+        state: this.state,
+        purchased: this.purchased,
+        boughtUpgrades: [...this.boughtUpgrades],
+        achievements: [...this.achievements]
+      };
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+      this.syncCloud();
+    },
+
+    load() {
+      try {
+        const d = localStorage.getItem(LS_KEY);
+        if (d) {
+          const data = JSON.parse(d);
+          this.state = data.state || {};
+          this.purchased = data.purchased || {};
+          this.boughtUpgrades = new Set(data.boughtUpgrades || []);
+          this.achievements = new Set(data.achievements || []);
+          this.lastSave = data.state?.lastSave;
+        }
+        const s = this.getState();
+        if ((s.coins || 0) === 0 && (s.cookies || 0) === 0 && Object.keys(this.purchased).length === 0) {
+          this.state.coins = 15;
+        }
+      } catch(e) {}
+    },
+
+    syncCloud() {
+      if (!FIREBASE_URL || /^anon_/.test(this.userId)) return;
+      const score = Math.floor(this.getState().coins || 0);
+      fetch(`${FIREBASE_URL}/players/${this.userId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userName: this.userName, cookies: score, updatedAt: Date.now() })
+      }).catch(() => {});
+    },
+
+    loadLeaderboard() {
+      const el = document.getElementById('lb-global');
+      if (!FIREBASE_URL) { el.innerHTML = 'Додай FIREBASE_URL'; return; }
+      el.innerHTML = 'Завантаження...';
+      fetch(`${FIREBASE_URL}/players.json`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data) { el.innerHTML = 'Ніхто ще не грав'; return; }
+          const players = Object.entries(data).map(([uid, v]) => ({ uid, ...v }));
+          players.sort((a, b) => (b.cookies || 0) - (a.cookies || 0));
+          const rankEmoji = ['🥇', '🥈', '🥉'];
+          el.innerHTML = players.slice(0, 10).map((p, i) => {
+            const isMe = p.uid === this.userId;
+            const rk = i < 3 ? rankEmoji[i] : '#' + (i + 1);
+            return `<div class="lb-row${isMe ? ' me' : ''}">${rk}<span class="lb-name">${(p.userName || 'Гравець').replace(/</g, '&lt;')}</span><span class="lb-score">${format(p.cookies || 0)} 🪙</span></div>`;
+          }).join('');
+        })
+        .catch(() => { el.innerHTML = 'Не вдалось завантажити'; });
+    },
+
+    startLoop() {
+      const loop = (t) => {
+        const dt = (t - (this._lastTick || t)) / 1000;
+        this._lastTick = t;
+        if (dt > 0 && dt < 1) this.tick(dt);
+        this.checkAchievements();
+        this.render();
+        this._raf = requestAnimationFrame(loop);
+      };
+      this._raf = requestAnimationFrame(loop);
+    },
+
+    switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelector(`.tab[onclick*="'${tab}'"]`)?.classList.add('active');
+      const v = document.getElementById('view-' + tab);
+      if (v) v.classList.add('active');
+      if (tab === 'leaderboard') this.loadLeaderboard();
+    },
+
+    render() {
+      const s = this.getState();
+      const cps = this.calcCPS();
+
+      const statsHtml = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'cookies', 'coins']
+        .filter(r => (s[r] || 0) > 0 || (cps[r] || 0) > 0)
+        .slice(-9)
+        .map(r => {
+          const res = RESOURCES[r] || { name: r, icon: '📦' };
+          return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}</div>${res.icon} ${res.name}<div class="stat-cps">+${(cps[r] || 0).toFixed(1)}/с</div></div>`;
+        }).join('');
+      document.getElementById('stats-panel').innerHTML = statsHtml || '<div class="stat" style="grid-column:1/-1">Клікай печиво — отримай ресурси</div>';
+
+      document.getElementById('buildings-list').innerHTML = BUILDINGS.map(b => {
+        const cost = this.getCost(b);
+        const canBuy = this.canAfford(b.costRes, cost);
+        const count = this.getCount(b.id);
+        const res = RESOURCES[b.resource];
+        return `<div class="building">
+          <div class="building-info">
+            <div class="building-name">${b.name} × ${count}</div>
+            <div class="building-desc">${b.desc}</div>
+            <div class="building-stats">+${b.prod} ${res?.icon || ''}/с</div>
+          </div>
+          <button class="btn-buy" ${!canBuy ? 'disabled' : ''} onclick="Game.buyBuilding(BUILDINGS_DATA[${BUILDINGS.indexOf(b)}])">${format(cost)} ${b.costRes === 'coins' ? '🪙' : '🍪'}</button>
+        </div>`;
+      }).join('');
+
+      document.getElementById('upgrades-list').innerHTML = UPGRADES.map(u => {
+        const bought = this.boughtUpgrades.has(u.id);
+        const canBuy = !bought && this.canAfford(u.costRes, u.cost);
+        return `<div class="upgrade-item">
+          <div class="upgrade-info">
+            <div class="upgrade-name">${u.name} ${bought ? '✓' : ''}</div>
+            <div class="upgrade-desc">${u.desc}</div>
+          </div>
+          <button class="btn-buy" ${!canBuy ? 'disabled' : ''} onclick="Game.buyUpgrade(UPGRADES_DATA[${UPGRADES.indexOf(u)}])">${bought ? 'Куплено' : format(u.cost) + ' 🪙'}</button>
+        </div>`;
+      }).join('');
+
+      document.getElementById('achievements-list').innerHTML = ACHIEVEMENTS.map(a => {
+        const un = this.achievements.has(a.id);
+        return `<div class="achieve-item ${un ? 'unlocked' : ''}"><span class="badge">${a.icon}</span><div><div class="upgrade-name">${a.name}</div><div class="upgrade-desc">${a.desc}</div></div>${un ? '✅' : '🔒'}</div>`;
+      }).join('');
+    }
+  };
+
+  window.BUILDINGS_DATA = BUILDINGS;
+  window.UPGRADES_DATA = UPGRADES;
+  window.Game = Game;
+  Game.init();
+})();
+</script>
 </body>
 </html>
