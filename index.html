@@ -1,680 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Grow Your Dick</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  /* ── FIREBASE CONFIG ── replace with your own ── */
-  :root {
-    --bg: #87CEEB;
-    --grass: #4CAF50;
-    --text: #1a1a2e;
-    --card: rgba(255,255,255,0.85);
-    --card-border: rgba(255,255,255,0.5);
-    --btn-water: #2196F3;
-    --btn-shave: #9C27B0;
-    --btn-lb: #FF9800;
-    --disabled: #aaa;
-    --shadow: rgba(0,0,0,0.15);
-    --sun: #FFD700;
-    --accent: #FF6B35;
-  }
-  [data-theme="dark"] {
-    --bg: #1a1a2e;
-    --grass: #2d5a27;
-    --text: #e0e0e0;
-    --card: rgba(30,30,50,0.9);
-    --card-border: rgba(80,80,120,0.5);
-    --btn-water: #1565C0;
-    --btn-shave: #6A1B9A;
-    --btn-lb: #E65100;
-    --disabled: #555;
-    --shadow: rgba(0,0,0,0.5);
-    --sun: #FFA500;
-    --accent: #FF6B35;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-    transition: background 0.3s, color 0.3s;
-  }
-  #app { display: flex; flex-direction: column; min-height: 100vh; }
-
-  /* ── HEADER ── */
-  #header {
-    text-align: center;
-    padding: 12px 16px 8px;
-    position: relative;
-    z-index: 10;
-  }
-  #header h1 {
-    font-size: 1.5rem;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    text-shadow: 0 2px 4px var(--shadow);
-    background: linear-gradient(135deg, #FF6B35, #FFD700);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  #size-display {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-top: 4px;
-    color: var(--text);
-  }
-  #size-display span { color: var(--accent); font-size: 1.3rem; }
-  #status-text {
-    font-size: 0.8rem;
-    opacity: 0.7;
-    margin-top: 2px;
-    min-height: 18px;
-    font-style: italic;
-  }
-
-  /* ── TABS ── */
-  #tabs {
-    display: flex;
-    margin: 0 16px 8px;
-    background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-  }
-  .tab-btn {
-    flex: 1;
-    padding: 8px;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-    opacity: 0.6;
-  }
-  .tab-btn.active {
-    background: var(--accent);
-    color: white;
-    opacity: 1;
-    border-radius: 10px;
-  }
-
-  /* ── GAME VIEW ── */
-  #game-view { flex: 1; display: flex; flex-direction: column; }
-  #canvas-wrap {
-    flex: 1;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 0 20px;
-    min-height: 220px;
-    position: relative;
-  }
-  canvas#gameCanvas {
-    display: block;
-    max-width: 100%;
-  }
-
-  /* ── MILESTONE TOAST ── */
-  #milestone-toast {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    background: linear-gradient(135deg, #FF6B35, #FFD700);
-    color: white;
-    padding: 16px 28px;
-    border-radius: 20px;
-    font-size: 1.2rem;
-    font-weight: 900;
-    text-align: center;
-    z-index: 999;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    pointer-events: none;
-  }
-  #milestone-toast.show { transform: translate(-50%, -50%) scale(1); }
-
-  /* ── CONTROLS ── */
-  #controls {
-    padding: 8px 16px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .action-row { display: flex; gap: 8px; }
-  .action-btn {
-    flex: 1;
-    padding: 12px 8px;
-    border: none;
-    border-radius: 14px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.1s, opacity 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 12px var(--shadow);
-    color: white;
-    line-height: 1.3;
-  }
-  .action-btn:active:not(:disabled) { transform: scale(0.96); }
-  .action-btn:disabled {
-    background: var(--disabled) !important;
-    cursor: not-allowed;
-    box-shadow: none;
-    opacity: 0.7;
-  }
-  #btn-water { background: linear-gradient(135deg, #2196F3, #0D47A1); }
-  #btn-shave { background: linear-gradient(135deg, #9C27B0, #4A148C); }
-  #btn-share {
-    width: 100%;
-    background: linear-gradient(135deg, #FF6B35, #e91e63);
-    padding: 13px;
-    font-size: 1rem;
-  }
-
-  /* ── LEADERBOARD ── */
-  #lb-view { padding: 8px 16px 16px; display: none; flex-direction: column; gap: 10px; }
-  #lb-view.active { display: flex; }
-  #lb-title {
-    text-align: center;
-    font-size: 1.2rem;
-    font-weight: 900;
-    background: linear-gradient(135deg, #FF6B35, #FFD700);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  #lb-list {
-    background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-  }
-  .lb-row {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--card-border);
-    gap: 10px;
-    transition: background 0.2s;
-  }
-  .lb-row:last-child { border-bottom: none; }
-  .lb-row.me { background: rgba(255,107,53,0.15); }
-  .lb-rank {
-    font-size: 1.1rem;
-    font-weight: 900;
-    width: 28px;
-    text-align: center;
-    flex-shrink: 0;
-  }
-  .lb-rank.gold { color: #FFD700; }
-  .lb-rank.silver { color: #C0C0C0; }
-  .lb-rank.bronze { color: #CD7F32; }
-  .lb-name { flex: 1; font-weight: 600; font-size: 0.9rem; }
-  .lb-length { font-weight: 800; color: var(--accent); font-size: 0.95rem; }
-  .lb-updated { font-size: 0.7rem; opacity: 0.5; }
-  #lb-refresh-btn {
-    background: var(--btn-lb);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 10px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 12px var(--shadow);
-    transition: transform 0.1s;
-  }
-  #lb-refresh-btn:active { transform: scale(0.97); }
-  #lb-empty { text-align: center; padding: 20px; opacity: 0.5; font-size: 0.9rem; }
-
-  /* ── PROGRESS BAR ── */
-  #progress-wrap {
-    margin: 0 16px 4px;
-    background: var(--card);
-    border: 1px solid var(--card-border);
-    border-radius: 20px;
-    height: 12px;
-    overflow: hidden;
-    backdrop-filter: blur(6px);
-  }
-  #progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #FF6B35, #FFD700, #4CAF50);
-    border-radius: 20px;
-    transition: width 1s ease;
-    min-width: 2px;
-  }
-
-  /* ── BOOST INDICATOR ── */
-  #boost-bar {
-    margin: 0 16px 6px;
-    display: flex;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-  .boost-pill {
-    padding: 3px 10px;
-    border-radius: 20px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    background: var(--card);
-    border: 1px solid var(--card-border);
-  }
-  .boost-pill.active { opacity: 1; }
-  #boost-water.active { background: rgba(33,150,243,0.3); color: #2196F3; }
-  #boost-shave.active { background: rgba(156,39,176,0.3); color: #9C27B0; }
-
-  /* confetti canvas */
-  #confetti-canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 998;
-  }
-
-  /* Loading */
-  #loading {
-    position: fixed;
-    inset: 0;
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    flex-direction: column;
-    gap: 12px;
-    font-size: 1.1rem;
-    font-weight: 700;
-  }
-  .spinner {
-    width: 40px; height: 40px;
-    border: 4px solid var(--card-border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌱 Вирощуй</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .growth {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #4ade80;
+      margin: 1rem 0;
+    }
+    .vis-bar {
+      height: 12px;
+      background: #333;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .vis-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4ade80, #22c55e);
+      border-radius: 6px;
+      transition: width 0.3s;
+    }
+    .actions { display: flex; flex-direction: column; gap: 0.75rem; }
+    button {
+      padding: 0.9rem 1rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .water { background: #3b82f6; color: white; }
+    .haircut { background: #a855f7; color: white; }
+    .watch { background: #ec4899; color: white; }
+    .reset { background: #444; color: #aaa; font-size: 0.9rem; }
+    .hint { font-size: 0.85rem; color: #888; margin-top: 1rem; }
+  </style>
 </head>
 <body>
-
-<div id="loading">
-  <div class="spinner"></div>
-  <span>Loading your garden... 🌱</span>
-</div>
-
-<canvas id="confetti-canvas"></canvas>
-<div id="milestone-toast">🎉 Milestone!</div>
-
-<div id="app">
-  <div id="header">
-    <h1>🌱 Grow Your Dick</h1>
-    <div id="size-display">Your Dick: <span id="length-val">0.0</span> cm</div>
-    <div id="status-text">Loading...</div>
+  <h1>🌱 Вирощуй</h1>
+  <div class="growth" id="growth">0.0 см</div>
+  <div class="vis-bar"><div class="vis-fill" id="fill" style="width: 0%"></div></div>
+  <div class="actions">
+    <button class="water" onclick="water()">💧 Підлити (+0.5 см)</button>
+    <button class="haircut" id="haircutBtn" onclick="haircut()">✂️ Стригти волосся (+2 см, раз на 24 год)</button>
+    <button class="watch" onclick="watchContent()">📺 Дивитись контент (+0.3 см)</button>
+    <button class="reset" onclick="resetGame()">🔄 Скинути</button>
   </div>
+  <p class="hint" id="hint"></p>
 
-  <div id="tabs">
-    <button class="tab-btn active" onclick="switchTab('game')" id="tab-game">🎮 Game</button>
-    <button class="tab-btn" onclick="switchTab('lb')" id="tab-lb">🏆 Leaderboard</button>
-  </div>
+  <script>
+    const KEY = 'growth_game';
+    const MAX = 100;
+    const WATER = 0.5, HAIRCUT_BOOST = 2, WATCH = 0.3;
+    const HAIRCUT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
-  <!-- GAME TAB -->
-  <div id="game-view">
-    <div id="progress-wrap"><div id="progress-bar" style="width:0%"></div></div>
-    <div id="boost-bar">
-      <div class="boost-pill" id="boost-water">💧 Watered ×3</div>
-      <div class="boost-pill" id="boost-shave">✂️ Shaved ×2.5</div>
-    </div>
-    <div id="canvas-wrap">
-      <canvas id="gameCanvas"></canvas>
-    </div>
-    <div id="controls">
-      <div class="action-row">
-        <button class="action-btn" id="btn-water" onclick="doWater()">💧 Water<br><small id="water-cd">Ready!</small></button>
-        <button class="action-btn" id="btn-shave" onclick="doShave()">✂️ Shave<br><small id="shave-cd">Ready!</small></button>
-      </div>
-      <button class="action-btn" id="btn-share" onclick="doShare()">🔥 Share My Size</button>
-    </div>
-  </div>
+    function load() {
+      try {
+        const s = localStorage.getItem(KEY);
+        return s ? JSON.parse(s) : { growth: 0, lastHaircut: null, watchCount: 0 };
+      } catch { return { growth: 0, lastHaircut: null, watchCount: 0 }; }
+    }
 
-  <!-- LEADERBOARD TAB -->
-  <div id="lb-view">
-    <div id="lb-title">🏆 Global Leaderboard</div>
-    <div id="lb-list"><div id="lb-empty">Loading leaderboard...</div></div>
-    <button id="lb-refresh-btn" onclick="loadLeaderboard()">🔄 Refresh</button>
-  </div>
-</div>
+    function save(data) {
+      localStorage.setItem(KEY, JSON.stringify(data));
+      render(data);
+    }
 
-<script>
-// ════════════════════════════════════════════════════════
-//  FIREBASE CONFIG — replace with your own values
-// ════════════════════════════════════════════════════════
-const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT"
-};
-// Set FIREBASE_ENABLED = false to use only localStorage
-const FIREBASE_ENABLED = false; // flip to true after Firebase setup
+    function canHaircut(data) {
+      if (!data.lastHaircut) return true;
+      return Date.now() - new Date(data.lastHaircut).getTime() >= HAIRCUT_COOLDOWN_MS;
+    }
 
-// ════════════════════════════════════════════════════════
-//  GAME CONSTANTS
-// ════════════════════════════════════════════════════════
-const BASE_GROWTH_PER_HOUR = 2.88;      // cm/hr passive
-const MAX_LENGTH = 200;
-const WATER_COOLDOWN = 4 * 3600 * 1000; // 4 hours ms
-const SHAVE_COOLDOWN = 30 * 60 * 1000;  // 30 min ms
-const HAIR_REGROW_TIME = 30 * 60 * 1000;// 30 min ms
-const WATER_BONUS = 8;                   // instant cm bonus
-const SHAVE_BONUS = 3;
-const WATER_MULTIPLIER = 3;
-const SHAVE_MULTIPLIER = 2.5;
-const WATER_BOOST_DURATION = 4 * 3600 * 1000;
-const SHAVE_BOOST_DURATION = 2 * 3600 * 1000;
-const MAX_OFFLINE_HOURS = 24;
-const MILESTONES = [10, 25, 50, 69, 100, 150, 200];
-
-// ════════════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════════════
-let state = {
-  length: 1.0,
-  lastSaved: Date.now(),
-  lastWater: 0,
-  lastShave: 0,
-  waterBoostUntil: 0,
-  shaveBoostUntil: 0,
-  lastHairShave: 0,
-  milestonesReached: []
-};
-let userId = 'anon';
-let userName = 'Anonymous';
-let tg = null;
-
-// ════════════════════════════════════════════════════════
-//  TELEGRAM INIT
-// ════════════════════════════════════════════════════════
-function initTelegram() {
-  try {
-    tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready();
-      tg.expand();
-      // Apply theme
-      const cs = tg.colorScheme || 'light';
-      document.documentElement.setAttribute('data-theme', cs);
-      // Get user info
-      const user = tg.initDataUnsafe?.user;
-      if (user) {
-        userId = String(user.id);
-        const last = user.last_name ? user.last_name[0] + '.' : '';
-        userName = (user.first_name || 'Player') + (last ? ' ' + last : '');
+    function render(data) {
+      const g = data.growth;
+      document.getElementById('growth').textContent = g.toFixed(1) + ' см';
+      document.getElementById('fill').style.width = Math.min(100, (g / MAX) * 100) + '%';
+      const btn = document.getElementById('haircutBtn');
+      btn.disabled = !canHaircut(data);
+      btn.title = canHaircut(data) ? 'Доступно!' : 'Ще раз на 24 години';
+      let hint = '';
+      if (data.lastHaircut && !canHaircut(data)) {
+        const next = new Date(new Date(data.lastHaircut).getTime() + HAIRCUT_COOLDOWN_MS);
+        hint = 'Стрижка: ' + next.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
       }
-      // Main button
-      tg.MainButton.setText('Share My Size 🔥');
-      tg.MainButton.onClick(doShare);
-      tg.MainButton.show();
+      document.getElementById('hint').textContent = hint;
     }
-  } catch(e) { console.warn('TG init error', e); }
-}
 
-// ════════════════════════════════════════════════════════
-//  HAPTIC FEEDBACK
-// ════════════════════════════════════════════════════════
-function haptic(type = 'impact', style = 'medium') {
-  try {
-    if (tg?.HapticFeedback) {
-      if (type === 'impact') tg.HapticFeedback.impactOccurred(style);
-      else if (type === 'notification') tg.HapticFeedback.notificationOccurred(style);
-    } else if (navigator.vibrate) {
-      navigator.vibrate(type === 'error' ? [30,20,30] : [30]);
+    function water() {
+      const d = load();
+      d.growth = Math.min(MAX, d.growth + WATER);
+      save(d);
     }
-  } catch(e) {}
-}
 
-// ════════════════════════════════════════════════════════
-//  SAVE / LOAD  (Firebase + localStorage fallback)
-// ════════════════════════════════════════════════════════
-const LS_KEY = 'gyd_save_v3';
-
-function saveLocal() {
-  localStorage.setItem(LS_KEY, JSON.stringify(state));
-}
-
-function loadLocal() {
-  try {
-    const d = localStorage.getItem(LS_KEY);
-    if (d) return JSON.parse(d);
-  } catch(e) {}
-  return null;
-}
-
-async function saveToFirebase(s) {
-  if (!FIREBASE_ENABLED) return;
-  try {
-    const url = `${FIREBASE_CONFIG.databaseURL}/players/${userId}.json`;
-    await fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...s,
-        userName,
-        updatedAt: Date.now()
-      })
-    });
-  } catch(e) { console.warn('Firebase save error', e); }
-}
-
-async function loadFromFirebase() {
-  if (!FIREBASE_ENABLED) return null;
-  try {
-    const url = `${FIREBASE_CONFIG.databaseURL}/players/${userId}.json`;
-    const r = await fetch(url);
-    if (r.ok) {
-      const d = await r.json();
-      if (d && d.length > 0) return d;
+    function haircut() {
+      const d = load();
+      if (!canHaircut(d)) return;
+      d.growth = Math.min(MAX, d.growth + HAIRCUT_BOOST);
+      d.lastHaircut = new Date().toISOString();
+      save(d);
     }
-  } catch(e) { console.warn('Firebase load error', e); }
-  return null;
-}
 
-async function loadLeaderboard() {
-  document.getElementById('lb-empty').textContent = 'Loading...';
-  document.getElementById('lb-empty').style.display = 'block';
-
-  if (!FIREBASE_ENABLED) {
-    document.getElementById('lb-empty').textContent = '⚠️ Enable Firebase to see the global leaderboard.';
-    return;
-  }
-  try {
-    const url = `${FIREBASE_CONFIG.databaseURL}/players.json?orderBy="length"&limitToLast=10`;
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('fetch failed');
-    const data = await r.json();
-    if (!data) { document.getElementById('lb-empty').textContent = 'No players yet!'; return; }
-
-    let players = Object.entries(data).map(([uid, v]) => ({ uid, ...v }));
-    players.sort((a,b) => (b.length||0) - (a.length||0));
-
-    renderLeaderboard(players);
-  } catch(e) {
-    document.getElementById('lb-empty').textContent = 'Failed to load. Check connection.';
-  }
-}
-
-async function updateLeaderboard() {
-  if (!FIREBASE_ENABLED) return;
-  try {
-    await saveToFirebase(state);
-  } catch(e) {}
-}
-
-function renderLeaderboard(players) {
-  const el = document.getElementById('lb-list');
-  if (!players.length) { el.innerHTML = '<div id="lb-empty">No one here yet. Be first! 💪</div>'; return; }
-  const rankEmoji = ['🥇','🥈','🥉'];
-  const rankClass = ['gold','silver','bronze'];
-  el.innerHTML = players.slice(0,10).map((p, i) => {
-    const isMe = p.uid === userId;
-    const rk = i < 3 ? `<span class="lb-rank ${rankClass[i]}">${rankEmoji[i]}</span>` 
-                      : `<span class="lb-rank">#${i+1}</span>`;
-    const updated = p.updatedAt ? timeAgo(p.updatedAt) : '';
-    return `<div class="lb-row${isMe?' me':''}">
-      ${rk}
-      <div class="lb-name">${escHtml(p.userName||'Player')}</div>
-      <div>
-        <div class="lb-length">${(p.length||0).toFixed(1)} cm</div>
-        <div class="lb-updated">${updated}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ════════════════════════════════════════════════════════
-//  ANTI-CHEAT: validate incoming state
-// ════════════════════════════════════════════════════════
-function validateState(s) {
-  const now = Date.now();
-  if (!s || typeof s.length !== 'number') return false;
-  if (s.length > MAX_LENGTH + 0.01) { s.length = MAX_LENGTH; }
-  if (s.length < 0) { s.length = 0; }
-  // Validate offline growth doesn't exceed cap
-  const offlineMs = now - (s.lastSaved || now);
-  const maxOfflineGrowth = (MAX_OFFLINE_HOURS * BASE_GROWTH_PER_HOUR);
-  // We'll apply offline growth below, just sanity check timestamps
-  if (s.lastWater > now) s.lastWater = 0;
-  if (s.lastShave > now) s.lastShave = 0;
-  if (s.waterBoostUntil > now + WATER_BOOST_DURATION + 1000) s.waterBoostUntil = 0;
-  if (s.shaveBoostUntil > now + SHAVE_BOOST_DURATION + 1000) s.shaveBoostUntil = 0;
-  return true;
-}
-
-// ════════════════════════════════════════════════════════
-//  OFFLINE GROWTH CALCULATION
-// ════════════════════════════════════════════════════════
-function applyOfflineGrowth() {
-  const now = Date.now();
-  const elapsed = Math.min(now - state.lastSaved, MAX_OFFLINE_HOURS * 3600 * 1000);
-  if (elapsed <= 0) return;
-  const hours = elapsed / 3600000;
-  // Simple: base rate (boosts may have expired, keep it fair)
-  const growth = hours * BASE_GROWTH_PER_HOUR;
-  state.length = Math.min(MAX_LENGTH, state.length + growth);
-  state.lastSaved = now;
-}
-
-// ════════════════════════════════════════════════════════
-//  CANVAS RENDERING
-// ════════════════════════════════════════════════════════
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let animFrame = 0;
-let wobble = 0;
-
-function resizeCanvas() {
-  const wrap = document.getElementById('canvas-wrap');
-  const W = Math.min(wrap.clientWidth, 360);
-  const H = Math.min(wrap.clientHeight, 300);
-  canvas.width = W;
-  canvas.height = H;
-}
-
-function lerp(a, b, t) { return a + (b - a) * t; }
-
-function drawScene(len) {
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0,0,W,H);
-
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-
-  // Sky gradient
-  const sky = ctx.createLinearGradient(0,0,0,H*0.75);
-  if (isDark) {
-    sky.addColorStop(0, '#0d1b2a');
-    sky.addColorStop(1, '#1a3a5c');
-  } else {
-    sky.addColorStop(0, '#87CEEB');
-    sky.addColorStop(1, '#c8e8f8');
-  }
-  ctx.fillStyle = sky;
-  ctx.fillRect(0,0,W,H*0.75);
-
-  // Sun / Moon
-  ctx.beginPath();
-  ctx.arc(W*0.82, H*0.15, 22, 0, Math.PI*2);
-  ctx.fillStyle = isDark ? '#ffffcc' : '#FFD700';
-  ctx.fill();
-  if (!isDark) {
-    // Sun rays
-    ctx.strokeStyle = '#FFD70088';
-    ctx.lineWidth = 2;
-    for (let i=0; i<8; i++) {
-      const a = (i/8)*Math.PI*2 + animFrame*0.01;
-      ctx.beginPath();
-      ctx.moveTo(W*0.82 + Math.cos(a)*26, H*0.15 + Math.sin(a)*26);
-      ctx.lineTo(W*0.82 + Math.cos(a)*34, H*0.15 + Math.sin(a)*34);
-      ctx.stroke();
+    function watchContent() {
+      const d = load();
+      d.growth = Math.min(MAX, d.growth + WATCH);
+      d.watchCount = (d.watchCount || 0) + 1;
+      save(d);
     }
-  }
 
-  // Clouds
-  if (!isDark) {
-    drawCloud(ctx, W*0.15 + Math.sin(animFrame*0.005)*5, H*0.12, 40);
-    drawCloud(ctx, W*0.55 + Math.cos(animFrame*0.007)*4, H*0.08, 30);
-  }
+    function resetGame() {
+      if (!confirm('Скинути прогрес?')) return;
+      save({ growth: 0, lastHaircut: null, watchCount: 0 });
+    }
 
-  // Grass
-  const grassGrad = ctx.createLinearGradient(0, H*0.72, 0, H);
-  grassGrad.addColorStop(0, isDark ? '#2d5a27' : '#4CAF50');
-  grassGrad.addColorStop(1, isDark ? '#1a3d15' : '#388E3C');
-  ctx.fillStyle = grassGrad;
-  ctx.beginPath();
-  ctx.moveTo(0, H*0.75);
-  for (let x=0; x<=W; x+=10) {
-    const y = H*0.75 + Math.sin(x*0.1 + animFrame*0.02)*3;
-    ctx.lineTo(x, y);
-  }
-  ctx.lineTo(W, H);
-  ctx.lineTo(0, H);
-  ctx.fill();
-
-  // ── THE DICK ──
-  const maxVisualHeight = H * 0.68;
-  const minVisualHeight = 18;
-  const t = Math.min(len / MAX_LENGTH, 1);
-  const height = lerp(minVisualHeight, maxVisualHeight, t);
-  const baseWidth = lerp(8, 28, t);
-  const cx = W / 2;
-  const baseY = H * 0.75 - 2;
-  const topY = baseY - height;
-
-  // Wobble on action
-  const w = Math.sin(wobble) * Math.min(4, height * 0.06);
-  wobble = wobble > 0 ? wobble - 0.12 : 0;
-
-  // Shadow
-  ctx.ellipse && (() => {
-    ctx.beginPath();
-    ctx.ellipse(cx + w*0.3, baseY + 6, baseWidth*0.9, 5, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.fill();
-  })();
-
-  // Shaft gradient
-  const shaftGrad = ctx.createLinearGradient(cx - baseWidth, topY, cx + baseWidth, topY);
-  shaftGrad.addColorStop(0, '#d4896b');
-  shaftGrad.addColorStop(0.35, '#e8a882');
-  shaftGrad.addCo
+    render(load());
+  </script>
+</body>
+</html>
