@@ -350,23 +350,23 @@
   const BUILDINGS = [
     { id: 'storage', name: 'Склад', desc: 'Місце для пшениці, борошна тощо.', resource: 'storage', costRes: 'coins', cost: 50, costMult: 1.2, prod: 0, isStorage: true },
     { id: 'wheat_farm', name: 'Ферма пшениці', desc: 'Вирощує пшеницю (вартість 0.1)', resource: 'wheat', costRes: 'coins', cost: 10, costMult: 1.15, prod: 0.5 },
-    { id: 'stall', name: 'Ларчик з зерном', desc: '10 пшениці→1 монета', resource: 'coins', costRes: 'wheat', cost: 80, costMult: 1.2, prod: 0.1, consumes: { wheat: 1 } },
+    { id: 'stall', name: 'Ларчик з зерном', desc: '10 пшениці→1 монета', resource: 'coins', costRes: 'wheat', cost: 80, costMult: 1.2, prod: 0.3, consumes: { wheat: 3 } },
     { id: 'mill', name: 'Млин', desc: '3 пшениці→1 борошно (3×0.1×1.3=0.39)', resource: 'flour', costRes: 'coins', cost: 80, costMult: 1.15, prod: 0.5, consumes: { wheat: 1.5 } },
     { id: 'well', name: 'Криниця', desc: 'Добуває воду (вартість 0.05)', resource: 'water', costRes: 'coins', cost: 40, costMult: 1.15, prod: 0.5 },
     { id: 'baker', name: 'Пекарня', desc: '2 борошна+1 вода→1 хліб (1.08)', resource: 'bread', costRes: 'coins', cost: 100, costMult: 1.15, prod: 0.5, consumes: { flour: 1, water: 0.5 } },
-    { id: 'bread_shop', name: 'Ларчик з хлібом', desc: '2 хліби→1 монета', resource: 'coins', costRes: 'bread', cost: 60, costMult: 1.2, prod: 0.25, consumes: { bread: 0.5 } },
+    { id: 'bread_shop', name: 'Ларчик з хлібом', desc: '2 хліби→1 монета', resource: 'coins', costRes: 'bread', cost: 60, costMult: 1.2, prod: 0.75, consumes: { bread: 1.5 } },
     { id: 'sugar_factory', name: 'Цукровий завод', desc: 'Виробляє цукор (вартість 0.15)', resource: 'sugar', costRes: 'coins', cost: 200, costMult: 1.15, prod: 0.3 },
     { id: 'chicken_coop', name: 'Курник', desc: 'Несе яйця (вартість 0.2)', resource: 'eggs', costRes: 'coins', cost: 180, costMult: 1.15, prod: 0.2 },
     { id: 'dairy_farm', name: 'Молочна ферма', desc: 'Корови→Масло (вартість 0.3)', resource: 'butter', costRes: 'coins', cost: 500, costMult: 1.15, prod: 0.15 },
     { id: 'mixer', name: 'Міксер', desc: '1 борошно+0.5 води+0.3 цукру+0.3 яйця→1 тісто', resource: 'dough', costRes: 'coins', cost: 800, costMult: 1.15, prod: 0.2, consumes: { flour: 0.2, water: 0.1, sugar: 0.06, eggs: 0.06 } },
     { id: 'oven', name: 'Піч для печива', desc: '0.4 тіста+0.2 масла→1 печиво', resource: 'cookies', costRes: 'coins', cost: 1500, costMult: 1.15, prod: 0.15, consumes: { dough: 0.06, butter: 0.03 } },
-    { id: 'cookie_market', name: 'Ринок печива', desc: '3 печива→1 монета', resource: 'coins', costRes: 'cookies', cost: 120, costMult: 1.15, prod: 0.33, consumes: { cookies: 1 } },
+    { id: 'cookie_market', name: 'Ринок печива', desc: '3 печива→1 монета', resource: 'coins', costRes: 'cookies', cost: 120, costMult: 1.15, prod: 1, consumes: { cookies: 3 } },
     { id: 'buns_oven', name: 'Піч для булочок', desc: '0.4 тіста+0.2 масла+0.1 цукру→1 булочка', resource: 'buns', costRes: 'coins', cost: 3000, costMult: 1.15, prod: 0.1, consumes: { dough: 0.04, butter: 0.02, sugar: 0.01 } },
-    { id: 'buns_shop', name: 'Ларчик з булочками', desc: '2 булочки→1 монета', resource: 'coins', costRes: 'buns', cost: 180, costMult: 1.15, prod: 0.5, consumes: { buns: 1 } },
+    { id: 'buns_shop', name: 'Ларчик з булочками', desc: '2 булочки→1 монета', resource: 'coins', costRes: 'buns', cost: 180, costMult: 1.15, prod: 1.5, consumes: { buns: 3 } },
     { id: 'pies_oven', name: 'Піч для пиріжків', desc: '0.4 тіста+0.25 масла+0.15 яєць→1 пиріжок', resource: 'pies', costRes: 'coins', cost: 6000, costMult: 1.15, prod: 0.08, consumes: { dough: 0.032, butter: 0.02, eggs: 0.012 } },
-    { id: 'pies_shop', name: 'Ларчик з пиріжками', desc: '1 пиріжок→1 монета', resource: 'coins', costRes: 'pies', cost: 350, costMult: 1.15, prod: 0.8, consumes: { pies: 0.8 } },
+    { id: 'pies_shop', name: 'Ларчик з пиріжками', desc: '1 пиріжок→1 монета', resource: 'coins', costRes: 'pies', cost: 350, costMult: 1.15, prod: 2.4, consumes: { pies: 2.4 } },
     { id: 'confectionery', name: 'Кондитерська', desc: '0.5 тіста+0.25 масла+0.2 цукру+0.2 яєць→1 торт', resource: 'cake', costRes: 'coins', cost: 12000, costMult: 1.15, prod: 0.06, consumes: { dough: 0.03, butter: 0.015, sugar: 0.012, eggs: 0.012 } },
-    { id: 'cake_shop', name: 'Ларчик з тортами', desc: '0.5 торта→1 монета', resource: 'coins', costRes: 'cake', cost: 400, costMult: 1.15, prod: 0.5, consumes: { cake: 0.25 } },
+    { id: 'cake_shop', name: 'Ларчик з тортами', desc: '0.5 торта→1 монета', resource: 'coins', costRes: 'cake', cost: 400, costMult: 1.15, prod: 1.5, consumes: { cake: 0.75 } },
     { id: 'water_mill', name: 'Водяний млин', desc: '2.5 пшениці+0.3 води→1 борошно', resource: 'flour', costRes: 'coins', cost: 400, costMult: 1.15, prod: 1.2, consumes: { wheat: 3, water: 0.36 } },
     { id: 'steam_mill', name: 'Паровий млин', desc: '2 пшениці+0.4 води→1 борошно', resource: 'flour', costRes: 'coins', cost: 1200, costMult: 1.15, prod: 3, consumes: { wheat: 6, water: 1.2 } }
   ];
@@ -1077,7 +1077,9 @@
           if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) cpsVal *= s.boostMultiplier;
           const boostTag = (s.boostActiveUntil || 0) > Date.now() ? ' ×2' : '';
           const cpsStr = cpsVal >= 0 ? `+${cpsVal.toFixed(1)}/с` : `${cpsVal.toFixed(1)}/с`;
-          return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}${capStr}</div>${res.icon} ${res.name}<div class="stat-cps" style="${cpsVal < 0 ? 'color:var(--accent)' : ''}">${cpsStr}${boostTag}</div></div>`;
+          const val = s[r] || 0;
+          const valStr = (r === 'coins' && val > 0 && val < 10) ? Number(val).toFixed(1) : format(val);
+          return `<div class="stat"><div class="stat-val">${valStr}${capStr}</div>${res.icon} ${res.name}<div class="stat-cps" style="${cpsVal < 0 ? 'color:var(--accent)' : ''}">${cpsStr}${boostTag}</div></div>`;
         }).join('');
       document.getElementById('stats-panel').innerHTML = statsHtml || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
       const titleEl = document.getElementById('app-title');
