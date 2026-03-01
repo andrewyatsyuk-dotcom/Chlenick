@@ -124,7 +124,9 @@
 
     .lb-list { width: 100%; background: var(--card); border-radius: 12px; overflow: hidden; }
     .lb-row { display: flex; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; }
+    .lb-row.lb-row-tg { cursor: pointer; }
     .lb-row.me { background: rgba(233,69,96,0.2); }
+    .lb-row .lb-open { font-size: 1rem; opacity: 0.7; }
     .lb-rank { font-weight: 900; width: 28px; text-align: center; }
     .lb-name { flex: 1; font-weight: 600; font-size: 0.9rem; }
     .lb-score { font-weight: 800; color: var(--gold); font-size: 0.9rem; }
@@ -133,17 +135,44 @@
 
     .achieve-item.unlocked { border-left: 4px solid var(--success); }
     .achieve-item .badge { font-size: 1.2rem; margin-right: 8px; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: linear-gradient(180deg, #1a1a2e, #16213e); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px; max-width: 340px; max-height: 85vh; overflow-y: auto;
+    }
+    .modal-box h2 { font-size: 1.1rem; margin-bottom: 12px; color: var(--gold); }
+    .modal-box p { font-size: 0.9rem; line-height: 1.5; opacity: 0.9; margin-bottom: 12px; }
+    .modal-btn { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 10px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem; }
+    .trade-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 8px; background: rgba(0,0,0,0.2); border-radius: 10px; gap: 8px; flex-wrap: wrap; }
+    .trade-row .trade-desc { flex: 1; min-width: 0; font-size: 0.85rem; }
+    .gift-form select, .gift-form input { padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); margin: 4px 0; }
+    .friend-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; }
+    .boost-badge { font-size: 0.75rem; background: var(--success); color: white; padding: 2px 8px; border-radius: 6px; }
   </style>
 </head>
 <body>
+  <div id="intro-modal" class="modal-overlay">
+    <div class="modal-box">
+      <h2>🌾 Як ти тут опинився</h2>
+      <p>Прокинувся ти в полі біля невеликого села. У кишені — кілька монет, під ногами — золота пшениця. Місцеві сказали: хто збирає зерно і вміє його перетворити на хліб — той тут і залишається.</p>
+      <p>Ти вирішив спробувати. Спочатку — серп і руки, потім млин, криниця, і нарешті власна пекарня. Шлях від зерна до буханки, від буханки до пекарні з ім’ям.</p>
+      <p>Добре, що саме ти тут. Починай збирати пшеницю.</p>
+      <button class="modal-btn" onclick="Game.closeIntro()">Почати гру</button>
+    </div>
+  </div>
+
   <div class="app-header">
-    <h1>🍞 Пекарня</h1>
+    <h1 id="app-title">🍞 Пекарня</h1>
   </div>
   <div class="app-content">
   <div id="view-main" class="view active">
     <div class="stats-panel" id="stats-panel"></div>
     <div class="storage-timer" id="storage-timer"></div>
-    <p style="font-size:0.8rem;opacity:0.7;">Початок: пшениця. Потім борошно → хліб → печиво → булочки → пиріжки.</p>
   </div>
 
   <div id="view-production" class="view">
@@ -156,6 +185,15 @@
 
   <div id="view-achievements" class="view">
     <div class="section"><h2>🏆 Досягнення</h2><div id="achievements-list"></div></div>
+  </div>
+
+  <div id="view-trade" class="view">
+    <div class="section"><h2>🏪 Торгова площадка</h2><p style="font-size:0.8rem;opacity:0.8;margin-bottom:10px;">Обмін ресурсів за фіксованими курсами.</p><div id="trades-list"></div></div>
+  </div>
+
+  <div id="view-gifts" class="view">
+    <div class="section"><h2>🎁 Подарунки</h2><p style="font-size:0.8rem;opacity:0.8;margin-bottom:8px;">Створи подарунок нижче і поділись посиланням — хто відкриє, отримає ресурси і стане другом.</p><div id="gifts-out-list"></div><h3 style="font-size:0.9rem;margin:12px 0 6px;">Надіслати подарунок</h3><div class="gift-form" id="gift-form"></div></div>
+    <div class="section"><h2>👥 Друзі та буст</h2><p style="font-size:0.8rem;opacity:0.8;margin-bottom:8px;">Друзі можуть дати буст ×2 на 30 хв (1 раз на день).</p><div id="friends-list"></div></div>
   </div>
 
   <div id="view-leaderboard" class="view">
@@ -173,7 +211,8 @@
     <button class="tab active" onclick="Game.switchTab('main')">🎮 Гра</button>
     <button class="tab" onclick="Game.switchTab('production')">🏭 Виробництво</button>
     <button class="tab" onclick="Game.switchTab('upgrades')">⬆️ Апгрейди</button>
-    <button class="tab" onclick="Game.switchTab('achievements')">🏆 Досягнення</button>
+    <button class="tab" onclick="Game.switchTab('trade')">🏪 Торгівля</button>
+    <button class="tab" onclick="Game.switchTab('gifts')">🎁 Друзі</button>
     <button class="tab" onclick="Game.switchTab('leaderboard')">📊 Топ</button>
   </div>
 
@@ -181,8 +220,20 @@
 (function() {
   const LS_KEY = 'bakery_game_v2';
   const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com';
+  const BOT_USERNAME = 'YOUR_BOT_USERNAME'; // Заміни на username бота для посилань подарунків
   const OFFLINE_MAX_SEC = 86400;
   const SAVE_INTERVAL_MS = 30000;
+  const BOOST_DURATION_MS = 30 * 60 * 1000;
+  const BOOST_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+  const TRADES = [
+    { id: 't1', give: { wheat: 50 }, get: { coins: 12 }, desc: '50 🌾 → 12 🪙' },
+    { id: 't2', give: { wheat: 200 }, get: { coins: 55 }, desc: '200 🌾 → 55 🪙' },
+    { id: 't3', give: { flour: 80 }, get: { coins: 40 }, desc: '80 🫙 борошна → 40 🪙' },
+    { id: 't4', give: { bread: 30 }, get: { coins: 25 }, desc: '30 🍞 → 25 🪙' },
+    { id: 't5', give: { coins: 100 }, get: { wheat: 300 }, desc: '100 🪙 → 300 🌾' },
+    { id: 't6', give: { coins: 60 }, get: { water: 100 }, desc: '60 🪙 → 100 💧' }
+  ];
 
   function format(val) {
     const n = typeof val === 'object' && val.toNumber ? val.toNumber() : +val;
@@ -206,11 +257,12 @@
     cookies: { key: 'cookies', name: 'Печиво', icon: '🍪', cps: 0, stage: 2 },
     buns: { key: 'buns', name: 'Булочки', icon: '🥐', cps: 0, stage: 3 },
     pies: { key: 'pies', name: 'Пиріжки', icon: '🥟', cps: 0, stage: 4 },
+    cake: { key: 'cake', name: 'Торт', icon: '🎂', cps: 0, stage: 5 },
     coins: { key: 'coins', name: 'Монети', icon: '🪙', cps: 0 }
   };
 
-  const STORAGE_BASE = { wheat: 500, flour: 400, water: 300, sugar: 200, eggs: 200, butter: 200, dough: 300, bread: 400, cookies: 300, buns: 300, pies: 200, coins: 1e9 };
-  const STORAGE_PER_LEVEL = { wheat: 500, flour: 400, water: 300, sugar: 200, eggs: 200, butter: 200, dough: 300, bread: 400, cookies: 300, buns: 300, pies: 200, coins: 0 };
+  const STORAGE_BASE = { wheat: 500, flour: 400, water: 300, sugar: 200, eggs: 200, butter: 200, dough: 300, bread: 400, cookies: 300, buns: 300, pies: 200, cake: 200, coins: 1e9 };
+  const STORAGE_PER_LEVEL = { wheat: 500, flour: 400, water: 300, sugar: 200, eggs: 200, butter: 200, dough: 300, bread: 400, cookies: 300, buns: 300, pies: 200, cake: 200, coins: 0 };
 
   const BUILDINGS = [
     { id: 'storage', name: 'Склад', desc: 'Місце для пшениці, борошна тощо. Покращуй, щоб зберігати більше.', resource: 'storage', costRes: 'coins', cost: 50, costMult: 1.2, prod: 0, isStorage: true },
@@ -230,6 +282,8 @@
     { id: 'buns_shop', name: 'Ларчик з булочками', desc: 'Булочки→Монети', resource: 'coins', costRes: 'buns', cost: 200, costMult: 1.15, prod: 0.5, consumes: { buns: 0.2 } },
     { id: 'pies_oven', name: 'Піч для пиріжків', desc: 'Тісто+Масло+Яйця→Пиріжки (ет.4)', resource: 'pies', costRes: 'coins', cost: 25000, costMult: 1.15, prod: 0.06, consumes: { dough: 0.5, butter: 0.3, eggs: 0.2 } },
     { id: 'pies_shop', name: 'Ларчик з пиріжками', desc: 'Пиріжки→Монети', resource: 'coins', costRes: 'pies', cost: 400, costMult: 1.15, prod: 0.8, consumes: { pies: 0.2 } },
+    { id: 'confectionery', name: 'Кондитерська', desc: 'Тісто+Масло+Цукор+Яйця→Торт (ет.5)', resource: 'cake', costRes: 'coins', cost: 35000, costMult: 1.15, prod: 0.05, consumes: { dough: 0.6, butter: 0.4, sugar: 0.3, eggs: 0.3 } },
+    { id: 'cake_shop', name: 'Ларчик з тортами', desc: 'Торт→Монети', resource: 'coins', costRes: 'cake', cost: 500, costMult: 1.15, prod: 1, consumes: { cake: 0.15 } },
     { id: 'water_mill', name: 'Водяний млин', desc: 'Більше борошна', resource: 'flour', costRes: 'coins', cost: 600, costMult: 1.15, prod: 1.5, consumes: { wheat: 2, water: 0.5 } },
     { id: 'steam_mill', name: 'Паровий млин', desc: 'Ще більше борошна', resource: 'flour', costRes: 'coins', cost: 1800, costMult: 1.15, prod: 4, consumes: { wheat: 4, water: 1 } }
   ];
@@ -242,7 +296,11 @@
     { id: 'u3', name: 'Кран', desc: '×2 води', cost: 300, costRes: 'coins', target: 'water', mult: 2 },
     { id: 'u4', name: 'Фермерські курки', desc: '×2 яєць', cost: 800, costRes: 'coins', target: 'eggs', mult: 2 },
     { id: 'u5', name: 'Солодка печка', desc: '×2 печива', cost: 2000, costRes: 'coins', target: 'cookies', mult: 2 },
-    { id: 'u6', name: 'Торгівельна ліцензія', desc: '×2 монет', cost: 1000, costRes: 'coins', target: 'coins', mult: 2 }
+    { id: 'u6', name: 'Торгівельна ліцензія', desc: '×2 монет', cost: 1000, costRes: 'coins', target: 'coins', mult: 2 },
+    { id: 'u7', name: 'Булочки свіжі', desc: '×2 булочок', cost: 5000, costRes: 'coins', target: 'buns', mult: 2 },
+    { id: 'u8', name: 'Пиріжки смачні', desc: '×2 пиріжок', cost: 10000, costRes: 'coins', target: 'pies', mult: 2 },
+    { id: 'u9', name: 'Торти преміум', desc: '×2 тортів', cost: 15000, costRes: 'coins', target: 'cake', mult: 2 },
+    { id: 'u10', name: 'Золоті жорна', desc: '×2 пшениці', cost: 500, costRes: 'coins', target: 'wheat', mult: 2 }
   ];
 
   const ACHIEVEMENTS = [
@@ -253,7 +311,12 @@
     { id: 'a3b', name: 'Булочник', desc: '50 булочок', icon: '🥐', check: s => s.buns >= 50 },
     { id: 'a4', name: 'Тисячник', desc: '1K монет', icon: '🪙', check: s => s.coins >= 1e3 },
     { id: 'a5', name: 'Магнат', desc: '1M монет', icon: '💰', check: s => s.coins >= 1e6 },
-    { id: 'a6', name: 'Швидка рука', desc: '5 пшениці/сек', icon: '⚡', check: s => (s.wheatCps || 0) >= 5 }
+    { id: 'a6', name: 'Швидка рука', desc: '5 пшениці/сек', icon: '⚡', check: s => (s.wheatCps || 0) >= 5 },
+    { id: 'a7', name: '10K пшениці', desc: '10K пшениці', icon: '🌾', check: s => s.wheat >= 1e4 },
+    { id: 'a8', name: '5K борошна', desc: '5K борошна', icon: '🫙', check: s => s.flour >= 5e3 },
+    { id: 'a9', name: '500 хліба', desc: '500 хліба', icon: '🍞', check: s => s.bread >= 500 },
+    { id: 'a10', name: 'Кондитер', desc: '50 тортів', icon: '🎂', check: s => (s.cake || 0) >= 50 },
+    { id: 'a11', name: 'Мільйонер', desc: '10M монет', icon: '💎', check: s => s.coins >= 1e7 }
   ];
 
   const Game = {
@@ -281,18 +344,44 @@
         }
       } catch(e) {}
       this.load();
-      Promise.resolve(this.loadFromCloud()).then(() => {
-        this.applyOffline();
-        this.render();
-        this.startLoop();
-      });
+      const startParam = window.Telegram?.WebApp?.start_param || '';
+      if (startParam && startParam.indexOf('gift_') === 0) {
+        this.claimGift(startParam.replace('gift_', '')).then(() => {
+          this.continueInit();
+        });
+      } else {
+        this.continueInit();
+      }
       setInterval(() => this.save(), SAVE_INTERVAL_MS);
       window.addEventListener('beforeunload', () => this.save());
     },
 
+    continueInit() {
+      Promise.resolve(this.loadFromCloud()).then(() => {
+        return this.applyBoostsFromCloud();
+      }).then(() => {
+        this.applyOffline();
+        this.render();
+        const s = this.getState();
+        const introEl = document.getElementById('intro-modal');
+        if (introEl) {
+          if (s.seenIntro) introEl.classList.add('hidden');
+          else this.state.seenIntro = false;
+        }
+        if (s.seenIntro) this.startLoop();
+      });
+    },
+
+    closeIntro() {
+      this.state.seenIntro = true;
+      this.save();
+      document.getElementById('intro-modal').classList.add('hidden');
+      this.startLoop();
+    },
+
     getState() {
       const s = this.state;
-      const def = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, coins: 0 };
+      const def = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, cake: 0, coins: 0, seenIntro: false, bakeryName: '', boostActiveUntil: 0, boostMultiplier: 1 };
       return { ...def, ...s };
     },
 
@@ -325,7 +414,7 @@
     getTimeToFullStorage() {
       const s = this.getState();
       const cps = this.calcCPS();
-      const resources = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies'];
+      const resources = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake'];
       let best = null;
       resources.forEach(r => {
         const cap = this.getStorageCap(r);
@@ -355,7 +444,7 @@
 
     calcCPS() {
       const s = this.getState();
-      const cps = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, coins: 0 };
+      const cps = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, cake: 0, coins: 0 };
 
       BUILDINGS.forEach(b => {
         if (b.isStorage) return;
@@ -402,7 +491,9 @@
           }
         }
 
-        this.add(b.resource, prod);
+        let prodMult = 1;
+        if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) prodMult = s.boostMultiplier;
+        this.add(b.resource, prod * prodMult);
       });
 
       if ((s.wheat || 0) > 10000) {
@@ -413,9 +504,11 @@
     },
 
     click() {
+      const s = this.getState();
       const cps = this.calcCPS();
       const wheatCps = cps.wheat || 0;
-      const baseWheat = wheatCps < 0.5 ? 1 : Math.max(1, Math.floor(wheatCps * 0.1) + 1);
+      let baseWheat = wheatCps < 0.5 ? 1 : Math.max(1, Math.floor(wheatCps * 0.1) + 1);
+      if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) baseWheat *= s.boostMultiplier;
       this.add('wheat', baseWheat);
       const coinsCps = cps.coins || 0;
       if (coinsCps < 0.3) {
@@ -447,6 +540,10 @@
       if (!this.canAfford(res, cost)) return;
       this.spend(res, cost);
       this.purchased[b.id] = (this.purchased[b.id] || 0) + 1;
+      if (b.id === 'baker' && this.getCount('baker') === 1 && !this.getState().bakeryName) {
+        const name = prompt('Назви свою пекарню:', '') || 'Моя пекарня';
+        if (name) this.state.bakeryName = String(name).slice(0, 30);
+      }
       this.save();
       this.render();
     },
@@ -556,6 +653,85 @@
         .catch(() => {});
     },
 
+    doTrade(trade) {
+      const s = this.getState();
+      for (const [res, amt] of Object.entries(trade.give)) {
+        if ((s[res] || 0) < amt) return;
+      }
+      for (const [res, amt] of Object.entries(trade.give)) this.spend(res, amt);
+      for (const [res, amt] of Object.entries(trade.get)) this.add(res, amt);
+      this.save();
+      this.render();
+    },
+
+    createGift(resource, amount) {
+      const s = this.getState();
+      if ((s[resource] || 0) < amount) return;
+      this.spend(resource, amount);
+      const code = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      const payload = { fromUserId: this.userId, fromUserName: this.userName, resource, amount, createdAt: Date.now() };
+      fetch(`${FIREBASE_URL}/gifts/${code}.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
+      this.save();
+      this.render();
+      const link = BOT_USERNAME && BOT_USERNAME !== 'YOUR_BOT_USERNAME' ? `https://t.me/${BOT_USERNAME}?start=gift_${code}` : '(Вкажи BOT_USERNAME в коді)';
+      alert('Подарунок створено! Поділись посиланням:\n' + link);
+    },
+
+    claimGift(code) {
+      if (!FIREBASE_URL || !code) return Promise.resolve();
+      return fetch(`${FIREBASE_URL}/gifts/${code}.json`).then(r => r.json()).then(data => {
+        if (!data || data.claimedBy) return;
+        this.add(data.resource, data.amount);
+        fetch(`${FIREBASE_URL}/gifts/${code}/claimedBy.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.userId) }).catch(() => {});
+        const fromId = data.fromUserId;
+        if (fromId && fromId !== this.userId) {
+          fetch(`${FIREBASE_URL}/friends/${this.userId}/${fromId}.json`, { method: 'PUT', body: 'true' }).catch(() => {});
+          fetch(`${FIREBASE_URL}/friends/${fromId}/${this.userId}.json`, { method: 'PUT', body: 'true' }).catch(() => {});
+        }
+        this.save();
+        if (data.fromUserName) alert('Подарунок від ' + data.fromUserName + ': +' + data.amount + ' ' + (RESOURCES[data.resource]?.name || data.resource));
+      }).catch(() => {});
+    },
+
+    applyBoostsFromCloud() {
+      if (!FIREBASE_URL || /^anon_/.test(this.userId)) return Promise.resolve();
+      return fetch(`${FIREBASE_URL}/boosts/${this.userId}.json`).then(r => r.json()).then(data => {
+        if (!data || !data.expiresAt || data.expiresAt <= Date.now()) return;
+        this.state.boostActiveUntil = data.expiresAt;
+        this.state.boostMultiplier = 2;
+        fetch(`${FIREBASE_URL}/boosts/${this.userId}.json`, { method: 'DELETE' }).catch(() => {});
+        this.save();
+      }).catch(() => {});
+    },
+
+    giveBoostToFriend(friendId) {
+      if (!FIREBASE_URL || /^anon_/.test(this.userId)) return;
+      fetch(`${FIREBASE_URL}/lastBoostGiven/${this.userId}/${friendId}.json`).then(r => r.json()).then(last => {
+        if (last && (Date.now() - last) < BOOST_COOLDOWN_MS) {
+          alert('Буст цьому другу вже давали сьогодні. Раз на день.');
+          return;
+        }
+        const expiresAt = Date.now() + BOOST_DURATION_MS;
+        const payload = { fromUserId: this.userId, fromUserName: this.userName, expiresAt, givenAt: Date.now() };
+        fetch(`${FIREBASE_URL}/boosts/${friendId}.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(() => {
+          fetch(`${FIREBASE_URL}/lastBoostGiven/${this.userId}/${friendId}.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Date.now()) }).catch(() => {});
+          alert('Буст ×2 на 30 хв надіслано другу!');
+        });
+      });
+    },
+
+    openPlayerInTG(uid) {
+      if (!uid || /^anon_/.test(uid)) return;
+      try {
+        const link = 'tg://user?id=' + uid;
+        if (window.Telegram?.WebApp?.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(link);
+        } else {
+          window.open(link, '_blank');
+        }
+      } catch(e) {}
+    },
+
     loadLeaderboard() {
       const el = document.getElementById('lb-global');
       if (!FIREBASE_URL) { el.innerHTML = 'Додай FIREBASE_URL'; return; }
@@ -570,7 +746,9 @@
           el.innerHTML = players.slice(0, 10).map((p, i) => {
             const isMe = p.uid === this.userId;
             const rk = i < 3 ? rankEmoji[i] : '#' + (i + 1);
-            return `<div class="lb-row${isMe ? ' me' : ''}">${rk}<span class="lb-name">${(p.userName || 'Гравець').replace(/</g, '&lt;')}</span><span class="lb-score">${format(p.cookies || 0)} 🪙</span></div>`;
+            const tgClass = /^anon_/.test(p.uid) ? '' : ' lb-row-tg';
+            const openTg = /^anon_/.test(p.uid) ? '' : ` onclick="Game.openPlayerInTG('${String(p.uid).replace(/'/g, "\\'")}')"`;
+            return `<div class="lb-row${isMe ? ' me' : ''}${tgClass}"${openTg}>${rk}<span class="lb-name">${(p.userName || 'Гравець').replace(/</g, '&lt;')}</span><span class="lb-score">${format(p.cookies || 0)} 🪙</span><span class="lb-open">👤</span></div>`;
           }).join('');
         })
         .catch(() => { el.innerHTML = 'Не вдалось завантажити'; });
@@ -596,22 +774,29 @@
       if (v) v.classList.add('active');
       document.querySelector('.clicker-wrap').style.display = tab === 'main' ? 'flex' : 'none';
       if (tab === 'leaderboard') this.loadLeaderboard();
+      if (tab === 'gifts') this.renderFriends();
     },
 
     render() {
       const s = this.getState();
       const cps = this.calcCPS();
 
-      const statsHtml = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'coins']
+      const statsHtml = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake', 'coins']
         .filter(r => (s[r] || 0) > 0 || (cps[r] || 0) > 0)
         .slice(-9)
         .map(r => {
           const res = RESOURCES[r] || { name: r, icon: '📦' };
           const cap = r !== 'coins' ? this.getStorageCap(r) : null;
           const capStr = cap != null && cap < 1e8 ? ` / ${format(cap)}` : '';
-          return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}${capStr}</div>${res.icon} ${res.name}<div class="stat-cps">+${(cps[r] || 0).toFixed(1)}/с</div></div>`;
+          let cpsVal = (cps[r] || 0);
+          if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) cpsVal *= s.boostMultiplier;
+          const boostTag = (s.boostActiveUntil || 0) > Date.now() ? ' ×2' : '';
+          return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}${capStr}</div>${res.icon} ${res.name}<div class="stat-cps">+${cpsVal.toFixed(1)}/с${boostTag}</div></div>`;
         }).join('');
       document.getElementById('stats-panel').innerHTML = statsHtml || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
+      const titleEl = document.getElementById('app-title');
+      if (titleEl) titleEl.textContent = (s.bakeryName ? s.bakeryName + ' 🍞' : '🍞 Пекарня');
+      if ((s.boostActiveUntil || 0) <= Date.now()) { this.state.boostMultiplier = 1; this.state.boostActiveUntil = 0; }
       const toFull = this.getTimeToFullStorage();
       const timerEl = document.getElementById('storage-timer');
       if (timerEl) {
@@ -657,8 +842,38 @@
         const un = this.achievements.has(a.id);
         return `<div class="achieve-item ${un ? 'unlocked' : ''}"><span class="badge">${a.icon}</span><div><div class="upgrade-name">${a.name}</div><div class="upgrade-desc">${a.desc}</div></div>${un ? '✅' : '🔒'}</div>`;
       }).join('');
+
+      const tradeList = document.getElementById('trades-list');
+      if (tradeList) {
+        tradeList.innerHTML = TRADES.map((t, i) => {
+          let can = true;
+          for (const [res, amt] of Object.entries(t.give)) { if ((s[res] || 0) < amt) can = false; }
+          return `<div class="trade-row"><span class="trade-desc">${t.desc}</span><button class="btn-buy" ${!can ? 'disabled' : ''} onclick="Game.doTrade(TRADES_DATA[${i}])">Обміняти</button></div>`;
+        }).join('');
+      }
+      const giftForm = document.getElementById('gift-form');
+      if (giftForm) {
+        const opts = ['wheat', 'flour', 'bread', 'coins'].map(r => `<option value="${r}">${RESOURCES[r]?.icon || ''} ${RESOURCES[r]?.name || r}</option>`).join('');
+        giftForm.innerHTML = `<select id="gift-res">${opts}</select><input type="number" id="gift-amt" min="1" value="50" style="width:80px"> <button class="btn-buy" onclick="Game.createGift(document.getElementById('gift-res').value, +document.getElementById('gift-amt').value)">Надіслати</button>`;
+      }
+    },
+
+    renderFriends() {
+      const el = document.getElementById('friends-list');
+      if (!el || !FIREBASE_URL || /^anon_/.test(this.userId)) { if (el) el.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">Увійди через Telegram і обміняйся подарунками — друзі з\'являться тут.</p>'; return; }
+      el.innerHTML = 'Завантаження...';
+      fetch(`${FIREBASE_URL}/friends/${this.userId}.json`).then(r => r.json()).then(friends => {
+        if (!friends || typeof friends !== 'object') { el.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">Поки немає друзів. Надішли подарунок — хто отримає, стане другом.</p>'; return; }
+        const ids = Object.keys(friends);
+        if (ids.length === 0) { el.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">Поки немає друзів.</p>'; return; }
+        Promise.all(ids.map(uid => fetch(`${FIREBASE_URL}/players/${uid}.json`).then(r => r.json()).then(p => ({ uid, name: p?.userName || 'Гравець' })))).then(arr => {
+          el.innerHTML = arr.map(({ uid, name }) => `<div class="friend-row"><span>${(name || 'Гравець').replace(/</g, '&lt;')}</span><button class="btn-buy" onclick="Game.giveBoostToFriend('${uid}')">Дати буст ×2</button></div>`).join('');
+        });
+      }).catch(() => { el.innerHTML = 'Помилка завантаження'; });
     }
   };
+
+  window.TRADES_DATA = TRADES;
 
   window.BUILDINGS_DATA = BUILDINGS;
   window.UPGRADES_DATA = UPGRADES;
