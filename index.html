@@ -219,6 +219,7 @@
   <div class="clicker-wrap">
     <div class="clicker" id="clicker" onclick="Game.click()">⛏️</div>
     <span class="clicker-hint">Бог дав дві лопати — копай!</span>
+    <span class="clicker-hint" id="click-percent" style="font-size:0.7rem;opacity:0.8;"></span>
   </div>
 
   <div class="tabs">
@@ -307,7 +308,13 @@
     { id: 'u7', name: 'Булочки свіжі', desc: '×2 булочок', cost: 5000, costRes: 'coins', target: 'buns', mult: 2 },
     { id: 'u8', name: 'Пиріжки смачні', desc: '×2 пиріжок', cost: 10000, costRes: 'coins', target: 'pies', mult: 2 },
     { id: 'u9', name: 'Торти преміум', desc: '×2 тортів', cost: 15000, costRes: 'coins', target: 'cake', mult: 2 },
-    { id: 'u10', name: 'Золоті жорна', desc: '×2 пшениці', cost: 500, costRes: 'coins', target: 'wheat', mult: 2 }
+    { id: 'u10', name: 'Золоті жорна', desc: '×2 пшениці', cost: 500, costRes: 'coins', target: 'wheat', mult: 2 },
+    { id: 'uc1', name: 'Гострий серп', desc: '+5% з кліку (копай)', cost: 300, costRes: 'wheat', clickPercent: 5 },
+    { id: 'uc2', name: 'Міцні лопати', desc: '+5% з кліку', cost: 500, costRes: 'coins', clickPercent: 5 },
+    { id: 'uc3', name: 'Залізне лопата', desc: '+10% з кліку', cost: 2000, costRes: 'coins', clickPercent: 10 },
+    { id: 'uc4', name: 'Борошняний удар', desc: '+5% з кліку', cost: 800, costRes: 'flour', clickPercent: 5 },
+    { id: 'uc5', name: 'Золоте лопато', desc: '+10% з кліку', cost: 8000, costRes: 'coins', clickPercent: 10 },
+    { id: 'uc6', name: 'Легенда копальні', desc: '+15% з кліку', cost: 25000, costRes: 'coins', clickPercent: 15 }
   ];
 
   const ACHIEVEMENTS = [
@@ -388,7 +395,7 @@
 
     getState() {
       const s = this.state;
-      const def = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, cake: 0, coins: 0, seenIntro: false, bakeryName: '', boostActiveUntil: 0, boostMultiplier: 1 };
+      const def = { wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0, dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, cake: 0, coins: 0, seenIntro: false, bakeryName: '', boostActiveUntil: 0, boostMultiplier: 1, clickBonusPercent: 10 };
       return { ...def, ...s };
     },
 
@@ -514,11 +521,12 @@
       const s = this.getState();
       const cps = this.calcCPS();
       const mult = (s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1 ? s.boostMultiplier : 1;
+      const clickPct = (s.clickBonusPercent || 10) / 100;
       const resources = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake', 'coins'];
       const gained = [];
       resources.forEach(res => {
         const rate = cps[res] || 0;
-        let amount = rate < 0.1 ? (res === 'wheat' ? 1 : 0) : 0.1 * rate;
+        let amount = rate < 0.1 ? (res === 'wheat' ? 1 : 0) : clickPct * rate;
         if (amount > 0) {
           amount *= mult;
           if (res !== 'coins') amount = Math.max(0, Math.floor(amount));
@@ -532,7 +540,7 @@
         }
       });
       if ((cps.coins || 0) < 0.3 && mult >= 1) this.add('coins', 0.3);
-      this.showFloating(gained.length ? '+10% ' + gained.slice(0, 5).join(' ') : '+копай!');
+      this.showFloating(gained.length ? '+' + (s.clickBonusPercent || 10) + '% ' + gained.slice(0, 5).join(' ') : '+копай!');
       try {
         if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
       } catch(e) {}
@@ -569,6 +577,7 @@
       if (!this.canAfford(u.costRes, u.cost)) return;
       this.spend(u.costRes, u.cost);
       this.boughtUpgrades.add(u.id);
+      if (u.clickPercent) this.state.clickBonusPercent = (this.getState().clickBonusPercent || 10) + u.clickPercent;
       this.save();
       this.render();
     },
@@ -920,6 +929,8 @@
       document.getElementById('stats-panel').innerHTML = statsHtml || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
       const titleEl = document.getElementById('app-title');
       if (titleEl) titleEl.textContent = (s.bakeryName ? s.bakeryName + ' 🍞' : '🍞 Пекарня');
+      const clickPctEl = document.getElementById('click-percent');
+      if (clickPctEl) clickPctEl.textContent = 'Клік: ' + (s.clickBonusPercent || 10) + '%';
       if ((s.boostActiveUntil || 0) <= Date.now()) { this.state.boostMultiplier = 1; this.state.boostActiveUntil = 0; }
       const toFull = this.getTimeToFullStorage();
       const timerEl = document.getElementById('storage-timer');
