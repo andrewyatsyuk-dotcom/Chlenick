@@ -63,6 +63,10 @@
     .stat { text-align: center; padding: 6px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 0.75rem; }
     .stat-val { font-weight: 800; color: var(--gold); font-size: 0.9rem; }
     .stat-cps { font-size: 0.65rem; opacity: 0.7; color: var(--success); }
+    .storage-timer {
+      width: 100%; text-align: center; font-size: 0.8rem; padding: 6px 10px; margin-bottom: 6px;
+      background: rgba(0,0,0,0.2); border-radius: 8px; color: var(--gold);
+    }
 
     .clicker-wrap {
       flex-shrink: 0;
@@ -132,6 +136,7 @@
   <div class="app-content">
   <div id="view-main" class="view active">
     <div class="stats-panel" id="stats-panel"></div>
+    <div class="storage-timer" id="storage-timer"></div>
     <p style="font-size:0.8rem;opacity:0.7;">Початок: пшениця. Потім борошно → хліб → печиво → булочки → пиріжки.</p>
   </div>
 
@@ -206,7 +211,7 @@
     { id: 'wheat_farm', name: 'Ферма пшениці', desc: 'Вирощує пшеницю', resource: 'wheat', costRes: 'coins', cost: 10, costMult: 1.15, prod: 0.5 },
     { id: 'stall', name: 'Ларчик з зерном', desc: 'Пшениця→Монети', resource: 'coins', costRes: 'wheat', cost: 100, costMult: 1.2, prod: 0.1, consumes: { wheat: 0.5 } },
     { id: 'mill', name: 'Млин', desc: 'Пшениця→Борошно', resource: 'flour', costRes: 'coins', cost: 100, costMult: 1.15, prod: 0.5, consumes: { wheat: 1 } },
-    { id: 'well', name: 'Криниця', desc: 'Добуває воду', resource: 'water', costRes: 'coins', cost: 150, costMult: 1.15, prod: 0.5 },
+    { id: 'well', name: 'Криниця', desc: 'Добуває воду', resource: 'water', costRes: 'coins', cost: 55, costMult: 1.15, prod: 0.5 },
     { id: 'baker', name: 'Пекарня', desc: 'Борошно+Вода→Хліб (ет.1)', resource: 'bread', costRes: 'coins', cost: 80, costMult: 1.15, prod: 0.5, consumes: { flour: 0.3, water: 0.2 } },
     { id: 'bread_shop', name: 'Ларчик з хлібом', desc: 'Хліб→Монети', resource: 'coins', costRes: 'bread', cost: 50, costMult: 1.2, prod: 0.2, consumes: { bread: 0.2 } },
     { id: 'sugar_factory', name: 'Цукровий завод', desc: 'Виробляє цукор', resource: 'sugar', costRes: 'coins', cost: 400, costMult: 1.15, prod: 0.3 },
@@ -270,9 +275,11 @@
         }
       } catch(e) {}
       this.load();
-      this.applyOffline();
-      this.render();
-      this.startLoop();
+      Promise.resolve(this.loadFromCloud()).then(() => {
+        this.applyOffline();
+        this.render();
+        this.startLoop();
+      });
       setInterval(() => this.save(), SAVE_INTERVAL_MS);
       window.addEventListener('beforeunload', () => this.save());
     },
@@ -307,6 +314,31 @@
       const perLevel = STORAGE_PER_LEVEL[res] || 500;
       const levels = this.getCount('storage') || 0;
       return base + perLevel * levels;
+    },
+
+    getTimeToFullStorage() {
+      const s = this.getState();
+      const cps = this.calcCPS();
+      const resources = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies'];
+      let best = null;
+      resources.forEach(r => {
+        const cap = this.getStorageCap(r);
+        const cur = s[r] || 0;
+        const rate = cps[r] || 0;
+        if (rate <= 0 || cur >= cap) return;
+        const sec = (cap - cur) / rate;
+        if (sec > 0 && (!best || sec < best.sec)) {
+          const res = RESOURCES[r] || { name: r, icon: '📦' };
+          best = { res: r, name: res.name, icon: res.icon, sec };
+        }
+      });
+      return best;
+    },
+
+    formatTime(sec) {
+      if (sec >= 3600) return (sec / 3600).toFixed(1) + ' год';
+      if (sec >= 60) return Math.ceil(sec / 60) + ' хв';
+      return Math.ceil(sec) + ' с';
     },
 
     add(res, amount) {
@@ -475,11 +507,47 @@
     syncCloud() {
       if (!FIREBASE_URL || /^anon_/.test(this.userId)) return;
       const score = Math.floor(this.getState().coins || 0);
+      const payload = {
+        userName: this.userName,
+        cookies: score,
+        updatedAt: Date.now(),
+        save: {
+          state: this.state,
+          purchased: this.purchased,
+          boughtUpgrades: [...this.boughtUpgrades],
+          achievements: [...this.achievements],
+          lastSave: this.state.lastSave || Date.now()
+        }
+      };
       fetch(`${FIREBASE_URL}/players/${this.userId}.json`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userName: this.userName, cookies: score, updatedAt: Date.now() })
+        body: JSON.stringify(payload)
       }).catch(() => {});
+    },
+
+    loadFromCloud() {
+      if (!FIREBASE_URL || /^anon_/.test(this.userId)) return Promise.resolve();
+      return fetch(`${FIREBASE_URL}/players/${this.userId}.json`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data || !data.save) return;
+          const cloud = data.save;
+          const cloudTime = cloud.lastSave || 0;
+          const localTime = this.lastSave || 0;
+          if (cloudTime >= localTime) {
+            this.state = cloud.state || {};
+            this.purchased = cloud.purchased || {};
+            this.boughtUpgrades = new Set(cloud.boughtUpgrades || []);
+            this.achievements = new Set(cloud.achievements || []);
+            this.lastSave = cloud.lastSave;
+            try {
+              const toStore = { state: this.state, purchased: this.purchased, boughtUpgrades: [...this.boughtUpgrades], achievements: [...this.achievements] };
+              localStorage.setItem(LS_KEY, JSON.stringify(toStore));
+            } catch(e) {}
+          }
+        })
+        .catch(() => {});
     },
 
     loadLeaderboard() {
@@ -538,6 +606,16 @@
           return `<div class="stat"><div class="stat-val">${format(s[r] || 0)}${capStr}</div>${res.icon} ${res.name}<div class="stat-cps">+${(cps[r] || 0).toFixed(1)}/с</div></div>`;
         }).join('');
       document.getElementById('stats-panel').innerHTML = statsHtml || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
+      const toFull = this.getTimeToFullStorage();
+      const timerEl = document.getElementById('storage-timer');
+      if (timerEl) {
+        if (toFull) {
+          timerEl.textContent = `Склад заповниться (${toFull.icon} ${toFull.name}): через ${this.formatTime(toFull.sec)}`;
+          timerEl.style.display = 'block';
+        } else {
+          timerEl.style.display = 'none';
+        }
+      }
 
       document.getElementById('buildings-list').innerHTML = BUILDINGS.map(b => {
         const cost = this.getCost(b);
