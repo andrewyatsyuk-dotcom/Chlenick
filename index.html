@@ -1,270 +1,439 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Grow Your Dick</title>
-<script src="https://telegram.org/js/telegram-web-app.js" async></script>
-<style>
-  :root {
-    --bg: #87CEEB;
-    --grass: #4CAF50;
-    --text: #1a1a2e;
-    --card: rgba(255,255,255,0.85);
-    --card-border: rgba(255,255,255,0.5);
-    --shadow: rgba(0,0,0,0.15);
-  }
-  [data-theme="dark"] {
-    --bg: #1a1a2e;
-    --grass: #2d5a27;
-    --text: #e0e0e0;
-    --card: rgba(30,30,50,0.9);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  #app { display: flex; flex-direction: column; min-height: 100vh; padding: 16px; }
-  #header { text-align: center; padding: 12px 0; }
-  #header h1 { font-size: 1.5rem; font-weight: 900; }
-  #size-display { font-size: 1.2rem; margin-top: 4px; }
-  #size-display span { font-weight: 900; transition: transform 0.15s; }
-  #size-display span.grow-pop { animation: growPop 0.4s ease-out; }
-  @keyframes growPop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
-  #game-view { flex: 1; display: flex; flex-direction: column; align-items: center; }
-  #canvas-wrap { flex: 1; display: flex; align-items: flex-end; justify-content: center; min-height: 280px; }
-  canvas { display: block; max-width: 100%; }
-  #controls { padding: 16px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .action-btn {
-    padding: 14px 24px; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700;
-    cursor: pointer; color: white; box-shadow: 0 4px 12px var(--shadow);
-    background: linear-gradient(135deg, #2196F3, #0D47A1);
-  }
-  .action-btn:active { transform: scale(0.96); }
-  #progress-wrap { width: 100%; max-width: 320px; margin: 8px auto; height: 10px; background: var(--card); border-radius: 10px; overflow: hidden; }
-  #progress-bar { height: 100%; background: linear-gradient(90deg, #FF6B35, #FFD700); border-radius: 10px; transition: width 0.5s; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🍪 Печиво-Клікер</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      --card: rgba(255,255,255,0.95);
+      --accent: #ff6b6b;
+      --text: #2d3436;
+      --gold: #fdcb6e;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      text-align: center;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .score-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    .score-label { font-size: 0.85rem; opacity: 0.7; }
+    .score-value { font-size: 2rem; font-weight: 900; color: var(--gold); }
+    .score-value span { font-size: 1rem; opacity: 0.8; }
+    .per-sec { font-size: 0.8rem; color: #00b894; margin-top: 4px; }
+
+    .clicker {
+      width: 180px;
+      height: 180px;
+      background: linear-gradient(145deg, #ffeaa7, #fdcb6e);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 10px 40px rgba(253,203,110,0.5);
+      transition: transform 0.08s;
+      margin: 20px 0;
+      border: 6px solid #f9ca24;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .clicker:active { transform: scale(0.92); }
+
+    .shop {
+      width: 100%;
+      max-width: 340px;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    .shop h2 { font-size: 1rem; margin-bottom: 12px; opacity: 0.8; }
+    .upgrade {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      transition: background 0.2s;
+    }
+    .upgrade:last-child { margin-bottom: 0; }
+    .upgrade:hover { background: #f1f3f5; }
+    .upgrade-info { flex: 1; }
+    .upgrade-name { font-weight: 700; font-size: 0.95rem; }
+    .upgrade-desc { font-size: 0.75rem; opacity: 0.6; }
+    .upgrade-stats { font-size: 0.8rem; color: #00b894; font-weight: 600; }
+    .upgrade-btn {
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .upgrade-btn:active { transform: scale(0.95); }
+    .upgrade-btn:disabled {
+      background: #b2bec3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .floating-coin {
+      position: fixed;
+      pointer-events: none;
+      font-size: 1.5rem;
+      animation: floatUp 0.8s ease-out forwards;
+      z-index: 100;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
+    }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab { padding: 10px 16px; border: none; border-radius: 12px; background: rgba(255,255,255,0.3); color: white; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .tab.active { background: white; color: #667eea; }
+    .tab:hover:not(.active) { background: rgba(255,255,255,0.5); }
+
+    .view { display: none; width: 100%; max-width: 340px; }
+    .view.active { display: flex; flex-direction: column; align-items: center; }
+
+    .newbie-badge {
+      background: linear-gradient(135deg, #00b894, #00cec9);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .lb-list { width: 100%; background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+    .lb-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #eee; gap: 12px; }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row.me { background: rgba(102,126,234,0.15); }
+    .lb-rank { font-size: 1.2rem; font-weight: 900; width: 36px; text-align: center; }
+    .lb-rank.gold { color: #fdcb6e; }
+    .lb-rank.silver { color: #b2bec3; }
+    .lb-rank.bronze { color: #e17055; }
+    .lb-name { flex: 1; font-weight: 600; }
+    .lb-score { font-weight: 800; color: var(--gold); }
+    .lb-empty { padding: 24px; text-align: center; opacity: 0.6; }
+    .lb-refresh { width: 100%; padding: 12px; margin-top: 8px; background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 12px; color: white; font-weight: 700; cursor: pointer; }
+  </style>
 </head>
 <body>
-<div id="app">
-  <div id="header">
-    <h1>🌱 Grow Your Dick</h1>
-    <div id="size-display">Твій член: <span id="length-val">0.0</span> см</div>
+  <h1>🍪 Печиво-Клікер</h1>
+  <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-bottom: 8px;">Тапай печиво, збирай монети!</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('game')">🎮 Гра</button>
+    <button class="tab" onclick="switchTab('global')">🏆 Глобальний топ</button>
+    <button class="tab" onclick="switchTab('group')">👥 Топ чату</button>
   </div>
-  <div id="progress-wrap"><div id="progress-bar" style="width:0%"></div></div>
-  <div id="game-view">
-    <div id="canvas-wrap"><canvas id="gameCanvas"></canvas></div>
-    <div id="controls">
-      <button class="action-btn" onclick="doWater()">💧 Полити</button>
-      <button class="action-btn" onclick="doShave()">✂️ Голіти</button>
-    </div>
+
+  <div id="view-game" class="view active">
+  <div id="newbie-badge" class="newbie-badge" style="display:none;">🚀 Бонус новачка: ×2 до виробництва!</div>
+  <div class="score-card">
+    <div class="score-label">Твої печива</div>
+    <div class="score-value"><span id="cookies">0</span> 🍪</div>
+    <div class="per-sec">+<span id="per-sec">0</span> / сек</div>
   </div>
-</div>
 
-<script>
-const BASE_GROWTH = 0.5;
-const MAX_LENGTH = 50;
-const WATER_BONUS = 5;
-const SHAVE_BONUS = 2;
-const WATER_CD = 4 * 3600 * 1000;
-const SHAVE_CD = 30 * 60 * 1000;
+  <div class="clicker" id="cookie" onclick="clickCookie()">🍪</div>
 
-let state = { length: 1, lastSaved: Date.now(), lastWater: 0, lastShave: 0 };
-let displayLength = 1;
-let growthBurst = 0;
+  <div class="shop">
+    <h2>🛒 Крамниця</h2>
+    <div id="upgrades"></div>
+  </div>
+  </div>
 
-function saveLocal() { localStorage.setItem('gyd', JSON.stringify(state)); }
-function loadLocal() { try { const d = localStorage.getItem('gyd'); return d ? JSON.parse(d) : null; } catch(e) { return null; } }
+  <div id="view-global" class="view">
+    <h2 style="margin-bottom:12px;color:white;">🏆 Глобальний топ</h2>
+    <div class="lb-list"><div id="lb-global" class="lb-empty">Завантаження...</div></div>
+    <button class="lb-refresh" onclick="loadLeaderboard('global')">🔄 Оновити</button>
+  </div>
 
-function applyOfflineGrowth() {
-  const elapsed = Math.min(Date.now() - state.lastSaved, 24 * 3600000);
-  if (elapsed <= 0) return;
-  const hours = elapsed / 3600000;
-  state.length = Math.min(MAX_LENGTH, state.length + hours * BASE_GROWTH);
-  state.lastSaved = Date.now();
-}
+  <div id="view-group" class="view">
+    <h2 style="margin-bottom:12px;color:white;">👥 Топ чату</h2>
+    <p id="group-hint" style="font-size:0.85rem;color:rgba(255,255,255,0.9);margin-bottom:8px;">Відкрий гру з чату, щоб побачити топ учасників</p>
+    <div class="lb-list"><div id="lb-group" class="lb-empty">Завантаження...</div></div>
+    <button class="lb-refresh" onclick="loadLeaderboard('group')">🔄 Оновити</button>
+  </div>
 
-function canWater() { return Date.now() - state.lastWater >= WATER_CD; }
-function canShave() { return Date.now() - state.lastShave >= SHAVE_CD; }
+  <script>
+    const LS_KEY = 'cookie_clicker_v2';
+    const LS_KEY_TOTAL = 'cookie_clicker_total_v1';
+    const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com/';  // https://YOUR_PROJECT-default-rtdb.firebaseio.com
 
-function doWater() {
-  if (!canWater()) return;
-  state.length = Math.min(MAX_LENGTH, state.length + WATER_BONUS);
-  state.lastWater = Date.now();
-  state.lastSaved = Date.now();
-  growthBurst = 1;
-  document.getElementById('length-val').classList.add('grow-pop');
-  setTimeout(() => document.getElementById('length-val').classList.remove('grow-pop'), 400);
-  saveLocal();
-}
+    let state = {
+      cookies: 0,
+      perSec: 0,
+      cursors: 0,
+      grandmas: 0,
+      farms: 0,
+      mines: 0,
+      factories: 0,
+      lastSave: Date.now(),
+      firstPlay: Date.now(),
+      totalEarned: 0
+    };
 
-function doShave() {
-  if (!canShave()) return;
-  state.length = Math.min(MAX_LENGTH, state.length + SHAVE_BONUS);
-  state.lastShave = Date.now();
-  state.lastSaved = Date.now();
-  growthBurst = 1;
-  document.getElementById('length-val').classList.add('grow-pop');
-  setTimeout(() => document.getElementById('length-val').classList.remove('grow-pop'), 400);
-  saveLocal();
-}
+    let userId = 'anon_' + Math.random().toString(36).slice(2, 10);
+    let userName = 'Гравець';
+    let chatId = null;
 
-// ════════════════════════════════════════════════════════
-// РЕАЛІСТИЧНИЙ МАЛЮНОК: член з волоссям, що росте
-// ════════════════════════════════════════════════════════
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-let wobble = 0;
+    const upgrades = [
+      { id: 'cursors', name: '🖱️ Курсор', desc: 'Автоматично кликає', cost: 10, costMult: 1.15, prod: 0.1, key: 'cursors' },
+      { id: 'grandmas', name: '👵 Бабуся', desc: 'Пече печиво', cost: 100, costMult: 1.15, prod: 1, key: 'grandmas' },
+      { id: 'farms', name: '🌾 Ферма', desc: 'Вирощує пшеницю', cost: 500, costMult: 1.15, prod: 8, key: 'farms' },
+      { id: 'mines', name: '⛏️ Шахта', desc: 'Добуває цукор', cost: 3000, costMult: 1.15, prod: 47, key: 'mines' },
+      { id: 'factories', name: '🏭 Фабрика', desc: 'Масове виробництво', cost: 10000, costMult: 1.15, prod: 260, key: 'factories' }
+    ];
 
-function resizeCanvas() {
-  const wrap = document.getElementById('canvas-wrap');
-  canvas.width = Math.min(wrap.clientWidth, 360);
-  canvas.height = Math.min(wrap.clientHeight, 320);
-}
+    const NEWBIE_THRESHOLD = 5000;
+    const NEWBIE_DAYS = 3;
 
-function lerp(a, b, t) { return a + (b - a) * Math.min(1, Math.max(0, t)); }
-
-function drawScene(len, burst) {
-  burst = burst || 0;
-  const W = canvas.width, H = canvas.height;
-  if (!W || !H) return;
-  ctx.clearRect(0, 0, W, H);
-
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.7);
-  sky.addColorStop(0, isDark ? '#0d1b2a' : '#87CEEB');
-  sky.addColorStop(1, isDark ? '#1a3a5c' : '#b8e0f0');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, W, H * 0.7);
-
-  // Трава внизу
-  const grassGrad = ctx.createLinearGradient(0, H * 0.72, 0, H);
-  grassGrad.addColorStop(0, isDark ? '#2d5a27' : '#4CAF50');
-  grassGrad.addColorStop(1, isDark ? '#1a3d15' : '#388E3C');
-  ctx.fillStyle = grassGrad;
-  ctx.fillRect(0, H * 0.72, W, H);
-
-  const cx = W / 2;
-  const baseY = H * 0.72;
-  const t = Math.min(len / MAX_LENGTH, 1);
-
-  // Розміри залежно від довжини (росте)
-  const shaftHeight = lerp(20, H * 0.6, t);
-  const shaftWidth = lerp(6, 22, t);
-  const headRadius = lerp(4, 14, t);
-  const hairRadius = lerp(8, 20, t);  // волосся теж росте
-  wobble = wobble > 0 ? wobble - 0.1 : 0;
-  const sway = Math.sin(wobble) * 3;
-
-  // Burst-ефект при зростанні
-  const scaleY = 1 + burst * 0.25;
-  ctx.save();
-  ctx.translate(cx, baseY);
-  ctx.scale(1, scaleY);
-  ctx.translate(-cx, -baseY);
-
-  // ═══ ВОЛОССЯ (пубічне) — темні завитки біля основи ═══
-  ctx.save();
-  ctx.globalAlpha = 0.85;
-  const hairColor = isDark ? '#3d2914' : '#5c4033';
-  const hairCount = Math.floor(12 + t * 8);
-  for (let i = 0; i < hairCount; i++) {
-    const angle = (i / hairCount) * Math.PI * 1.2 + Math.random() * 0.3;
-    const r = hairRadius * (0.5 + Math.random() * 0.5);
-    const hx = cx + Math.cos(angle) * r * 0.8 + (Math.random() - 0.5) * 4;
-    const hy = baseY - Math.sin(angle) * r * 0.3 + (Math.random() - 0.5) * 6;
-    const hr = 2 + Math.random() * 3;
-    ctx.fillStyle = hairColor;
-    ctx.beginPath();
-    ctx.ellipse(hx, hy, hr, hr * 1.4, angle * 0.5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  // ═══ Тінь під членом ═══
-  ctx.beginPath();
-  ctx.ellipse(cx + 2, baseY + 4, shaftWidth * 0.9, 4, 0, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.12)';
-  ctx.fill();
-
-  // ═══ СТВОЛ (ствол) — реалістичний градієнт шкіри ═══
-  const topY = baseY - shaftHeight;
-  const shaftGrad = ctx.createLinearGradient(cx - shaftWidth, topY, cx + shaftWidth, baseY);
-  shaftGrad.addColorStop(0, '#c17b5c');
-  shaftGrad.addColorStop(0.25, '#e8a080');
-  shaftGrad.addColorStop(0.5, '#f0b090');
-  shaftGrad.addColorStop(0.75, '#e8a080');
-  shaftGrad.addColorStop(1, '#c17b5c');
-  ctx.fillStyle = shaftGrad;
-
-  ctx.beginPath();
-  ctx.moveTo(cx - shaftWidth * 0.5 + sway, baseY);
-  ctx.quadraticCurveTo(cx - shaftWidth * 0.7, baseY - shaftHeight * 0.4, cx - shaftWidth * 0.6, topY + headRadius);
-  ctx.lineTo(cx, topY + headRadius * 0.3);
-  ctx.quadraticCurveTo(cx + shaftWidth * 0.6, topY + headRadius, cx + shaftWidth * 0.7, baseY - shaftHeight * 0.4);
-  ctx.quadraticCurveTo(cx + shaftWidth * 0.5 - sway, baseY, cx + shaftWidth * 0.5, baseY);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // ═══ ГОЛОВКА — трохи світліша, округла ═══
-  ctx.beginPath();
-  ctx.ellipse(cx, topY + headRadius * 0.5, headRadius, headRadius * 0.85, 0, 0, Math.PI * 2);
-  const headGrad = ctx.createRadialGradient(cx - 2, topY, 0, cx, topY, headRadius);
-  headGrad.addColorStop(0, '#f5c4a8');
-  headGrad.addColorStop(1, '#e8a882');
-  ctx.fillStyle = headGrad;
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-function updateUI() {
-  document.getElementById('length-val').textContent = displayLength.toFixed(1);
-  document.getElementById('progress-bar').style.width = Math.min(100, (displayLength / MAX_LENGTH) * 100) + '%';
-  drawScene(displayLength, growthBurst);
-}
-
-function init() {
-  try {
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready();
-      tg.expand();
-      document.documentElement.setAttribute('data-theme', tg.colorScheme || 'light');
+    function save() {
+      state.lastSave = Date.now();
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
     }
-  } catch(e) {}
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
 
-  const local = loadLocal();
-  if (local && typeof local.length === 'number') {
-    state = { ...state, ...local };
-    state.length = Math.min(MAX_LENGTH, Math.max(0.5, state.length));
-  }
-  applyOfflineGrowth();
-  state.lastSaved = Date.now();
-  saveLocal();
+    function load() {
+      try {
+        const d = localStorage.getItem(LS_KEY);
+        if (d) {
+          const loaded = JSON.parse(d);
+          state = { ...state, ...loaded };
+          const offlineSec = Math.min((Date.now() - state.lastSave) / 1000, 86400);
+          const offlineEarned = (state.perSec || 0) * offlineSec;
+          state.cookies += offlineEarned;
+          state.totalEarned = (state.totalEarned || 0) + offlineEarned;
+        }
+      } catch(e) {}
+    }
 
-  displayLength = state.length;
-  updateUI();
+    function getNewbieMultiplier() {
+      const total = state.totalEarned || 0;
+      const daysSince = (Date.now() - (state.firstPlay || Date.now())) / (24 * 3600000);
+      if (total < NEWBIE_THRESHOLD || daysSince < NEWBIE_DAYS) return 2;
+      if (total < NEWBIE_THRESHOLD * 2 || daysSince < NEWBIE_DAYS * 2) return 1.5;
+      return 1;
+    }
 
-  setInterval(() => {
-    applyOfflineGrowth();
-    saveLocal();
-  }, 2000);
+    function calcPerSec() {
+      let total = 0;
+      upgrades.forEach(u => { total += (state[u.key] || 0) * u.prod; });
+      state.perSec = total * getNewbieMultiplier();
+    }
 
-  requestAnimationFrame(function loop() {
-    displayLength = lerp(displayLength, state.length, 0.1);
-    growthBurst = Math.max(0, growthBurst - 0.025);
-    updateUI();
-    requestAnimationFrame(loop);
-  });
-}
+    function getCost(upgrade) {
+      const count = state[upgrade.key] || 0;
+      return Math.floor(upgrade.cost * Math.pow(upgrade.costMult, count));
+    }
 
-init();
-</script>
+    function clickCookie() {
+      state.cookies += 1;
+      state.totalEarned = (state.totalEarned || 0) + 1;
+      haptic();
+      showFloating('+1');
+      save();
+      updateUI();
+    }
+
+    function buyUpgrade(upgrade) {
+      const cost = getCost(upgrade);
+      if (state.cookies < cost) return;
+      state.cookies -= cost;
+      state[upgrade.key] = (state[upgrade.key] || 0) + 1;
+      calcPerSec();
+      haptic();
+      save();
+      renderUpgrades();
+      updateUI();
+    }
+
+    function showFloating(text) {
+      const el = document.createElement('div');
+      el.className = 'floating-coin';
+      el.textContent = text;
+      el.style.left = (window.innerWidth / 2 - 20 + (Math.random() - 0.5) * 40) + 'px';
+      el.style.top = '45%';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    }
+
+    function haptic() {
+      try {
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        } else if (navigator.vibrate) navigator.vibrate(20);
+      } catch(e) {}
+    }
+
+    function format(n) {
+      if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+      return Math.floor(n).toString();
+    }
+
+    function renderUpgrades() {
+      document.getElementById('upgrades').innerHTML = upgrades.map(u => {
+        const count = state[u.key] || 0;
+        const cost = getCost(u);
+        const canBuy = state.cookies >= cost;
+        return `<div class="upgrade">
+          <div class="upgrade-info">
+            <div class="upgrade-name">${u.name} × ${count}</div>
+            <div class="upgrade-desc">${u.desc}</div>
+            <div class="upgrade-stats">+${u.prod} / сек</div>
+          </div>
+          <button class="upgrade-btn" ${!canBuy ? 'disabled' : ''} onclick="buyUpgrade(upgradesData[${upgrades.indexOf(u)}])">
+            ${format(cost)} 🍪
+          </button>
+        </div>`;
+      }).join('');
+    }
+
+    const upgradesData = upgrades;
+
+    function updateUI() {
+      document.getElementById('cookies').textContent = format(state.cookies);
+      calcPerSec();
+      document.getElementById('per-sec').textContent = state.perSec.toFixed(1);
+      renderUpgrades();
+      const m = getNewbieMultiplier();
+      const badge = document.getElementById('newbie-badge');
+      if (m > 1) {
+        badge.style.display = 'block';
+        badge.textContent = '🚀 Бонус новачка: ×' + m + ' до виробництва!';
+      } else badge.style.display = 'none';
+    }
+
+    function gameLoop() {
+      const now = Date.now();
+      const dt = (now - (state._lastTick || now)) / 1000;
+      state._lastTick = now;
+      const earned = state.perSec * dt;
+      state.cookies += earned;
+      state.totalEarned = (state.totalEarned || 0) + earned;
+      save();
+      syncLeaderboard();
+      updateUI();
+    }
+
+    let lastSync = 0;
+    function syncLeaderboard() {
+      if (!FIREBASE_URL || Date.now() - lastSync < 5000) return;
+      lastSync = Date.now();
+      const score = Math.floor(state.cookies);
+      try {
+        const path = chatId ? `groups/${chatId}/players/${userId}` : `players/${userId}`;
+        fetch(`${FIREBASE_URL}/${path}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userName, cookies: score, updatedAt: Date.now() })
+        }).catch(() => {});
+      } catch(e) {}
+    }
+
+    async function loadLeaderboard(type) {
+      if (!FIREBASE_URL) {
+        const el = type === 'global' ? document.getElementById('lb-global') : document.getElementById('lb-group');
+        el.innerHTML = '<div class="lb-empty">Додай FIREBASE_URL у код для топу</div>';
+        return;
+      }
+      const el = type === 'global' ? document.getElementById('lb-global') : document.getElementById('lb-group');
+      el.innerHTML = '<div class="lb-empty">Завантаження...</div>';
+      try {
+        let url = `${FIREBASE_URL}/players.json?orderBy="cookies"&limitToLast=50`;
+        if (type === 'group' && chatId) {
+          url = `${FIREBASE_URL}/groups/${chatId}/players.json?orderBy="cookies"&limitToLast=50`;
+        } else if (type === 'group') {
+          document.getElementById('group-hint').style.display = 'block';
+          el.innerHTML = '<div class="lb-empty">Відкрий гру з чату (Menu → гра), щоб побачити топ учасників</div>';
+          return;
+        }
+        const r = await fetch(url);
+        if (!r.ok) throw new Error('fetch');
+        const data = await r.json();
+        if (!data) { el.innerHTML = '<div class="lb-empty">Ніхто ще не грав. Будь першим!</div>'; return; }
+        let players = Object.entries(data).map(([uid, v]) => ({ uid, ...v }));
+        players.sort((a, b) => (b.cookies || 0) - (a.cookies || 0));
+        const rankEmoji = ['🥇', '🥈', '🥉'];
+        el.innerHTML = players.slice(0, 10).map((p, i) => {
+          const isMe = p.uid === userId;
+          const rk = i < 3 ? `<span class="lb-rank ${['gold','silver','bronze'][i]}">${rankEmoji[i]}</span>` : `<span class="lb-rank">#${i+1}</span>`;
+          return `<div class="lb-row${isMe?' me':''}">${rk}<div class="lb-name">${escapeHtml(p.userName||'Гравець')}</div><div class="lb-score">${format(p.cookies||0)} 🍪</div></div>`;
+        }).join('');
+      } catch(e) { el.innerHTML = '<div class="lb-empty">Не вдалось завантажити</div>'; }
+    }
+
+    function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
+      document.getElementById('view-' + tab).classList.add('active');
+      if (tab === 'global' || tab === 'group') loadLeaderboard(tab);
+    }
+
+    function init() {
+      try {
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+          tg.ready();
+          tg.expand();
+          document.body.style.background = tg.themeParams?.bg_color || 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)';
+          const u = tg.initDataUnsafe?.user;
+          if (u) {
+            userId = String(u.id);
+            userName = (u.first_name || 'Гравець') + (u.last_name ? ' ' + u.last_name[0] + '.' : '');
+          }
+          const sp = tg.initDataUnsafe?.start_param;
+          if (sp && sp.startsWith('g')) chatId = sp.slice(1);
+        }
+      } catch(e) {}
+      load();
+      state.totalEarned = state.totalEarned || state.cookies;
+      state.firstPlay = state.firstPlay || Date.now();
+      calcPerSec();
+      updateUI();
+      setInterval(gameLoop, 500);
+    }
+
+    init();
+  </script>
 </body>
 </html>
