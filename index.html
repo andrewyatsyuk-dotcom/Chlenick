@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>🍞 Пекарня — Хліб → Печиво → Булочки → Пиріжки</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -20,12 +20,16 @@
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       min-height: 100vh;
+      min-height: 100dvh;
       background: var(--bg);
       color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 12px;
+      padding-top: max(12px, env(safe-area-inset-top) + 52px);
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
       overflow-x: hidden;
     }
     .app-header { flex-shrink: 0; }
@@ -36,13 +40,15 @@
       max-width: 400px;
       overflow-y: auto;
       overflow-x: hidden;
+      padding-left: 2px;
+      padding-right: 2px;
     }
     .tabs {
       display: flex;
       gap: 6px;
       margin-top: 10px;
-      padding: 10px 0 20px;
-      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      padding: 10px 0;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
       flex-wrap: wrap;
       justify-content: center;
       flex-shrink: 0;
