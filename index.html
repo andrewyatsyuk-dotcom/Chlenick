@@ -1444,10 +1444,24 @@
       if (tab === 'main') this.renderMainExtra(s, cps);
     },
 
+    isResourceUnlocked: function(r, s) {
+      if (r === 'wheat' || r === 'coins') return true;
+      if ((s[r] || 0) > 0) return true;
+      for (var i = 0; i < BUILDINGS.length; i++) {
+        var b = BUILDINGS[i];
+        if (this.getCount(b.id) <= 0) continue;
+        if (b.resource === r) return true;
+        if (b.consumes && b.consumes[r]) return true;
+        if (b.costRes === r) return true;
+      }
+      return false;
+    },
+
     renderStats: function(s, cps) {
       var html = '';
       for (var i = 0; i < RESOURCE_KEYS.length; i++) {
         var r = RESOURCE_KEYS[i];
+        if (!this.isResourceUnlocked(r, s)) continue;
         var res = RESOURCES[r] || { name: r, icon: '📦' };
         var cap = r !== 'coins' ? this.getStorageCap(r) : null;
         var capStr = cap != null && cap < 1e8 ? ' / ' + format(cap) : '';
