@@ -453,7 +453,6 @@
   const BUILDINGS = [
     { id: 'storage', name: 'Склад', desc: 'Місце для пшениці, борошна тощо.', resource: 'storage', costRes: 'coins', cost: 50, costMult: 1.2, prod: 0, isStorage: true },
     { id: 'wheat_farm', name: 'Ферма пшениці', desc: 'Вирощує пшеницю (вартість 0.1)', resource: 'wheat', costRes: 'coins', cost: 10, costMult: 1.15, prod: 0.5 },
-    { id: 'stall', name: 'Ларчик з зерном', desc: '10 пшениці→1 монета', resource: 'coins', costRes: 'wheat', cost: 80, costMult: 1.2, prod: 0.3, consumes: { wheat: 3 } },
     { id: 'mill', name: 'Млин', desc: '3 пшениці→1 борошно (3×0.1×1.3=0.39)', resource: 'flour', costRes: 'coins', cost: 80, costMult: 1.15, prod: 0.5, consumes: { wheat: 1.5 } },
     { id: 'well', name: 'Криниця', desc: 'Добуває воду (вартість 0.05)', resource: 'water', costRes: 'coins', cost: 40, costMult: 1.15, prod: 0.5 },
     { id: 'baker', name: 'Пекарня', desc: '2 борошна+1 вода→1 хліб (1.08)', resource: 'bread', costRes: 'coins', cost: 100, costMult: 1.15, prod: 0.5, consumes: { flour: 1, water: 0.5 } },
