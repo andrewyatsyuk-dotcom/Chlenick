@@ -334,7 +334,8 @@
   const WHEAT_OVERFLOW_FLOOR = 8000;
   const WHEAT_OVERFLOW_RATE = 3;
   const WHEAT_TO_FLOUR_RATIO = 3;
-  const STARTING_COINS = 15;
+  const STARTING_COINS = 30;
+  const BASE_CLICK_COINS = 1;
   const CLICK_BONUS_DEFAULT = 10;
   const LEADERBOARD_SIZE = 10;
   const BAKERY_NAME_MAX_LEN = 30;
@@ -818,7 +819,7 @@
           }
         }
       }
-      if ((cps.coins || 0) < 0.3 && mult >= 1) this.add('coins', 0.3);
+      if ((cps.coins || 0) < BASE_CLICK_COINS && mult >= 1) this.add('coins', BASE_CLICK_COINS);
       this.state.totalClicks = (this.state.totalClicks || 0) + 1;
       this.showFloating(gained.length ? '+' + (s.clickBonusPercent || CLICK_BONUS_DEFAULT) + '% ' + gained.slice(0, 5).join(' ') : '+копай!');
       try {
