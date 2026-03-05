@@ -35,12 +35,19 @@
     .mbox h2{font-size:1rem;margin-bottom:8px;color:var(--neon)}
     .mbox p{font-size:0.82rem;line-height:1.5;opacity:0.9;margin-bottom:6px}
     .mbtn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:10px;color:white;font-weight:700;cursor:pointer;font-size:0.95rem;margin-top:6px}
-    canvas{display:block;margin:0 auto;border-radius:8px;border:2px solid var(--border);background:#000;touch-action:none}
-    .game-hud{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-size:0.75rem;color:var(--neon);margin-bottom:4px}
-    .game-target{text-align:center;padding:6px;margin-bottom:6px;background:rgba(255,62,108,0.1);border:1px solid rgba(255,62,108,0.2);border-radius:8px;font-size:0.8rem;color:var(--accent)}
-    .speed-bar{height:4px;background:rgba(255,255,255,0.05);border-radius:2px;margin-bottom:6px;overflow:hidden}
+    body.in-game h1,body.in-game .res-bar,body.in-game .tabs{display:none!important}
+    body.in-game .app{max-width:100%;padding:0}
+    body.in-game{padding:0}
+    body.in-game #v-play{position:fixed;inset:0;z-index:100;background:var(--bg);padding:4px;overflow:hidden;display:flex!important;flex-direction:column}
+    canvas{display:block;margin:0 auto;border-radius:4px;border:1px solid var(--border);background:#000;touch-action:none;flex:1}
+    .game-hud{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;font-size:0.8rem;color:var(--neon);flex-shrink:0}
+    .game-target{text-align:center;padding:5px;margin-bottom:4px;background:rgba(255,62,108,0.1);border:1px solid rgba(255,62,108,0.2);border-radius:6px;font-size:0.78rem;color:var(--accent);flex-shrink:0}
+    .speed-bar{height:4px;background:rgba(255,255,255,0.05);border-radius:2px;margin-bottom:4px;overflow:hidden;flex-shrink:0}
     .speed-fill{height:100%;background:linear-gradient(90deg,var(--neon),#ff6600,var(--accent));transition:width 0.3s;border-radius:2px}
     .quit-btn{padding:5px 12px;background:rgba(255,62,108,0.3);border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-weight:700;font-size:0.7rem;cursor:pointer}
+    .roach{position:absolute;font-size:1.8rem;cursor:pointer;user-select:none;transition:transform 0.1s;z-index:2}
+    .roach:active{transform:scale(0.7)}
+    .roach-label{position:absolute;font-size:0.55rem;color:rgba(255,255,255,0.6);font-weight:700;pointer-events:none;white-space:nowrap;z-index:1}
     .lb-row{display:flex;align-items:center;padding:8px;margin-bottom:3px;background:rgba(0,0,0,0.3);border-radius:8px;gap:8px;font-size:0.8rem}
     .lb-row.me{border-left:3px solid var(--accent)}
     .lb-rank{font-weight:900;width:26px;text-align:center}
@@ -98,7 +105,8 @@ var GAMES=[
   {id:'reaction',n:'Реакція',i:'⚡',desc:'10 раундів: тисни на зелене. Вікно -1%/3с.',color:'#ff6600'},
   {id:'dodge',n:'Ухилятор',i:'💀',desc:'Уникай перешкод що падають. Швидкість +1%/3с.',color:'#ff00ff'},
   {id:'flappy',n:'Літак',i:'✈️',desc:'Тримай висоту між трубами. Швидкість +1%/3с.',color:'#00bfff'},
-  {id:'memory',n:'Пам\'ять',i:'🧩',desc:'Запам\'ятай послідовність. Довжина +1/раунд.',color:'#ffd700'}
+  {id:'memory',n:'Пам\'ять',i:'🧩',desc:'Запам\'ятай послідовність. Довжина +1/раунд.',color:'#ffd700'},
+  {id:'roach',n:'Таргани',i:'🪳',desc:'Тапай тарганів! Пропустив 3 = кінець. Швидше +1%/3с.',color:'#8b4513'}
 ];
 
 function fmt(n){n=Math.floor(Math.max(0,n));if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n+'';}
@@ -187,7 +195,7 @@ var G={
   startGame:function(id){
     var self=this;
     this._game=id;this._rival=null;this._alive=true;
-    document.getElementById('main-tabs').style.display='none';
+    document.body.classList.add('in-game');
     document.querySelectorAll('.vw').forEach(function(e){e.classList.remove('a');});
     document.getElementById('v-play').classList.add('a');
     if(FB){
@@ -206,6 +214,7 @@ var G={
     else if(id==='dodge')this.playDodge();
     else if(id==='flappy')this.playFlappy();
     else if(id==='memory')this.playMemory();
+    else if(id==='roach')this.playRoach();
   },
 
   hud:function(icon){
@@ -223,6 +232,7 @@ var G={
 
   endGame:function(id,score){
     this._game=null;this._alive=false;
+    document.body.classList.remove('in-game');
     document.getElementById('main-tabs').style.display='flex';
     document.onkeydown=null;document.onkeyup=null;
     this.s.played=(this.s.played||0)+1;
@@ -254,7 +264,8 @@ var G={
   // ====== SNAKE ======
   playSnake:function(){
     var el=document.getElementById('v-play');
-    var W=20,H=20,SZ=Math.min(18,Math.floor((window.innerWidth-40)/W));
+    var SZ=Math.floor(Math.min((window.innerWidth-16)/20,(window.innerHeight-100)/20));
+    var W=Math.floor((window.innerWidth-16)/SZ),H=Math.floor((window.innerHeight-100)/SZ);
     el.innerHTML=this.hud('🍎')+'<canvas id="gc" width="'+(W*SZ)+'" height="'+(H*SZ)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Свайп / стрілки</p>';
     var cv=document.getElementById('gc'),cx=cv.getContext('2d');
     var snake=[{x:10,y:10}],dir={x:1,y:0},food,score=0,st=Date.now();
@@ -279,7 +290,8 @@ var G={
   // ====== TETRIS ======
   playTetris:function(){
     var el=document.getElementById('v-play');
-    var C=10,RW=18,SZ=Math.min(20,Math.floor((window.innerWidth-40)/C));
+    var SZ=Math.floor(Math.min((window.innerWidth-16)/10,(window.innerHeight-100)/20));
+    var C=Math.floor((window.innerWidth-16)/SZ),RW=Math.floor((window.innerHeight-100)/SZ);
     el.innerHTML=this.hud('🧱')+'<canvas id="gc" width="'+(C*SZ)+'" height="'+(RW*SZ)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Свайп/стрілки | Тап=поворот</p>';
     var cv=document.getElementById('gc'),cx=cv.getContext('2d');
     var grid=[];for(var i=0;i<RW;i++){grid[i]=[];for(var j=0;j<C;j++)grid[i][j]=0;}
@@ -319,8 +331,9 @@ var G={
   // ====== DODGE ======
   playDodge:function(){
     var el=document.getElementById('v-play');
-    var W=300,H=380,sc=Math.min(1,((window.innerWidth-24)/W));
-    el.innerHTML=this.hud('💀')+'<canvas id="gc" width="'+Math.floor(W*sc)+'" height="'+Math.floor(H*sc)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Палець / ← →</p>';
+    var W=window.innerWidth-16,H=window.innerHeight-110;
+    el.innerHTML=this.hud('💀')+'<canvas id="gc" width="'+W+'" height="'+H+'"></canvas>';
+    var sc=1;
     var cv=document.getElementById('gc'),cx=cv.getContext('2d');
     var px=W/2,pw=28,ph=18,score=0,st=Date.now(),obs=[];
     var touching=false,touchX=px;
@@ -349,8 +362,8 @@ var G={
   // ====== FLAPPY ======
   playFlappy:function(){
     var el=document.getElementById('v-play');
-    var W=300,H=400,sc=Math.min(1,(window.innerWidth-24)/W);
-    el.innerHTML=this.hud('✈️')+'<canvas id="gc" width="'+Math.floor(W*sc)+'" height="'+Math.floor(H*sc)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Тап / Пробіл = підлетіти</p>';
+    var W=window.innerWidth-16,H=window.innerHeight-110,sc=1;
+    el.innerHTML=this.hud('✈️')+'<canvas id="gc" width="'+W+'" height="'+H+'"></canvas>';
     var cv=document.getElementById('gc'),cx=cv.getContext('2d');
     var by=H/2,bv=0,grav=800,flap=-280,score=0,st=Date.now();
     var pipes=[],pipeW=40,gap=120,pipeTimer=0;
@@ -439,6 +452,50 @@ var G={
       }
     }
     nextLevel();
+  },
+
+  // ====== ROACH ======
+  playRoach:function(){
+    var el=document.getElementById('v-play');
+    el.innerHTML=this.hud('🪳')+'<div id="roach-field" style="position:relative;flex:1;overflow:hidden;background:#111;border-radius:6px;border:1px solid var(--border)"><div style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:0.65rem;opacity:0.3">Тапай тарганів!</div><div id="roach-lives" style="position:absolute;top:8px;right:10px;font-size:0.9rem">❤️❤️❤️</div></div>';
+    var field=document.getElementById('roach-field');
+    var score=0,lives=3,st=Date.now(),spawnTimer=null;
+    var LABELS=['ПОДАТКИ','ПОНЕДІЛОК','ДЕДЛАЙН','ОНОВЛЕННЯ','СПАМ','РЕКЛАМА','СПОВІЩЕННЯ','БАГ','ЛАГАЄ','404','NULL','UNDEFINED','ТІКТОК','КРЕДИТ','ЗНО','БУДИЛЬНИК','ЧЕРГА','СКАМ','ДОНАТ','ПРОЧИТАНО','ДОЩ','ПЕЧИВО?','Wi-Fi 1%','БАТАРЕЯ 2%','МАМА ДЗВОНИТЬ','КАПЧА','COOKIES','ПІДПИСКА','РАНДОМ','CTRL+Z','СИНІЙ ЕКРАН','JS ERROR'];
+
+    function spawn(){
+      if(!G._alive)return;
+      var sp=G.updHud(score,'🪳',st);
+      var r=document.createElement('div');
+      r.className='roach';
+      r.textContent='🪳';
+      var sz=Math.max(1.2,2.2-score*0.02);
+      r.style.fontSize=sz+'rem';
+      var fw=field.offsetWidth,fh=field.offsetHeight;
+      r.style.left=Math.floor(Math.random()*(fw-40))+'px';
+      r.style.top=Math.floor(Math.random()*(fh-60)+20)+'px';
+      var label=document.createElement('div');
+      label.className='roach-label';
+      label.textContent=LABELS[Math.floor(Math.random()*LABELS.length)];
+      label.style.left=r.style.left;
+      label.style.top=(parseInt(r.style.top)+sz*16+4)+'px';
+      field.appendChild(label);
+      field.appendChild(r);
+      var lifespan=Math.max(600,2500*100/sp);
+      var timeout=setTimeout(function(){
+        if(r.parentNode){r.remove();label.remove();lives--;
+          document.getElementById('roach-lives').textContent='❤️'.repeat(Math.max(0,lives))+'🖤'.repeat(Math.max(0,3-lives));
+          if(lives<=0){G.endGame('roach',score);return;}}
+      },lifespan);
+      r.onclick=function(e){
+        e.stopPropagation();
+        clearTimeout(timeout);
+        score++;r.textContent='💥';label.remove();
+        setTimeout(function(){if(r.parentNode)r.remove();},150);
+      };
+      var interval=Math.max(300,1200*100/sp);
+      spawnTimer=setTimeout(spawn,interval);
+    }
+    spawn();
   }
 };
 
