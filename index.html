@@ -2,773 +2,509 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>⚔️ Королівство — Онлайн стратегія</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🧠 ПІДВАЛ — тобі тут сподобається</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: linear-gradient(180deg, #0a0e1a 0%, #1a1a2e 50%, #0d1b2a 100%);
-      --card: rgba(255,255,255,0.06);
-      --card-hover: rgba(255,255,255,0.1);
-      --text: #d4d4d4;
-      --accent: #e94560;
-      --gold: #ffd700;
-      --wood: #8b6914;
-      --stone: #8899aa;
-      --food: #4caf50;
-      --success: #00b894;
-      --danger: #e94560;
-      --border: rgba(255,255,255,0.08);
-      --blue: #5b7fff;
-    }
+    @keyframes shake { 0%,100%{transform:translate(0)} 25%{transform:translate(-3px,2px)} 50%{transform:translate(3px,-2px)} 75%{transform:translate(-2px,-3px)} }
+    @keyframes rainbow { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes cursed { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+    @keyframes bsod-flicker { 0%,95%{opacity:1} 96%{opacity:0} 97%{opacity:1} }
+    @keyframes typing { from{width:0} to{width:100%} }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    :root { --bg:#0a0a0a; --card:rgba(255,255,255,0.04); --text:#c8c8c8; --accent:#ff3e6c; --neon:#39ff14; --cursed:#ff00ff; --warning:#ff6600; }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      min-height: 100vh; min-height: 100dvh;
-      background: var(--bg); color: var(--text);
-      display: flex; flex-direction: column; align-items: center;
-      padding: 8px;
-      padding-top: max(8px, env(safe-area-inset-top) + 48px);
-      padding-bottom: 0;
-      overflow-x: hidden;
+      font-family: 'Comic Sans MS', 'Segoe UI', system-ui, cursive, sans-serif;
+      min-height:100vh; background:var(--bg); color:var(--text);
+      display:flex; flex-direction:column; align-items:center;
+      padding:8px; overflow-x:hidden;
     }
-    h1 { font-size: 1.2rem; margin-bottom: 6px; color: white; text-align: center; }
+    h1 { font-size:1.1rem; color:var(--neon); text-align:center; margin-bottom:6px; text-shadow:0 0 10px var(--neon); }
     .res-bar {
-      width: 100%; max-width: 420px; display: flex; justify-content: space-around; align-items: center;
-      padding: 8px 6px; margin-bottom: 6px;
-      background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 10px;
+      width:100%; max-width:400px; display:flex; justify-content:space-around;
+      padding:6px; margin-bottom:4px; background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.06); border-radius:8px; font-size:0.75rem;
     }
-    .res-item { display: flex; align-items: center; gap: 3px; font-weight: 700; font-size: 0.8rem; }
-    .res-item .ri { font-size: 1rem; }
-    .res-gold { color: var(--gold); }
-    .res-wood { color: var(--wood); }
-    .res-stone { color: var(--stone); }
-    .res-food { color: var(--food); }
-    .res-rate { font-size: 0.55rem; opacity: 0.5; margin-left: 1px; }
-    .power-bar {
-      width: 100%; max-width: 420px; text-align: center; font-size: 0.7rem; padding: 4px;
-      margin-bottom: 6px; color: var(--accent); opacity: 0.8;
-    }
-    .app-content {
-      flex: 1; width: 100%; max-width: 420px;
-      overflow-y: auto; overflow-x: hidden;
-    }
+    .res-item { display:flex; align-items:center; gap:2px; font-weight:700; }
+    .app-content { flex:1; width:100%; max-width:400px; overflow-y:auto; }
     .tabs {
-      display: flex; gap: 4px; padding: 6px 0;
-      padding-bottom: max(12px, env(safe-area-inset-bottom));
-      justify-content: center; flex-shrink: 0; flex-wrap: wrap;
+      display:flex; gap:3px; padding:6px 0; padding-bottom:max(10px,env(safe-area-inset-bottom));
+      justify-content:center; flex-wrap:wrap;
     }
     .tab {
-      padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px;
-      background: var(--card); color: var(--text); font-weight: 600; cursor: pointer;
-      font-size: 0.8rem; transition: all 0.2s;
+      padding:6px 10px; border:1px solid rgba(255,255,255,0.08); border-radius:6px;
+      background:var(--card); color:var(--text); font-weight:600; cursor:pointer; font-size:0.75rem;
     }
-    .tab:hover, .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
-    .view { display: none; width: 100%; flex-direction: column; gap: 8px; }
-    .view.active { display: flex; }
-    .section {
-      background: var(--card); border-radius: 10px; padding: 10px;
-      border: 1px solid var(--border);
-    }
-    .section h2 { font-size: 0.9rem; margin-bottom: 8px; opacity: 0.9; }
+    .tab:hover,.tab.active { background:var(--accent); color:white; border-color:var(--accent); }
+    .view { display:none; width:100%; flex-direction:column; gap:6px; }
+    .view.active { display:flex; }
+    .section { background:var(--card); border-radius:8px; padding:10px; border:1px solid rgba(255,255,255,0.06); }
+    .section h2 { font-size:0.85rem; margin-bottom:6px; }
     .row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 6px 8px; margin-bottom: 3px; background: rgba(0,0,0,0.2);
-      border-radius: 8px; gap: 6px; min-height: 40px;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:6px; margin-bottom:3px; background:rgba(0,0,0,0.3);
+      border-radius:6px; gap:6px;
     }
-    .row:hover { background: rgba(255,255,255,0.04); }
-    .row-icon { font-size: 1.3rem; flex-shrink: 0; }
-    .row-info { flex: 1; min-width: 0; }
-    .row-name { font-weight: 700; font-size: 0.8rem; }
-    .row-desc { font-size: 0.62rem; opacity: 0.5; }
-    .row-stat { font-size: 0.65rem; color: var(--success); }
+    .row-icon { font-size:1.2rem; }
+    .row-info { flex:1; min-width:0; }
+    .row-name { font-weight:700; font-size:0.78rem; }
+    .row-desc { font-size:0.6rem; opacity:0.5; }
+    .row-stat { font-size:0.6rem; color:var(--neon); }
     .btn {
-      padding: 6px 10px; border: none; border-radius: 6px; color: white;
-      font-weight: 700; font-size: 0.75rem; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+      padding:5px 8px; border:none; border-radius:5px; color:white;
+      font-weight:700; font-size:0.7rem; cursor:pointer; white-space:nowrap;
     }
-    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
-    .btn-danger { background: linear-gradient(135deg, #e94560, #c0392b); }
-    .btn-success { background: linear-gradient(135deg, #00b894, #2ecc71); }
-    .btn:disabled { background: #444; cursor: not-allowed; opacity: 0.6; }
-    .btn:active:not(:disabled) { transform: scale(0.95); }
-    .castle-visual {
-      text-align: center; padding: 16px 0 8px;
+    .btn-p { background:linear-gradient(135deg,#667eea,#764ba2); }
+    .btn-d { background:linear-gradient(135deg,#e94560,#c0392b); }
+    .btn-n { background:var(--neon); color:#000; }
+    .btn:disabled { background:#333; cursor:not-allowed; opacity:0.5; }
+    .btn:active:not(:disabled) { transform:scale(0.93); }
+    .event-banner {
+      width:100%; max-width:400px; padding:8px 12px; margin-bottom:6px;
+      border-radius:8px; font-size:0.78rem; text-align:center; font-weight:700;
+      animation: pulse 1s infinite;
     }
-    .castle-icon { font-size: 4rem; filter: drop-shadow(0 4px 12px rgba(255,215,0,0.3)); }
-    .castle-name { font-size: 1.1rem; font-weight: 800; color: white; margin-top: 4px; }
-    .castle-level { font-size: 0.75rem; color: var(--gold); }
-    .troop-counter {
-      display: flex; align-items: center; gap: 4px; font-size: 0.85rem;
+    .event-good { background:rgba(57,255,20,0.12); border:1px solid var(--neon); color:var(--neon); }
+    .event-bad { background:rgba(255,62,108,0.12); border:1px solid var(--accent); color:var(--accent); }
+    .event-cursed { background:rgba(255,0,255,0.12); border:1px solid var(--cursed); color:var(--cursed); animation: shake 0.3s infinite; }
+    .dont-btn {
+      padding:12px 24px; background:linear-gradient(135deg,#ff0000,#8b0000);
+      border:3px solid #ff0000; border-radius:12px; color:white; font-size:1rem;
+      font-weight:900; cursor:pointer; animation: pulse 0.8s infinite;
+      box-shadow: 0 0 20px rgba(255,0,0,0.4); margin:8px auto; display:block;
     }
-    .troop-counter input {
-      width: 50px; padding: 4px; border-radius: 4px; border: 1px solid var(--border);
-      background: rgba(0,0,0,0.3); color: var(--text); font-size: 0.8rem; text-align: center;
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:200; display:flex; align-items:center; justify-content:center; padding:16px; }
+    .modal-overlay.hidden { display:none; }
+    .modal-box { background:#111; border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:20px; max-width:340px; max-height:85vh; overflow-y:auto; }
+    .modal-box h2 { font-size:1rem; margin-bottom:8px; color:var(--neon); }
+    .modal-box p { font-size:0.82rem; line-height:1.5; opacity:0.9; margin-bottom:8px; }
+    .modal-btn { width:100%; padding:10px; background:var(--accent); border:none; border-radius:8px; color:white; font-weight:700; cursor:pointer; font-size:0.9rem; margin-top:4px; }
+    .bsod {
+      position:fixed; inset:0; background:#0000aa; z-index:999; display:flex;
+      flex-direction:column; align-items:center; justify-content:center; padding:20px;
+      font-family:'Courier New',monospace; color:white; animation: bsod-flicker 3s;
     }
-    .player-card {
-      padding: 8px; margin-bottom: 4px; background: rgba(0,0,0,0.2);
-      border-radius: 8px; display: flex; align-items: center; gap: 8px;
-    }
-    .player-card.me { border-left: 3px solid var(--accent); }
-    .player-info { flex: 1; }
-    .player-name { font-weight: 700; font-size: 0.85rem; }
-    .player-power { font-size: 0.7rem; color: var(--accent); }
-    .player-rank { font-weight: 900; width: 24px; text-align: center; font-size: 0.85rem; }
-    .battle-log {
-      max-height: 200px; overflow-y: auto; font-size: 0.75rem; line-height: 1.6;
-      padding: 8px; background: rgba(0,0,0,0.2); border-radius: 8px;
-    }
-    .log-win { color: var(--success); }
-    .log-lose { color: var(--danger); }
-    .log-time { opacity: 0.4; font-size: 0.6rem; }
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200;
-      display: flex; align-items: center; justify-content: center; padding: 20px;
-    }
-    .modal-overlay.hidden { display: none; }
-    .modal-box {
-      background: linear-gradient(180deg, #0a0e1a, #1a1a2e); border: 1px solid var(--border);
-      border-radius: 14px; padding: 20px; max-width: 340px; max-height: 85vh; overflow-y: auto;
-    }
-    .modal-box h2 { font-size: 1rem; margin-bottom: 10px; color: var(--gold); }
-    .modal-box p { font-size: 0.85rem; line-height: 1.5; opacity: 0.9; margin-bottom: 10px; }
-    .modal-btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 0.95rem; margin-top: 6px; }
-    .modal-input {
-      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-      background: rgba(0,0,0,0.3); color: var(--text); font-size: 0.95rem; margin-bottom: 6px;
-    }
-    .shield-badge { display: inline-block; padding: 2px 8px; background: rgba(91,127,255,0.2); border: 1px solid var(--blue); border-radius: 6px; font-size: 0.65rem; color: var(--blue); margin-left: 6px; }
-    #toast-container {
-      position: fixed; top: max(8px, env(safe-area-inset-top) + 4px); left: 50%; transform: translateX(-50%);
-      z-index: 300; display: flex; flex-direction: column; align-items: center; gap: 4px;
-      pointer-events: none; width: 90%; max-width: 360px;
-    }
-    .toast {
-      padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
-      color: white; opacity: 0; transform: translateY(-16px); transition: all 0.3s ease;
-      pointer-events: auto; text-align: center; width: 100%;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .toast-success { background: rgba(0,184,148,0.95); }
-    .toast-error { background: rgba(233,69,96,0.95); }
-    .toast-info { background: rgba(91,127,255,0.95); }
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 4px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 4px; }
-    .settings-row span { font-size: 0.8rem; }
-    .settings-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; font-size: 0.75rem; cursor: pointer; }
-    .settings-btn.danger { border-color: var(--accent); color: var(--accent); }
-    .guide-hint { width: 100%; padding: 8px 12px; margin-bottom: 6px; background: rgba(91,127,255,0.15); border: 1px solid rgba(91,127,255,0.3); border-radius: 8px; font-size: 0.8rem; color: #8fa8ff; text-align: center; line-height: 1.4; max-width: 420px; }
+    .bsod.hidden { display:none; }
+    .bsod h1 { color:white; font-size:1.2rem; background:rgba(255,255,255,0.2); padding:2px 8px; text-shadow:none; }
+    .bsod p { font-size:0.8rem; margin-top:12px; text-align:center; line-height:1.6; }
+    .player-card { padding:6px; margin-bottom:3px; background:rgba(0,0,0,0.3); border-radius:6px; display:flex; align-items:center; gap:6px; }
+    .player-card.me { border-left:2px solid var(--accent); }
+    .sus-meter { height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; margin-top:4px; }
+    .sus-fill { height:100%; background:linear-gradient(90deg,var(--neon),var(--accent),var(--cursed)); transition:width 0.5s; border-radius:3px; }
+    #toast-container { position:fixed; top:8px; left:50%; transform:translateX(-50%); z-index:300; display:flex; flex-direction:column; align-items:center; gap:4px; pointer-events:none; width:90%; max-width:360px; }
+    .toast { padding:8px 12px; border-radius:8px; font-size:0.75rem; font-weight:600; color:white; opacity:0; transform:translateY(-14px); transition:all 0.3s; text-align:center; width:100%; box-shadow:0 4px 12px rgba(0,0,0,0.5); }
+    .toast.show { opacity:1; transform:translateY(0); }
+    .toast-s { background:rgba(57,255,20,0.9); color:#000; }
+    .toast-e { background:rgba(255,62,108,0.9); }
+    .toast-i { background:rgba(91,127,255,0.9); }
+    .toast-c { background:rgba(255,0,255,0.9); animation: shake 0.3s infinite; }
   </style>
 </head>
 <body>
   <div id="toast-container"></div>
+  <div id="bsod" class="bsod hidden"></div>
 
-  <div id="intro-modal" class="modal-overlay">
-    <div class="modal-box">
-      <h2>⚔️ Ласкаво просимо, Лорде!</h2>
-      <p>Ви отримали землі на кордоні королівства. Тут нічого немає — лише поле і мішок з ресурсами.</p>
-      <p>Побудуйте ферму, зведіть замок, зберіть армію — і захистіть свої володіння від сусідів.</p>
-      <button class="modal-btn" onclick="Game.startGame()">Почати будівництво</button>
+  <div id="intro" class="modal-overlay">
+    <div class="modal-box" style="text-align:center">
+      <h2>🧠 ПІДВАЛ</h2>
+      <p>Ти прокинувся в підвалі. Тут темно. Пахне мемами і зрадою.</p>
+      <p>Ти не пам'ятаєш як сюди потрапив. Але тут є Wi-Fi.</p>
+      <p style="font-size:0.65rem;opacity:0.4;margin-top:8px;">Натискаючи кнопку нижче ти погоджуєшся з тим що нічого хорошого тут не буде.</p>
+      <button class="modal-btn" onclick="G.start()">Окей, я готовий страждати</button>
+      <p style="font-size:0.55rem;opacity:0.25;margin-top:6px;">v6.6.6 | made with mass psychosis</p>
     </div>
   </div>
 
   <div id="name-modal" class="modal-overlay hidden">
-    <div class="modal-box">
-      <h2>👑 Ваше королівство зростає!</h2>
-      <p>Замок досяг 3 рівня. Час дати назву вашим володінням!</p>
-      <input class="modal-input" id="kingdom-name-input" type="text" placeholder="Назва королівства" maxlength="24">
-      <button class="modal-btn" onclick="Game.nameKingdom()">Затвердити</button>
+    <div class="modal-box" style="text-align:center">
+      <h2>👑 Ти заслужив ім'я</h2>
+      <p>Твій підвал досяг 3 рівня. Це більше ніж підвал. Це вже... щось.</p>
+      <input style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.4);color:var(--text);font-size:0.9rem;margin-bottom:6px;" id="name-input" type="text" placeholder="Назва твоєї імперії" maxlength="24">
+      <button class="modal-btn" onclick="G.nameIt()">Так тому і бути</button>
     </div>
   </div>
 
-  <div id="battle-result-modal" class="modal-overlay hidden">
-    <div class="modal-box">
-      <h2 id="battle-result-title"></h2>
-      <div id="battle-result-body" style="font-size:0.85rem;line-height:1.7;margin-bottom:10px;"></div>
-      <button class="modal-btn" onclick="document.getElementById('battle-result-modal').classList.add('hidden')">Зрозуміло</button>
-    </div>
+  <div id="event-modal" class="modal-overlay hidden">
+    <div class="modal-box" id="event-box"></div>
   </div>
 
-  <h1 id="kingdom-title">⚔️ Королівство</h1>
+  <h1 id="title">🧠 ПІДВАЛ</h1>
   <div class="res-bar" id="res-bar"></div>
-  <div class="power-bar" id="power-bar"></div>
-  <div class="guide-hint" id="guide-hint" style="display:none"></div>
+  <div id="event-banner" class="event-banner" style="display:none"></div>
+  <div id="sus-section" style="width:100%;max-width:400px;margin-bottom:4px;display:none">
+    <div style="display:flex;justify-content:space-between;font-size:0.6rem;opacity:0.5"><span>нормальність</span><span id="sus-label">0%</span><span>хаос</span></div>
+    <div class="sus-meter"><div class="sus-fill" id="sus-fill" style="width:0%"></div></div>
+  </div>
 
   <div class="app-content">
-    <div id="view-resources" class="view active"></div>
-    <div id="view-city" class="view"></div>
-    <div id="view-army" class="view"></div>
-    <div id="view-map" class="view"></div>
-    <div id="view-log" class="view"></div>
-    <div id="view-top" class="view"></div>
-    <div id="view-settings" class="view"></div>
+    <div id="v-base" class="view active"></div>
+    <div id="v-grind" class="view"></div>
+    <div id="v-army" class="view"></div>
+    <div id="v-map" class="view"></div>
+    <div id="v-log" class="view"></div>
+    <div id="v-set" class="view"></div>
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="G.tab('resources')">⛏️ Ресурси</button>
-    <button class="tab" onclick="G.tab('city')">🏰 Місто</button>
-    <button class="tab" onclick="G.tab('army')">⚔️ Армія</button>
-    <button class="tab" onclick="G.tab('map')">🗺️ Карта</button>
-    <button class="tab" onclick="G.tab('log')">📜 Журнал</button>
-    <button class="tab" onclick="G.tab('top')">📊 Топ</button>
-    <button class="tab" onclick="G.tab('settings')">⚙️</button>
+    <button class="tab active" onclick="G.tab('base')">🏚️ Підвал</button>
+    <button class="tab" onclick="G.tab('grind')">⛏️ Грінд</button>
+    <button class="tab" onclick="G.tab('army')">🤡 Армія</button>
+    <button class="tab" onclick="G.tab('map')">🗺️ Набіг</button>
+    <button class="tab" onclick="G.tab('log')">📜 Лог</button>
+    <button class="tab" onclick="G.tab('set')">⚙️</button>
   </div>
 
 <script>
-(function() {
+(function(){
 'use strict';
+var FB='https://leaderboardcookie-default-rtdb.firebaseio.com';
+var LS='basement_v1';
 
-var FB = 'https://leaderboardcookie-default-rtdb.firebaseio.com';
-var LS = 'kingdom_v1';
-var SAVE_MS = 30000;
-var SYNC_MS = 5000;
-var SHIELD_MS = 3600000;
-var ATTACK_COOLDOWN_MS = 300000;
-var OFFLINE_MAX = 86400;
+var R={brain:{i:'🧠',n:'Мозок',c:'#ff69b4'},cringe:{i:'💀',n:'Кринж',c:'#ff3e6c'},frog:{i:'🐸',n:'Жаби',c:'#39ff14'},vibe:{i:'🔥',n:'Кайф',c:'#ff6600'}};
+var RK=['brain','cringe','frog','vibe'];
 
-var RES_KEYS = ['gold','wood','stone','food'];
-var RES_META = {
-  gold: { icon: '🪙', name: 'Золото', cls: 'res-gold' },
-  wood: { icon: '🪵', name: 'Дерево', cls: 'res-wood' },
-  stone: { icon: '🪨', name: 'Камінь', cls: 'res-stone' },
-  food: { icon: '🌾', name: 'Їжа', cls: 'res-food' }
-};
-
-var RES_BUILDINGS = [
-  { id: 'farm', name: 'Ферма', icon: '🌾', desc: 'Виробляє їжу', maxLevel: 20, cost: function(l) { return { gold: 30*(l+1), wood: 20*(l+1) }; }, prod: { food: 2 }, effect: function(l) { return '+' + (2*(l+1)) + ' їжі/хв'; } },
-  { id: 'lumber', name: 'Лісопилка', icon: '🪵', desc: 'Виробляє дерево', maxLevel: 20, cost: function(l) { return { gold: 25*(l+1), stone: 10*(l+1) }; }, prod: { wood: 2 }, effect: function(l) { return '+' + (2*(l+1)) + ' дерева/хв'; } },
-  { id: 'quarry', name: 'Каменоломня', icon: '⛏️', desc: 'Виробляє камінь', maxLevel: 20, cost: function(l) { return { gold: 25*(l+1), wood: 15*(l+1) }; }, prod: { stone: 1.5 }, effect: function(l) { return '+' + (1.5*(l+1)).toFixed(1) + ' каменю/хв'; } },
-  { id: 'mine', name: 'Золотий рудник', icon: '💰', desc: 'Виробляє золото', maxLevel: 20, cost: function(l) { return { wood: 40*(l+1), stone: 30*(l+1) }; }, prod: { gold: 1 }, effect: function(l) { return '+' + (1*(l+1)) + ' золота/хв'; } }
+var BASE_B=[
+  {id:'couch',n:'Диван',i:'🛋️',d:'Лежиш і думаєш про сенс',mx:20,c:function(l){return{brain:30*(l+1),vibe:10*(l+1)};},p:{brain:1},e:function(l){return'+'+(1*(l+1))+' 🧠/хв';}},
+  {id:'phone',n:'Телефон',i:'📱',d:'Скролиш стрічку в нікуди',mx:20,c:function(l){return{brain:20*(l+1),frog:15*(l+1)};},p:{cringe:2},e:function(l){return'+'+(2*(l+1))+' 💀/хв';}},
+  {id:'printer',n:'Принтер мемів',i:'🖨️',d:'Друкує жаб з нічого',mx:20,c:function(l){return{cringe:25*(l+1),brain:20*(l+1)};},p:{frog:1.5},e:function(l){return'+'+(1.5*(l+1)).toFixed(1)+' 🐸/хв';}},
+  {id:'speaker',n:'Колонка',i:'🔊',d:'Грає lo-fi beats для підвалу',mx:20,c:function(l){return{frog:30*(l+1),cringe:20*(l+1)};},p:{vibe:1},e:function(l){return'+'+(1*(l+1))+' 🔥/хв';}}
 ];
-var CITY_BUILDINGS = [
-  { id: 'castle', name: 'Замок', icon: '🏰', desc: 'Рівень замку визначає максимум будівель', maxLevel: 20, cost: function(l) { return { gold: 80*(l+1), wood: 60*(l+1), stone: 40*(l+1) }; }, effect: function(l) { return 'Макс. будівель: ' + (3 + l*2); } },
-  { id: 'barracks', name: 'Казарма', icon: '⚔️', desc: 'Тренує воїнів, визначає макс. армію', maxLevel: 15, cost: function(l) { return { gold: 60*(l+1), wood: 40*(l+1), stone: 30*(l+1) }; }, effect: function(l) { return 'Макс. армія: ' + (10 + l*10); } },
-  { id: 'wall', name: 'Стіна', icon: '🧱', desc: 'Збільшує оборону', maxLevel: 15, cost: function(l) { return { stone: 80*(l+1), wood: 30*(l+1) }; }, effect: function(l) { return '+' + (20*(l+1)) + ' оборони'; } },
-  { id: 'tower', name: 'Вежа', icon: '🏹', desc: 'Збільшує оборону', maxLevel: 10, cost: function(l) { return { stone: 60*(l+1), gold: 40*(l+1) }; }, effect: function(l) { return '+' + (30*(l+1)) + ' оборони'; } }
+var CITY_B=[
+  {id:'basement',n:'Підвал',i:'🏚️',d:'Рівень визначає макс. кімнат',mx:20,c:function(l){return{brain:80*(l+1),cringe:40*(l+1),frog:30*(l+1)};},e:function(l){return'Макс. кімнат: '+(3+l*2);}},
+  {id:'gym',n:'Качалка',i:'💪',d:'Тренує клоунів. Навіщо? Ніхто не знає.',mx:15,c:function(l){return{brain:50*(l+1),vibe:30*(l+1),cringe:20*(l+1)};},e:function(l){return'Макс. армія: '+(10+l*10);}},
+  {id:'door',n:'Двері',i:'🚪',d:'Замкнені. Але тобі і так норм.',mx:15,c:function(l){return{frog:60*(l+1),brain:30*(l+1)};},e:function(l){return'+'+(15*(l+1))+' оборони';}},
+  {id:'trap',n:'Пастка',i:'🪤',d:'Для тих хто прийде без запрошення',mx:10,c:function(l){return{cringe:50*(l+1),vibe:25*(l+1)};},e:function(l){return'+'+(25*(l+1))+' оборони';}}
 ];
-var BUILDINGS = RES_BUILDINGS.concat(CITY_BUILDINGS);
+var ALL_B=BASE_B.concat(CITY_B);
 
-var TROOPS = [
-  { id: 'warrior', name: 'Воїн', icon: '🗡️', atk: 10, def: 8, cost: { gold: 20, food: 10 }, desc: 'Збалансований боєць' },
-  { id: 'archer', name: 'Лучник', icon: '🏹', atk: 15, def: 5, cost: { gold: 30, food: 15 }, desc: 'Сильна атака, слабкий захист' },
-  { id: 'knight', name: 'Лицар', icon: '🐴', atk: 25, def: 20, cost: { gold: 80, food: 30 }, desc: 'Елітний воїн' }
+var TROOPS=[
+  {id:'clown',n:'Клоун',i:'🤡',a:10,d:8,c:{brain:20,vibe:10},ds:'Сміється. Страшно.'},
+  {id:'toxic',n:'Токсік',i:'👹',a:18,d:4,c:{cringe:30,vibe:15},ds:'Пише в чат ВЕЛИКИМИ літерами'},
+  {id:'monke',n:'Мавпа',i:'🦧',a:12,d:15,c:{frog:25,brain:10},ds:'Повертається до традицій'},
+  {id:'sussy',n:'Сас-бака',i:'📮',a:25,d:20,c:{brain:60,cringe:40},ds:'Коли самозванець підозрілий'}
 ];
 
-function fmt(n) {
-  n = Math.floor(n);
-  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
-  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
-  return n.toString();
-}
-function esc(s) { var e = document.createElement('span'); e.textContent = s; return e.innerHTML; }
+var EVENTS=[
+  {t:'Мама зайшла в кімнату',d:'Продуктивність -50% на 30с. Ти притворився що спиш.',type:'bad',fx:function(g){g._prodMult=0.5;setTimeout(function(){g._prodMult=1;},30000);}},
+  {t:'Ти знайшов під диваном стару жабу',d:'+500 🐸. Вона дивиться на тебе з розумінням.',type:'good',fx:function(g){g.s.frog+=500;}},
+  {t:'Вірусна реклама',d:'Ти випадково натиснув на банер. +2000 кринжу.',type:'bad',fx:function(g){g.s.cringe+=2000;}},
+  {t:'Lo-fi girl пішла спати',d:'Кайф тимчасово подвоєно!',type:'good',fx:function(g){g._prodMult=2;setTimeout(function(){g._prodMult=1;},60000);}},
+  {t:'Хтось відписався',d:'Ти втратив 200 мозку від екзистенціального жаху.',type:'bad',fx:function(g){g.s.brain=Math.max(0,g.s.brain-200);}},
+  {t:'Квантовий жабовий стрибок',d:'Всі ресурси перемішались. Чому? Квантова фізика.',type:'cursed',fx:function(g){var t=g.s.brain;g.s.brain=g.s.frog;g.s.frog=g.s.cringe;g.s.cringe=g.s.vibe;g.s.vibe=t;}},
+  {t:'Ретроградний Меркурій',d:'Нічого не сталось. Або сталось? Ти не впевнений.',type:'cursed',fx:function(){}},
+  {t:'Знайдено секретну кімнату',d:'+1000 всіх ресурсів!',type:'good',fx:function(g){RK.forEach(function(r){g.s[r]+=1000;});}},
+  {t:'Підвал дещо розширився',d:'Виявляється стіна була просто шафою.',type:'good',fx:function(g){g.s.brain+=300;g.s.vibe+=300;}},
+  {t:'Інтернет впав',d:'Або ні. Ти вже не розрізняєш реальність.',type:'cursed',fx:function(g){g.s.cringe+=666;}}
+];
 
-var Toast = {
-  show: function(msg, type) {
-    var c = document.getElementById('toast-container'); if (!c) return;
-    var el = document.createElement('div');
-    el.className = 'toast toast-' + (type||'info');
-    el.textContent = msg; c.appendChild(el);
-    requestAnimationFrame(function() { el.classList.add('show'); });
-    setTimeout(function() { el.classList.remove('show'); setTimeout(function() { if (el.parentNode) el.remove(); }, 300); }, 3000);
-  }
-};
+function fmt(n){n=Math.floor(Math.max(0,n));if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n+'';}
+function esc(s){var e=document.createElement('span');e.textContent=s;return e.innerHTML;}
+function toast(m,t){var c=document.getElementById('toast-container');if(!c)return;var e=document.createElement('div');e.className='toast toast-'+(t||'i');e.textContent=m;c.appendChild(e);requestAnimationFrame(function(){e.classList.add('show');});setTimeout(function(){e.classList.remove('show');setTimeout(function(){if(e.parentNode)e.remove();},300);},3000);}
 
-var _syncTimer = null;
-function debouncedSync() {
-  clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(function() { Game.syncCloud(); }, SYNC_MS);
-}
+var G={
+  s:{brain:200,cringe:100,frog:50,vibe:80,name:'',on:false,ls:0,shield:0,la:0,log:[],gs:0,named:false,sus:0,evts:0,dontCount:0},
+  b:{},tr:{clown:0,toxic:0,monke:0,sussy:0},
+  uid:'anon_'+Math.random().toString(36).slice(2,10),
+  un:'Анон',
+  _t:'base',_d:true,_lt:0,_prodMult:1,_evtTimer:null,
 
-var _snd = true;
-function snd(t) {
-  if (!_snd) return;
-  try {
-    var c = new (window.AudioContext||window.webkitAudioContext)();
-    var o = c.createOscillator(), g = c.createGain();
-    o.connect(g); g.connect(c.destination);
-    if (t==='click') { o.frequency.value=500; g.gain.setValueAtTime(0.08,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.06); o.start(); o.stop(c.currentTime+0.06); }
-    else if (t==='build') { o.frequency.value=700; g.gain.setValueAtTime(0.1,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.1); o.start(); o.stop(c.currentTime+0.1); }
-    else if (t==='battle') { o.frequency.value=300; o.type='sawtooth'; g.gain.setValueAtTime(0.12,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.2); o.start(); o.stop(c.currentTime+0.2); }
-  } catch(e) {}
-}
-
-var Game = {
-  s: { gold: 300, wood: 200, stone: 100, food: 150, name: '', started: false, lastSave: 0, shieldUntil: 0, lastAttack: 0, battleLog: [], guideStep: 0, named: false },
-  b: {},
-  troops: { warrior: 0, archer: 0, knight: 0 },
-  userId: 'anon_' + Math.random().toString(36).slice(2,10),
-  userName: 'Лорд',
-  _tab: 'resources',
-  _dirty: true,
-  _lastTick: 0,
-
-  init: function() {
-    try {
-      var tg = window.Telegram && window.Telegram.WebApp;
-      if (tg) { tg.ready(); tg.expand(); var u = tg.initDataUnsafe && tg.initDataUnsafe.user; if (u) { this.userId = String(u.id); this.userName = (u.first_name||'')+(u.last_name?' '+u.last_name[0]+'.':''); } }
-    } catch(e) {}
+  init:function(){
+    try{var tg=window.Telegram&&window.Telegram.WebApp;if(tg){tg.ready();tg.expand();var u=tg.initDataUnsafe&&tg.initDataUnsafe.user;if(u){this.uid=String(u.id);this.un=(u.first_name||'');}}}catch(e){}
     this.load();
-    if (this.s.started) {
-      document.getElementById('intro-modal').classList.add('hidden');
-      this.applyOffline();
-      this.startLoop();
-    }
-    var self = this;
-    setInterval(function() { self.save(); }, SAVE_MS);
-    window.addEventListener('beforeunload', function() { self.save(); });
+    if(this.s.on){document.getElementById('intro').classList.add('hidden');this.offline();this.loop();this.startEvents();}
   },
 
-  startGame: function() {
-    this.s.name = '';
-    this.s.started = true;
-    this.s.guideStep = 0;
-    this.s.shieldUntil = Date.now() + SHIELD_MS * 2;
-    this.save();
-    document.getElementById('intro-modal').classList.add('hidden');
-    Toast.show('Починайте будівництво!', 'success');
-    this.startLoop();
+  start:function(){
+    this.s.on=true;this.s.shield=Date.now()+7200000;
+    document.getElementById('intro').classList.add('hidden');
+    toast('Ласкаво просимо в підвал. Виходу немає.','s');
+    this.save();this.loop();this.startEvents();
   },
 
-  nameKingdom: function() {
-    var name = document.getElementById('kingdom-name-input').value.trim() || 'Нове Королівство';
-    this.s.name = name.slice(0,24);
-    this.s.named = true;
+  nameIt:function(){
+    var n=document.getElementById('name-input').value.trim()||'Підвал Безіменного';
+    this.s.name=n.slice(0,24);this.s.named=true;
     document.getElementById('name-modal').classList.add('hidden');
-    Toast.show('👑 ' + esc(this.s.name) + ' — нехай живе!', 'success');
-    snd('build');
-    this.save(); this._dirty = true;
+    toast('👑 '+esc(n)+' — звучить загрозливо','s');
+    this.save();this._d=true;
   },
 
-  load: function() {
-    try {
-      var d = localStorage.getItem(LS);
-      if (d) { var data = JSON.parse(d); this.s = data.s || this.s; this.b = data.b || {}; this.troops = data.troops || { warrior:0, archer:0, knight:0 }; }
-    } catch(e) {}
+  load:function(){try{var d=localStorage.getItem(LS);if(d){var p=JSON.parse(d);this.s=p.s||this.s;this.b=p.b||{};this.tr=p.tr||{clown:0,toxic:0,monke:0,sussy:0};}}catch(e){}},
+  save:function(){this.s.ls=Date.now();try{localStorage.setItem(LS,JSON.stringify({s:this.s,b:this.b,tr:this.tr}));}catch(e){}this.sync();},
+
+  sync:function(){
+    if(!FB||/^anon_/.test(this.uid))return;
+    var p={name:this.s.name||'Анонімний підвал',power:this.power(),buildings:this.b,troops:this.tr,resources:{brain:Math.floor(this.s.brain),cringe:Math.floor(this.s.cringe),frog:Math.floor(this.s.frog),vibe:Math.floor(this.s.vibe)},shieldUntil:this.s.shield||0,updatedAt:Date.now(),save:{s:this.s,b:this.b,tr:this.tr}};
+    fetch(FB+'/basements/'+this.uid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).catch(function(){});
   },
 
-  save: function() {
-    this.s.lastSave = Date.now();
-    try { localStorage.setItem(LS, JSON.stringify({ s: this.s, b: this.b, troops: this.troops })); } catch(e) {}
-    debouncedSync();
+  maxRooms:function(){return 3+(this.b.basement||0)*2;},
+  totalRooms:function(){var t=0;for(var k in this.b){if(k!=='basement')t+=this.b[k]||0;}return t;},
+  maxArmy:function(){return 10+(this.b.gym||0)*10;},
+  totalTr:function(){var t=0;for(var k in this.tr)t+=this.tr[k]||0;return t;},
+
+  prod:function(){
+    var p={brain:0,cringe:0,frog:0,vibe:0};
+    ALL_B.forEach(function(bd){if(!bd.p)return;var l=G.b[bd.id]||0;if(l<=0)return;for(var r in bd.p)p[r]+=bd.p[r]*l;});
+    p.vibe-=this.totalTr()*0.3;
+    for(var k in p)p[k]*=this._prodMult;
+    return p;
   },
 
-  syncCloud: function() {
-    if (!FB || /^anon_/.test(this.userId)) return;
-    var payload = { name: this.s.name, userName: this.userName, power: this.getPower(), castle: this.b.castle||0, troops: this.troops, buildings: this.b, resources: { gold: Math.floor(this.s.gold), wood: Math.floor(this.s.wood), stone: Math.floor(this.s.stone), food: Math.floor(this.s.food) }, shieldUntil: this.s.shieldUntil||0, updatedAt: Date.now(), save: { s: this.s, b: this.b, troops: this.troops } };
-    fetch(FB+'/kingdoms/'+this.userId+'.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }).catch(function(){});
+  def:function(){return(this.b.door||0)*15+(this.b.trap||0)*25+this.totalTr()*TROOPS.reduce(function(s,t){return s+(G.tr[t.id]||0)*t.d;},0)/Math.max(1,this.totalTr());},
+  atk:function(){var a=0;TROOPS.forEach(function(t){a+=(G.tr[t.id]||0)*t.a;});return a;},
+  power:function(){return this.atk()+this.def()+(this.b.basement||0)*50;},
+
+  can:function(c){for(var r in c)if((this.s[r]||0)<c[r])return false;return true;},
+  spend:function(c){for(var r in c)this.s[r]=Math.max(0,(this.s[r]||0)-c[r]);},
+
+  build:function(id){
+    var bd=ALL_B.find(function(b){return b.id===id;});if(!bd)return;
+    var l=this.b[id]||0;
+    if(l>=bd.mx){toast('Максимум! Далі тільки в реальності.','e');return;}
+    if(id!=='basement'&&this.totalRooms()>=this.maxRooms()&&l===0){toast('Покращ підвал щоб відкрити кімнати','e');return;}
+    var c=bd.c(l);if(!this.can(c)){toast('Не вистачає ресурсів (як завжди)','e');return;}
+    this.spend(c);this.b[id]=l+1;
+    this.s.sus=Math.min(100,(this.s.sus||0)+3);
+    toast(bd.i+' '+bd.n+' → Lv.'+(l+1),'s');
+    if(!this.s.named&&(this.b.basement||0)>=3)document.getElementById('name-modal').classList.remove('hidden');
+    this.save();this._d=true;
   },
 
-  loadFromCloud: function() {
-    if (!FB || /^anon_/.test(this.userId)) return Promise.resolve();
-    var self = this;
-    return fetch(FB+'/kingdoms/'+this.userId+'.json').then(function(r){return r.json();}).then(function(d) {
-      if (!d||!d.save) return;
-      if ((d.save.s.lastSave||0) >= (self.s.lastSave||0)) {
-        self.s = d.save.s; self.b = d.save.b||{}; self.troops = d.save.troops||{warrior:0,archer:0,knight:0};
-        try { localStorage.setItem(LS, JSON.stringify({s:self.s,b:self.b,troops:self.troops})); } catch(e){}
-      }
-    }).catch(function(){});
+  train:function(id,q){
+    var td=TROOPS.find(function(t){return t.id===id;});if(!td)return;
+    q=Math.min(q,this.maxArmy()-this.totalTr());
+    if(q<=0){toast('Армія повна. Куди їх девати?','e');return;}
+    if((this.b.gym||0)<=0){toast('Побудуй Качалку спочатку','e');return;}
+    var c={};for(var r in td.c)c[r]=td.c[r]*q;
+    if(!this.can(c)){toast('Бідність — не порок, але і не клоуни','e');return;}
+    this.spend(c);this.tr[id]=(this.tr[id]||0)+q;
+    toast(td.i+' +'+q+' '+td.n,'s');
+    this.save();this._d=true;
   },
 
-  getMaxBuildings: function() { return 3 + (this.b.castle||0) * 2; },
-  getTotalBuildings: function() { var t=0; for(var k in this.b) { if(k!=='castle') t += (this.b[k]||0); } return t; },
-  getMaxArmy: function() { return 10 + (this.b.barracks||0) * 10; },
-  getTotalTroops: function() { var t=0; for(var k in this.troops) t += (this.troops[k]||0); return t; },
-
-  getProduction: function() {
-    var prod = { gold: 0, wood: 0, stone: 0, food: 0 };
-    for (var i=0; i<BUILDINGS.length; i++) {
-      var bd = BUILDINGS[i];
-      if (!bd.prod) continue;
-      var lvl = this.b[bd.id] || 0;
-      if (lvl <= 0) continue;
-      for (var r in bd.prod) { prod[r] += bd.prod[r] * lvl; }
-    }
-    var armyFood = this.getTotalTroops() * 0.5;
-    prod.food -= armyFood;
-    return prod;
+  attack:function(tid){
+    if(this.atk()<=0){toast('В тебе немає армії. Серйозно?','e');return;}
+    if(Date.now()-(this.s.la||0)<300000){toast('Армія ще їсть шаурму. Зачекай.','i');return;}
+    var self=this;toast('⚔️ Набігаємо...','i');
+    fetch(FB+'/basements/'+tid+'.json').then(function(r){return r.json();}).then(function(tgt){
+      if(!tgt){toast('Підвал не знайдено. Може переїхали.','e');return;}
+      if((tgt.shieldUntil||0)>Date.now()){toast('У них щит! Підлий хід.','e');return;}
+      var myA=self.atk(),thD=0;
+      thD+=(tgt.buildings&&tgt.buildings.door||0)*15+(tgt.buildings&&tgt.buildings.trap||0)*25;
+      if(tgt.troops)TROOPS.forEach(function(t){thD+=(tgt.troops[t.id]||0)*t.d;});
+      var ratio=myA/Math.max(1,thD),win=ratio>0.8;
+      var loss=win?Math.max(0.1,1-ratio*0.5):0.6;
+      for(var tk in self.tr){var lost=Math.ceil((self.tr[tk]||0)*loss*(0.3+Math.random()*0.3));self.tr[tk]=Math.max(0,(self.tr[tk]||0)-lost);}
+      var loot={brain:0,cringe:0,frog:0,vibe:0};
+      if(win&&tgt.resources){var sp=Math.min(0.3,ratio*0.15);for(var rk in loot){loot[rk]=Math.floor((tgt.resources[rk]||0)*sp);self.s[rk]+=loot[rk];}}
+      self.s.la=Date.now();
+      self.s.sus=Math.min(100,(self.s.sus||0)+8);
+      if(!self.s.log)self.s.log=[];
+      self.s.log.unshift({t:Date.now(),w:win,tgt:tgt.name||'???',l:loot});
+      if(self.s.log.length>20)self.s.log=self.s.log.slice(0,20);
+      var em=document.getElementById('event-modal'),eb=document.getElementById('event-box');
+      if(win){eb.innerHTML='<h2>⚔️ Перемога!</h2><p>Ти пограбував <b>'+esc(tgt.name||'???')+'</b>!</p><p>🧠+'+fmt(loot.brain)+' 💀+'+fmt(loot.cringe)+' 🐸+'+fmt(loot.frog)+' 🔥+'+fmt(loot.vibe)+'</p><p style="font-size:0.65rem;opacity:0.4">Вони це заслужили. Мабуть.</p><button class="modal-btn" onclick="document.getElementById(\'event-modal\').classList.add(\'hidden\')">Забрати здобич</button>';}
+      else{eb.innerHTML='<h2>💀 Поразка</h2><p><b>'+esc(tgt.name||'???')+'</b> виявився сильнішим.</p><p>Твої клоуни тікають додому плачучи.</p><button class="modal-btn" onclick="document.getElementById(\'event-modal\').classList.add(\'hidden\')">Соромно</button>';}
+      em.classList.remove('hidden');
+      self.save();self._d=true;
+    }).catch(function(){toast('Мережа померла. Або ні.','e');});
   },
 
-  getDefense: function() {
-    var def = 0;
-    var wall = this.b.wall || 0;
-    var tower = this.b.tower || 0;
-    def += wall * 20; def += tower * 30;
-    for (var k in this.troops) { var td = TROOPS.find(function(t){return t.id===k;}); if (td) def += (this.troops[k]||0) * td.def; }
-    return def;
+  dont:function(){
+    this.s.dontCount=(this.s.dontCount||0)+1;
+    var c=this.s.dontCount;
+    if(c===1)toast('Я ж казав не натискати.','e');
+    else if(c===2)toast('Серйозно?','e');
+    else if(c===3){toast('Ок. Тримай +666 кринжу.','c');this.s.cringe+=666;}
+    else if(c===4){toast('Екран перевернувся. Навіщо.','c');document.body.style.transform='rotate(180deg)';setTimeout(function(){document.body.style.transform='';},5000);}
+    else if(c===5){this.fakeBSOD();}
+    else if(c===6){toast('🐸🐸🐸🐸🐸 ЖАБИ 🐸🐸🐸🐸🐸','c');this.s.frog+=9999;}
+    else if(c>=7){var r=RK[Math.floor(Math.random()*RK.length)];var amt=Math.floor(Math.random()*2000)-500;this.s[r]=Math.max(0,(this.s[r]||0)+amt);toast((amt>=0?'+':'')+amt+' '+R[r].i+' (рандом)','c');}
+    this.s.sus=Math.min(100,(this.s.sus||0)+5);
+    this.save();this._d=true;
   },
 
-  getAttackPower: function() {
-    var atk = 0;
-    for (var k in this.troops) { var td = TROOPS.find(function(t){return t.id===k;}); if (td) atk += (this.troops[k]||0) * td.atk; }
-    return atk;
+  fakeBSOD:function(){
+    var el=document.getElementById('bsod');
+    el.innerHTML='<h1>BASEMENT ERROR</h1><p>A fatal error has occurred in ПІДВАЛ.exe<br><br>CRINGE_OVERFLOW_EXCEPTION<br>FROG_NOT_FOUND<br>VIBE_CHECK_FAILED<br><br>Press any key to pretend this never happened.</p>';
+    el.classList.remove('hidden');
+    document.addEventListener('click',function h(){el.classList.add('hidden');document.removeEventListener('click',h);toast('Ніби нічого не було.','s');},{once:true});
   },
 
-  getPower: function() { return this.getAttackPower() + this.getDefense() + (this.b.castle||0)*50; },
-
-  canAfford: function(cost) {
-    for (var r in cost) { if ((this.s[r]||0) < cost[r]) return false; }
-    return true;
+  startEvents:function(){
+    var self=this;
+    this._evtTimer=setInterval(function(){
+      if(Math.random()>0.3)return;
+      var ev=EVENTS[Math.floor(Math.random()*EVENTS.length)];
+      ev.fx(self);
+      self.s.evts=(self.s.evts||0)+1;
+      self.s.sus=Math.min(100,(self.s.sus||0)+2);
+      var bn=document.getElementById('event-banner');
+      bn.textContent=ev.t+': '+ev.d;
+      bn.className='event-banner event-'+ev.type;
+      bn.style.display='block';
+      setTimeout(function(){bn.style.display='none';},6000);
+      self.save();self._d=true;
+    },45000);
   },
 
-  spend: function(cost) { for (var r in cost) this.s[r] = Math.max(0, (this.s[r]||0) - cost[r]); },
-
-  upgradeBuilding: function(id) {
-    var bd = BUILDINGS.find(function(b){return b.id===id;});
-    if (!bd) return;
-    var lvl = this.b[id] || 0;
-    if (lvl >= bd.maxLevel) { Toast.show('Максимальний рівень!','error'); return; }
-    if (id !== 'castle' && this.getTotalBuildings() >= this.getMaxBuildings() && lvl === 0) {
-      Toast.show('Покращте замок для нових будівель','error'); return;
-    }
-    var cost = bd.cost(lvl);
-    if (!this.canAfford(cost)) { Toast.show('Не вистачає ресурсів','error'); return; }
-    this.spend(cost);
-    this.b[id] = lvl + 1;
-    snd('build');
-    Toast.show(bd.icon + ' ' + bd.name + ' → рівень ' + (lvl+1), 'success');
-    this.save(); this._dirty = true;
+  tick:function(dt){
+    var p=this.prod();
+    for(var i=0;i<RK.length;i++){var r=RK[i];this.s[r]=Math.max(0,(this.s[r]||0)+(p[r]||0)/60*dt);}
   },
 
-  trainTroop: function(id, qty) {
-    var td = TROOPS.find(function(t){return t.id===id;});
-    if (!td) return;
-    qty = Math.max(1, Math.min(qty, 50));
-    if (this.getTotalTroops() + qty > this.getMaxArmy()) {
-      qty = this.getMaxArmy() - this.getTotalTroops();
-      if (qty <= 0) { Toast.show('Армія повна! Покращте казарму','error'); return; }
-    }
-    var cost = {}; for (var r in td.cost) cost[r] = td.cost[r] * qty;
-    if (!this.canAfford(cost)) { Toast.show('Не вистачає ресурсів','error'); return; }
-    this.spend(cost);
-    this.troops[id] = (this.troops[id]||0) + qty;
-    snd('build');
-    Toast.show(td.icon + ' +' + qty + ' ' + td.name, 'success');
-    this.save(); this._dirty = true;
+  offline:function(){
+    var off=Math.min((Date.now()-(this.s.ls||Date.now()))/1000,86400);
+    if(off<=5)return;this.tick(off);this.save();
   },
 
-  attack: function(targetId) {
-    if (!FB || /^anon_/.test(this.userId)) return;
-    if (this.getAttackPower() <= 0) { Toast.show('Немає армії для атаки!','error'); return; }
-    if (Date.now() - (this.s.lastAttack||0) < ATTACK_COOLDOWN_MS) {
-      var left = Math.ceil((ATTACK_COOLDOWN_MS - (Date.now() - this.s.lastAttack)) / 60000);
-      Toast.show('Армія відпочиває! Зачекайте ' + left + ' хв','info'); return;
-    }
-    var self = this;
-    Toast.show('⚔️ Атакуємо...','info');
-    fetch(FB+'/kingdoms/'+targetId+'.json').then(function(r){return r.json();}).then(function(target) {
-      if (!target) { Toast.show('Ціль не знайдена','error'); return; }
-      if ((target.shieldUntil||0) > Date.now()) { Toast.show('У цілі активний щит!','error'); return; }
-      var myAtk = self.getAttackPower();
-      var theirDef = 0;
-      var tw = target.buildings && target.buildings.wall || 0;
-      var tt = target.buildings && target.buildings.tower || 0;
-      theirDef += tw * 20 + tt * 30;
-      if (target.troops) { for (var k in target.troops) { var td = TROOPS.find(function(t){return t.id===k;}); if (td) theirDef += (target.troops[k]||0) * td.def; } }
-
-      var ratio = myAtk / Math.max(1, theirDef);
-      var win = ratio > 0.8;
-      var lossRate = win ? Math.max(0.1, 1 - ratio*0.5) : 0.6;
-
-      for (var tk in self.troops) {
-        var lost = Math.ceil((self.troops[tk]||0) * lossRate * (0.3 + Math.random()*0.3));
-        self.troops[tk] = Math.max(0, (self.troops[tk]||0) - lost);
-      }
-
-      var loot = { gold: 0, wood: 0, stone: 0, food: 0 };
-      if (win && target.resources) {
-        var stealPct = Math.min(0.3, ratio * 0.15);
-        for (var rk in loot) {
-          loot[rk] = Math.floor((target.resources[rk]||0) * stealPct);
-          self.s[rk] = (self.s[rk]||0) + loot[rk];
-        }
-        if (target.troops) {
-          var defLoss = {};
-          for (var dk in target.troops) {
-            defLoss[dk] = Math.ceil((target.troops[dk]||0) * 0.3);
-            target.troops[dk] = Math.max(0, target.troops[dk] - defLoss[dk]);
-          }
-        }
-        for (var lr in loot) {
-          target.resources[lr] = Math.max(0, (target.resources[lr]||0) - loot[lr]);
-        }
-        if (target.save) {
-          target.save.s.gold = target.resources.gold; target.save.s.wood = target.resources.wood;
-          target.save.s.stone = target.resources.stone; target.save.s.food = target.resources.food;
-          if (target.troops) target.save.troops = target.troops;
-        }
-        fetch(FB+'/kingdoms/'+targetId+'.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(target) }).catch(function(){});
-      }
-
-      self.s.lastAttack = Date.now();
-      var logEntry = {
-        time: Date.now(), win: win, target: target.name || 'Невідомий',
-        loot: loot, myPower: myAtk, theirDef: theirDef
-      };
-      if (!self.s.battleLog) self.s.battleLog = [];
-      self.s.battleLog.unshift(logEntry);
-      if (self.s.battleLog.length > 20) self.s.battleLog = self.s.battleLog.slice(0, 20);
-
-      snd('battle');
-      var titleEl = document.getElementById('battle-result-title');
-      var bodyEl = document.getElementById('battle-result-body');
-      if (win) {
-        titleEl.textContent = '⚔️ Перемога!';
-        bodyEl.innerHTML = 'Ви розбили <b>' + esc(target.name||'Невідомий') + '</b>!<br>' +
-          '🪙 +' + fmt(loot.gold) + ' 🪵 +' + fmt(loot.wood) + ' 🪨 +' + fmt(loot.stone) + ' 🌾 +' + fmt(loot.food);
-      } else {
-        titleEl.textContent = '💀 Поразка!';
-        bodyEl.innerHTML = 'Оборона <b>' + esc(target.name||'Невідомий') + '</b> виявилась занадто сильною.<br>Ваша армія зазнала втрат.';
-      }
-      document.getElementById('battle-result-modal').classList.remove('hidden');
-      self.save(); self._dirty = true;
-    }).catch(function() { Toast.show('Помилка мережі','error'); });
+  loop:function(){
+    var self=this;
+    var lp=function(t){var dt=(t-(self._lt||t))/1000;self._lt=t;if(dt>0&&dt<1){self.tick(dt);self._d=true;}requestAnimationFrame(lp);};
+    requestAnimationFrame(lp);
+    setInterval(function(){if(self._d){self._d=false;self.render();}},150);
   },
 
-  tick: function(dt) {
-    var prod = this.getProduction();
-    for (var i = 0; i < RES_KEYS.length; i++) {
-      var r = RES_KEYS[i];
-      var perSec = (prod[r]||0) / 60;
-      this.s[r] = Math.max(0, (this.s[r]||0) + perSec * dt);
-    }
+  tab:function(t){
+    this._t=t;
+    document.querySelectorAll('.tab').forEach(function(e){e.classList.remove('active');});
+    document.querySelectorAll('.view').forEach(function(e){e.classList.remove('active');});
+    var b=document.querySelector('.tab[onclick*="\''+t+'\'"]');if(b)b.classList.add('active');
+    var v=document.getElementById('v-'+t);if(v)v.classList.add('active');
+    if(t==='map')this.loadMap();
+    this._d=true;
   },
 
-  applyOffline: function() {
-    var off = Math.min((Date.now() - (this.s.lastSave||Date.now())) / 1000, OFFLINE_MAX);
-    if (off <= 5) return;
-    this.tick(off);
-    this.save();
+  render:function(){
+    this.renderRes();
+    var t=this._t;
+    if(t==='base')this.renderList('v-base',CITY_B,'🏚️ Підвал і оборона');
+    else if(t==='grind')this.renderList('v-grind',BASE_B,'⛏️ Грінд-кімнати');
+    else if(t==='army')this.renderArmy();
+    else if(t==='log')this.renderLog();
+    else if(t==='set')this.renderSet();
   },
 
-  startLoop: function() {
-    var self = this;
-    var loop = function(t) {
-      var dt = (t - (self._lastTick||t)) / 1000;
-      self._lastTick = t;
-      if (dt > 0 && dt < 1) { self.tick(dt); self._dirty = true; }
-      requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(loop);
-    setInterval(function() { if (self._dirty) { self._dirty = false; self.render(); } }, 150);
+  renderRes:function(){
+    var p=this.prod(),h='';
+    RK.forEach(function(r){var m=R[r];var rate=p[r]||0;h+='<div class="res-item" style="color:'+m.c+'"><span>'+m.i+'</span>'+fmt(G.s[r]||0)+'<span style="font-size:0.5rem;opacity:0.4;margin-left:1px">'+(rate>=0?'+':'')+rate.toFixed(1)+'/хв</span></div>';});
+    document.getElementById('res-bar').innerHTML=h;
+    document.getElementById('title').textContent='🧠 '+(this.s.name||'ПІДВАЛ');
+    var sus=this.s.sus||0;
+    var susEl=document.getElementById('sus-section');
+    if(susEl){susEl.style.display=sus>0?'block':'none';document.getElementById('sus-fill').style.width=sus+'%';document.getElementById('sus-label').textContent=sus+'%';}
   },
 
-  tab: function(t) {
-    this._tab = t;
-    document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('active');});
-    document.querySelectorAll('.view').forEach(function(el){el.classList.remove('active');});
-    var btn = document.querySelector('.tab[onclick*="\''+t+'\'"]');
-    if (btn) btn.classList.add('active');
-    var v = document.getElementById('view-'+t);
-    if (v) v.classList.add('active');
-    if (t==='top') this.loadLeaderboard();
-    if (t==='map') this.loadMap();
-    this._dirty = true;
-  },
-
-  render: function() {
-    this.renderResBar();
-    this.renderGuide();
-    this.checkNamePrompt();
-    var t = this._tab;
-    if (t==='resources') this.renderBuildingList('view-resources', RES_BUILDINGS, '⛏️ Виробничі будівлі');
-    else if (t==='city') this.renderBuildingList('view-city', CITY_BUILDINGS, '🏰 Військові будівлі');
-    else if (t==='army') this.renderArmy();
-    else if (t==='log') this.renderLog();
-    else if (t==='settings') this.renderSettings();
-  },
-
-  GUIDE_STEPS: [
-    { check: function(g){return (g.b.farm||0)>=1;}, hint: '🌾 Побудуй Ферму! Перейди на вкладку ⛏️ Ресурси', tab: 'resources' },
-    { check: function(g){return (g.b.lumber||0)>=1;}, hint: '🪵 Тепер побудуй Лісопилку для дерева', tab: 'resources' },
-    { check: function(g){return (g.b.castle||0)>=1;}, hint: '🏰 Зведи Замок! Перейди на вкладку 🏰 Місто', tab: 'city' },
-    { check: function(g){return (g.b.quarry||0)>=1;}, hint: '⛏️ Побудуй Каменоломню для каменю', tab: 'resources' },
-    { check: function(g){return (g.b.mine||0)>=1;}, hint: '💰 Побудуй Золотий рудник', tab: 'resources' },
-    { check: function(g){return (g.b.barracks||0)>=1;}, hint: '⚔️ Побудуй Казарму для армії → вкладка 🏰 Місто', tab: 'city' },
-    { check: function(g){return g.getTotalTroops()>=5;}, hint: '🗡️ Натренуй 5 воїнів → вкладка ⚔️ Армія', tab: 'army' },
-    { check: function(g){return (g.b.castle||0)>=3;}, hint: '🏰 Покращ Замок до рівня 3 щоб назвати королівство', tab: 'city' }
+  GUIDE:[
+    {ck:function(g){return(g.b.couch||0)>=1;},h:'🛋️ Побудуй Диван → вкладка ⛏️ Грінд'},
+    {ck:function(g){return(g.b.phone||0)>=1;},h:'📱 Побудуй Телефон для кринжу'},
+    {ck:function(g){return(g.b.basement||0)>=1;},h:'🏚️ Покращ Підвал → вкладка 🏚️ Підвал'},
+    {ck:function(g){return(g.b.printer||0)>=1;},h:'🖨️ Побудуй Принтер мемів'},
+    {ck:function(g){return(g.b.gym||0)>=1;},h:'💪 Побудуй Качалку для армії'},
+    {ck:function(g){return g.totalTr()>=5;},h:'🤡 Натренуй 5 клоунів → вкладка 🤡'},
+    {ck:function(g){return(g.b.basement||0)>=3;},h:'🏚️ Підвал Lv.3 → отримай ім\'я!'}
   ],
 
-  renderGuide: function() {
-    var el = document.getElementById('guide-hint');
-    if (!el) return;
-    var step = this.s.guideStep || 0;
-    if (step >= this.GUIDE_STEPS.length) { el.style.display = 'none'; return; }
-    while (step < this.GUIDE_STEPS.length && this.GUIDE_STEPS[step].check(this)) { step++; }
-    this.s.guideStep = step;
-    if (step >= this.GUIDE_STEPS.length) { el.style.display = 'none'; return; }
-    el.textContent = '📋 Крок ' + (step+1) + ': ' + this.GUIDE_STEPS[step].hint;
-    el.style.display = 'block';
-  },
-
-  checkNamePrompt: function() {
-    if (!this.s.named && (this.b.castle||0) >= 3) {
-      document.getElementById('name-modal').classList.remove('hidden');
+  renderList:function(vid,list,title){
+    var el=document.getElementById(vid),h='';
+    if(vid==='v-base'){
+      var bl=this.b.basement||0;
+      var icons=['🕳️','🏚️','🏠','🏗️','🏰','🏯','🏛️','👑','💀','🌌','♾️'];
+      h+='<div style="text-align:center;padding:12px 0"><div style="font-size:3rem;filter:drop-shadow(0 4px 12px rgba(57,255,20,0.3))">'+icons[Math.min(Math.floor(bl/2),icons.length-1)]+'</div><div style="font-size:1rem;font-weight:800;color:white;margin-top:4px">'+esc(this.s.name||'Підвал')+'</div><div style="font-size:0.7rem;color:var(--neon)">Lv.'+bl+' | Кімнати: '+this.totalRooms()+'/'+this.maxRooms()+'</div></div>';
     }
-  },
-
-  renderResBar: function() {
-    var prod = this.getProduction();
-    var html = '';
-    for (var i=0; i<RES_KEYS.length; i++) {
-      var r = RES_KEYS[i]; var m = RES_META[r];
-      var rate = prod[r]||0;
-      var rateStr = rate >= 0 ? '+'+rate.toFixed(1) : rate.toFixed(1);
-      html += '<div class="res-item '+m.cls+'"><span class="ri">'+m.icon+'</span> '+fmt(this.s[r]||0)+'<span class="res-rate">'+rateStr+'/хв</span></div>';
+    var step=this.s.gs||0;
+    while(step<this.GUIDE.length&&this.GUIDE[step].ck(this))step++;
+    this.s.gs=step;
+    if(step<this.GUIDE.length)h+='<div style="padding:6px 10px;margin-bottom:6px;background:rgba(91,127,255,0.1);border:1px solid rgba(91,127,255,0.2);border-radius:6px;font-size:0.75rem;color:#8fa8ff;text-align:center">📋 Крок '+(step+1)+': '+this.GUIDE[step].h+'</div>';
+    h+='<div class="section"><h2>'+title+'</h2>';
+    for(var i=0;i<list.length;i++){
+      var bd=list[i],l=this.b[bd.id]||0,c=bd.c(l);
+      var ok=this.can(c)&&l<bd.mx;
+      if(bd.id!=='basement'&&l===0&&this.totalRooms()>=this.maxRooms())ok=false;
+      var cs='';for(var r in c)cs+=(R[r]?R[r].i:'')+fmt(c[r])+' ';
+      var bt=l===0?'🔨 Будувати':'⬆️ Lv.'+(l+1);
+      h+='<div class="row"><span class="row-icon">'+bd.i+'</span><div class="row-info"><div class="row-name">'+esc(bd.n)+(l>0?' <span style="opacity:0.4">Lv.'+l+'</span>':'')+'</div><div class="row-desc">'+esc(bd.d)+'</div><div class="row-stat">'+bd.e(l)+'</div></div><button class="btn btn-p" '+(ok?'':'disabled')+' onclick="G.build(\''+bd.id+'\')" style="min-width:80px"><div style="font-size:0.55rem;opacity:0.6">'+cs+'</div>'+bt+'</button></div>';
     }
-    document.getElementById('res-bar').innerHTML = html;
-    var shield = (this.s.shieldUntil||0) > Date.now();
-    var shieldStr = shield ? '<span class="shield-badge">🛡️ Щит: ' + Math.ceil(((this.s.shieldUntil||0)-Date.now())/60000) + ' хв</span>' : '';
-    document.getElementById('power-bar').innerHTML = '⚔️ Сила: '+fmt(this.getPower()) + ' | 🗡️ Атака: '+fmt(this.getAttackPower())+' | 🛡️ Оборона: '+fmt(this.getDefense()) + shieldStr;
-    document.getElementById('kingdom-title').textContent = '⚔️ ' + (this.s.name || 'Нове поселення');
+    h+='</div>';
+    h+='<button class="dont-btn" onclick="G.dont()">НЕ НАТИСКАЙ</button>';
+    el.innerHTML=h;
   },
 
-  renderBuildingList: function(viewId, list, title) {
-    var el = document.getElementById(viewId);
-    var castleLvl = this.b.castle || 0;
-    var html = '';
-    if (viewId === 'view-city') {
-      var icons = ['🏚️','🏠','🏡','🏘️','🏰','🏰','🏯','🏯','🏛️','🏛️','👑'];
-      var cIcon = icons[Math.min(Math.floor(castleLvl/2), icons.length-1)];
-      html += '<div class="castle-visual"><div class="castle-icon">'+cIcon+'</div><div class="castle-name">'+esc(this.s.name||'Нове поселення')+'</div><div class="castle-level">Замок: Lv.'+castleLvl+' | Будівлі: '+this.getTotalBuildings()+'/'+this.getMaxBuildings()+'</div></div>';
-    }
-    html += '<div class="section"><h2>'+title+'</h2>';
-    for (var i=0; i<list.length; i++) {
-      var bd = list[i];
-      var lvl = this.b[bd.id]||0;
-      var cost = bd.cost(lvl);
-      var can = this.canAfford(cost) && lvl < bd.maxLevel;
-      if (bd.id !== 'castle' && lvl === 0 && this.getTotalBuildings() >= this.getMaxBuildings()) can = false;
-      var costStr = '';
-      for (var r in cost) costStr += (RES_META[r]?RES_META[r].icon:'') + fmt(cost[r]) + ' ';
-      var btnText = lvl === 0 ? '🔨 Побудувати' : '⬆️ Lv.' + (lvl+1);
-      html += '<div class="row"><span class="row-icon">'+bd.icon+'</span><div class="row-info"><div class="row-name">'+esc(bd.name)+(lvl>0?' <span style="opacity:0.5">Lv.'+lvl+'</span>':'')+'</div><div class="row-desc">'+esc(bd.desc)+'</div><div class="row-stat">'+bd.effect(lvl)+'</div></div><button class="btn btn-primary" '+(can?'':'disabled')+' onclick="G.upgradeBuilding(\''+bd.id+'\')" style="min-width:90px"><div style="font-size:0.65rem;opacity:0.7">'+costStr+'</div>'+btnText+'</button></div>';
-    }
-    html += '</div>';
-    el.innerHTML = html;
+  renderArmy:function(){
+    var el=document.getElementById('v-army'),h='';
+    h+='<div class="section"><h2>🤡 Армія абсурду <span style="opacity:0.4;font-size:0.65rem">'+this.totalTr()+'/'+this.maxArmy()+'</span></h2>';
+    if((this.b.gym||0)<=0)h+='<p style="opacity:0.5;font-size:0.75rem;padding:8px">Побудуй Качалку щоб тренувати бійців</p>';
+    else{TROOPS.forEach(function(td){
+      var have=G.tr[td.id]||0;var cs='';for(var r in td.c)cs+=(R[r]?R[r].i:'')+td.c[r]+' ';
+      h+='<div class="row"><span class="row-icon">'+td.i+'</span><div class="row-info"><div class="row-name">'+esc(td.n)+' <span style="opacity:0.4">×'+have+'</span></div><div class="row-desc">'+esc(td.ds)+' | ⚔️'+td.a+' 🛡️'+td.d+'</div><div class="row-stat">'+cs+'</div></div><div style="display:flex;gap:3px"><button class="btn btn-p" onclick="G.train(\''+td.id+'\',1)">+1</button><button class="btn btn-n" onclick="G.train(\''+td.id+'\',5)">+5</button></div></div>';
+    });}
+    h+='</div><div class="section"><h2>📊 Статистика бойових мавп</h2>';
+    h+='<div class="row"><span class="row-icon">⚔️</span><div class="row-info"><div class="row-name">Атака</div></div><span style="font-weight:700;color:var(--accent)">'+fmt(this.atk())+'</span></div>';
+    h+='<div class="row"><span class="row-icon">🛡️</span><div class="row-info"><div class="row-name">Оборона</div></div><span style="font-weight:700;color:var(--neon)">'+fmt(this.def())+'</span></div>';
+    h+='<div class="row"><span class="row-icon">🔥</span><div class="row-info"><div class="row-name">Утримання</div><div class="row-desc">Клоуни теж хочуть їсти</div></div><span style="font-weight:700;color:var(--warning)">-'+(this.totalTr()*0.3).toFixed(1)+' 🔥/хв</span></div>';
+    h+='</div>';
+    el.innerHTML=h;
   },
 
-  renderArmy: function() {
-    var el = document.getElementById('view-army');
-    var html = '<div class="section"><h2>🪖 Армія <span style="opacity:0.5;font-size:0.7rem">'+this.getTotalTroops()+'/'+this.getMaxArmy()+'</span></h2>';
-    if ((this.b.barracks||0) <= 0) {
-      html += '<p style="opacity:0.6;font-size:0.8rem;padding:10px;">Побудуйте Казарму щоб тренувати воїнів</p>';
-    } else {
-      for (var i=0; i<TROOPS.length; i++) {
-        var td = TROOPS[i];
-        var have = this.troops[td.id]||0;
-        var costStr = '';
-        for (var r in td.cost) costStr += (RES_META[r]?RES_META[r].icon:'') + td.cost[r] + ' ';
-        html += '<div class="row"><span class="row-icon">'+td.icon+'</span><div class="row-info"><div class="row-name">'+esc(td.name)+' <span style="opacity:0.5">×'+have+'</span></div><div class="row-desc">'+esc(td.desc)+' | ⚔️'+td.atk+' 🛡️'+td.def+'</div></div><div class="troop-counter"><button class="btn btn-primary" onclick="G.trainTroop(\''+td.id+'\',1)">+1</button><button class="btn btn-success" onclick="G.trainTroop(\''+td.id+'\',5)">+5</button></div></div>';
-      }
-    }
-    html += '</div>';
-    html += '<div class="section"><h2>📊 Бойова статистика</h2>';
-    html += '<div class="row"><span class="row-icon">⚔️</span><div class="row-info"><div class="row-name">Атака</div></div><span style="font-weight:700;color:var(--accent)">'+fmt(this.getAttackPower())+'</span></div>';
-    html += '<div class="row"><span class="row-icon">🛡️</span><div class="row-info"><div class="row-name">Оборона</div></div><span style="font-weight:700;color:var(--blue)">'+fmt(this.getDefense())+'</span></div>';
-    html += '<div class="row"><span class="row-icon">🌾</span><div class="row-info"><div class="row-name">Утримання армії</div><div class="row-desc">'+this.getTotalTroops()+' воїнів × 0.5 їжі/хв</div></div><span style="font-weight:700;color:var(--food)">-'+(this.getTotalTroops()*0.5).toFixed(1)+'/хв</span></div>';
-    html += '</div>';
-    el.innerHTML = html;
+  loadMap:function(){
+    var el=document.getElementById('v-map');
+    if(!FB){el.innerHTML='<div class="section"><p style="opacity:0.5">Wi-Fi в підвалі зник</p></div>';return;}
+    el.innerHTML='<div class="section"><p><span class="spinner"></span> Шукаємо сусідні підвали...</p></div>';
+    var self=this;
+    fetch(FB+'/basements.json').then(function(r){return r.json();}).then(function(data){
+      if(!data){el.innerHTML='<div class="section"><p style="opacity:0.5">Ти один в цьому світі.</p></div>';return;}
+      var ps=Object.entries(data).filter(function(e){return e[0]!==self.uid&&e[1]&&e[1].name;}).map(function(e){return{uid:e[0],name:e[1].name||'???',power:e[1].power||0,shield:(e[1].shieldUntil||0)>Date.now()};});
+      ps.sort(function(a,b){return a.power-b.power;});
+      var h='<div class="section"><h2>🗺️ Сусідні підвали</h2>';
+      if(ps.length===0)h+='<p style="opacity:0.5;font-size:0.75rem;padding:8px">Поки пусто. Запроси друзів в підвал.</p>';
+      ps.slice(0,15).forEach(function(p){
+        h+='<div class="player-card"><span class="row-icon">🏚️</span><div style="flex:1"><div style="font-weight:700;font-size:0.8rem">'+esc(p.name)+(p.shield?' <span style="font-size:0.6rem;color:var(--blue)">🛡️</span>':'')+'</div><div style="font-size:0.65rem;color:var(--accent)">⚔️ '+fmt(p.power)+'</div></div><button class="btn btn-d" '+(p.shield?'disabled':'')+' onclick="G.attack(\''+p.uid+'\')">🔥 Набіг</button></div>';
+      });
+      h+='</div>';el.innerHTML=h;
+    }).catch(function(){el.innerHTML='<div class="section"><p style="opacity:0.5">Інтернет помер. Як і надія.</p></div>';});
   },
 
-  loadMap: function() {
-    var el = document.getElementById('view-map');
-    if (!FB) { el.innerHTML = '<p style="padding:20px;opacity:0.6">Мережа недоступна</p>'; return; }
-    el.innerHTML = '<div class="section"><h2>🗺️ Сусідні королівства</h2><p style="opacity:0.6;font-size:0.75rem"><span class="spinner"></span> Пошук цілей...</p></div>';
-    var self = this;
-    fetch(FB+'/kingdoms.json').then(function(r){return r.json();}).then(function(data) {
-      if (!data) { el.innerHTML = '<div class="section"><p style="opacity:0.6">Поки нікого немає</p></div>'; return; }
-      var players = Object.entries(data).filter(function(e){return e[0]!==self.userId && e[1] && e[1].name;}).map(function(e){return {uid:e[0], name:e[1].name||'???', power:e[1].power||0, castle:e[1].castle||0, shield:(e[1].shieldUntil||0)>Date.now()};});
-      players.sort(function(a,b){return a.power-b.power;});
-      var html = '<div class="section"><h2>🗺️ Сусідні королівства</h2>';
-      if (players.length === 0) html += '<p style="opacity:0.6;font-size:0.8rem;padding:8px">Поки нікого немає. Запроси друзів!</p>';
-      for (var i=0; i<Math.min(players.length,15); i++) {
-        var p = players[i];
-        html += '<div class="player-card"><span class="row-icon">🏰</span><div class="player-info"><div class="player-name">'+esc(p.name)+(p.shield?' <span class="shield-badge">🛡️</span>':'')+'</div><div class="player-power">⚔️ Сила: '+fmt(p.power)+' | 🏰 Lv.'+p.castle+'</div></div><button class="btn btn-danger" '+(p.shield?'disabled':'')+' onclick="G.attack(\''+p.uid+'\')">⚔️</button></div>';
-      }
-      html += '</div>';
-      el.innerHTML = html;
-    }).catch(function(){ el.innerHTML = '<div class="section"><p style="opacity:0.6">Помилка завантаження</p></div>'; });
+  renderLog:function(){
+    var el=document.getElementById('v-log'),logs=this.s.log||[];
+    var h='<div class="section"><h2>📜 Хроніки хаосу</h2>';
+    if(logs.length===0)h+='<p style="opacity:0.5;font-size:0.75rem;padding:8px">Тут буде записано кожне твоє непотребство.</p>';
+    else{h+='<div style="max-height:300px;overflow-y:auto">';
+    logs.forEach(function(lg){
+      var d=new Date(lg.t),ts=d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+      if(lg.w)h+='<div style="color:var(--neon);font-size:0.72rem;padding:3px 0">⚔️ Пограбував <b>'+esc(lg.tgt)+'</b>: 🧠+'+fmt(lg.l.brain)+' 💀+'+fmt(lg.l.cringe)+' <span style="opacity:0.3;font-size:0.55rem">'+ts+'</span></div>';
+      else h+='<div style="color:var(--accent);font-size:0.72rem;padding:3px 0">💀 Зганьбився перед <b>'+esc(lg.tgt)+'</b> <span style="opacity:0.3;font-size:0.55rem">'+ts+'</span></div>';
+    });h+='</div>';}
+    h+='</div>';el.innerHTML=h;
   },
 
-  loadLeaderboard: function() {
-    var el = document.getElementById('view-top');
-    el.innerHTML = '<div class="section"><p><span class="spinner"></span> Завантаження...</p></div>';
-    var self = this;
-    fetch(FB+'/kingdoms.json').then(function(r){return r.json();}).then(function(data) {
-      if (!data) { el.innerHTML = '<div class="section"><p style="opacity:0.6">Порожньо</p></div>'; return; }
-      var players = Object.entries(data).filter(function(e){return e[1]&&e[1].name;}).map(function(e){return {uid:e[0],name:e[1].name||'???',power:e[1].power||0,castle:e[1].castle||0};});
-      players.sort(function(a,b){return b.power-a.power;});
-      var ranks = ['🥇','🥈','🥉'];
-      var html = '<div class="section"><h2>📊 Рейтинг</h2>';
-      for (var i=0; i<Math.min(players.length,10); i++) {
-        var p = players[i]; var isMe = p.uid===self.userId;
-        html += '<div class="player-card'+(isMe?' me':'')+'"><span class="player-rank">'+(i<3?ranks[i]:'#'+(i+1))+'</span><div class="player-info"><div class="player-name">'+esc(p.name)+'</div><div class="player-power">⚔️ '+fmt(p.power)+' | 🏰 Lv.'+p.castle+'</div></div></div>';
-      }
-      html += '</div>';
-      el.innerHTML = html;
-    }).catch(function(){ el.innerHTML = '<div class="section"><p style="opacity:0.6">Помилка</p></div>'; });
+  renderSet:function(){
+    var el=document.getElementById('v-set');
+    var h='<div class="section"><h2>⚙️ Налаштування підвалу</h2>';
+    h+='<div class="settings-row"><span>🔄 Скинути все</span><button class="settings-btn danger" onclick="G.reset()">Знищити</button></div>';
+    h+='</div><div class="section"><h2>📊 Статистика деградації</h2>';
+    h+='<div class="settings-row"><span>🏚️ Рівень підвалу</span><span>'+(this.b.basement||0)+'</span></div>';
+    h+='<div class="settings-row"><span>🤡 Розмір армії</span><span>'+this.totalTr()+'/'+this.maxArmy()+'</span></div>';
+    h+='<div class="settings-row"><span>⚔️ Набігів</span><span>'+(this.s.log||[]).length+'</span></div>';
+    h+='<div class="settings-row"><span>🏆 Перемог</span><span>'+(this.s.log||[]).filter(function(l){return l.w;}).length+'</span></div>';
+    h+='<div class="settings-row"><span>🎲 Подій</span><span>'+(this.s.evts||0)+'</span></div>';
+    h+='<div class="settings-row"><span>🔴 Натискань "НЕ НАТИСКАЙ"</span><span>'+(this.s.dontCount||0)+'</span></div>';
+    h+='<div class="settings-row"><span>😈 Рівень хаосу</span><span>'+(this.s.sus||0)+'%</span></div>';
+    h+='</div>';
+    el.innerHTML=h;
   },
 
-  renderLog: function() {
-    var el = document.getElementById('view-log');
-    var logs = this.s.battleLog || [];
-    var html = '<div class="section"><h2>📜 Журнал битв</h2>';
-    if (logs.length === 0) {
-      html += '<p style="opacity:0.6;font-size:0.8rem;padding:8px">Ще не було битв. Йдіть на Карту та атакуйте!</p>';
-    } else {
-      html += '<div class="battle-log">';
-      for (var i=0; i<logs.length; i++) {
-        var lg = logs[i];
-        var d = new Date(lg.time);
-        var timeStr = d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
-        if (lg.win) {
-          html += '<div class="log-win">⚔️ Перемога над <b>'+esc(lg.target)+'</b>: 🪙+'+fmt(lg.loot.gold)+' 🪵+'+fmt(lg.loot.wood)+' <span class="log-time">'+timeStr+'</span></div>';
-        } else {
-          html += '<div class="log-lose">💀 Поразка від <b>'+esc(lg.target)+'</b> <span class="log-time">'+timeStr+'</span></div>';
-        }
-      }
-      html += '</div>';
-    }
-    html += '</div>';
-    el.innerHTML = html;
-  },
-
-  renderSettings: function() {
-    var el = document.getElementById('view-settings');
-    var html = '<div class="section"><h2>⚙️ Налаштування</h2>';
-    html += '<div class="settings-row"><span>🔊 Звук</span><button class="settings-btn" onclick="G.toggleSound()" id="snd-btn">'+(_snd?'Увімк.':'Вимк.')+'</button></div>';
-    html += '<div class="settings-row"><span>🔄 Скинути прогрес</span><button class="settings-btn danger" onclick="G.resetProgress()">Скинути</button></div>';
-    html += '</div>';
-    html += '<div class="section"><h2>📊 Статистика</h2>';
-    html += '<div class="settings-row"><span>🏰 Рівень замку</span><span>'+(this.b.castle||0)+'</span></div>';
-    html += '<div class="settings-row"><span>🪖 Армія</span><span>'+this.getTotalTroops()+'/'+this.getMaxArmy()+'</span></div>';
-    html += '<div class="settings-row"><span>⚔️ Битв</span><span>'+(this.s.battleLog||[]).length+'</span></div>';
-    html += '<div class="settings-row"><span>🏆 Перемог</span><span>'+(this.s.battleLog||[]).filter(function(l){return l.win;}).length+'</span></div>';
-    html += '</div>';
-    el.innerHTML = html;
-  },
-
-  toggleSound: function() {
-    _snd = !_snd;
-    var btn = document.getElementById('snd-btn');
-    if (btn) btn.textContent = _snd ? 'Увімк.' : 'Вимк.';
-    if (_snd) snd('click');
-  },
-
-  resetProgress: function() {
-    if (!confirm('Скинути весь прогрес? Це не можна скасувати.')) return;
-    this.s = { gold:300, wood:200, stone:100, food:150, name:'', started:false, lastSave:0, shieldUntil:0, lastAttack:0, battleLog:[], guideStep:0, named:false };
-    this.b = {}; this.troops = { warrior:0, archer:0, knight:0 };
-    try { localStorage.removeItem(LS); } catch(e) {}
-    location.reload();
+  reset:function(){
+    if(!confirm('Справді знищити підвал? Жаби будуть сумні.'))return;
+    this.s={brain:200,cringe:100,frog:50,vibe:80,name:'',on:false,ls:0,shield:0,la:0,log:[],gs:0,named:false,sus:0,evts:0,dontCount:0};
+    this.b={};this.tr={clown:0,toxic:0,monke:0,sussy:0};
+    try{localStorage.removeItem(LS);}catch(e){}location.reload();
   }
 };
 
-window.Game = Game;
-window.G = Game;
-Game.init();
+window.G=G;window.Game=G;G.init();
 })();
 </script>
 </body>
