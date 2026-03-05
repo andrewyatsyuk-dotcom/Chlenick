@@ -1762,9 +1762,27 @@
         var canBuy = effectiveQty > 0 && self.canAfford(b.costRes, cost);
         var count = self.getCount(b.id);
         var res = RESOURCES[b.resource];
+        var actualProd = b.prod;
+        var starved = '';
+        if (!b.isStorage && count > 0 && b.consumes) {
+          var st = self.getState();
+          var bn = 1;
+          var keys = Object.keys(b.consumes);
+          for (var ci = 0; ci < keys.length; ci++) {
+            var cr = keys[ci];
+            var avail = st[cr] || 0;
+            var need = b.consumes[cr] * count;
+            if (need > 0 && avail < need * 2) {
+              bn = Math.min(bn, Math.max(0.1, avail / (need * 2)));
+              starved = '⚠️ ' + ((RESOURCES[cr] || {}).icon || '') + '↓';
+            }
+          }
+          var mult = getUpgradeMultiplier(b.resource, self.boughtUpgrades);
+          actualProd = b.prod * count * mult * bn;
+        }
         var stats = b.isStorage
           ? 'Місце: +' + (STORAGE_PER_LEVEL.wheat || 500) + '/рівень на ресурс'
-          : '+' + b.prod + ' ' + ((res || {}).icon || '') + '/с';
+          : (count > 0 && b.consumes ? '+' + actualProd.toFixed(1) + ' ' + ((res || {}).icon || '') + '/с ' + starved : '+' + b.prod + ' ' + ((res || {}).icon || '') + '/с');
         var qtyLabel = effectiveQty > 1 ? ' (×' + effectiveQty + ')' : '';
         var bIcon = b.isStorage ? '📦' : ((RESOURCES[b.resource] || {}).icon || '🏭');
         html += '<div class="building"><span class="building-icon">' + bIcon + '</span><div class="building-info"><div class="building-name">' + escapeHtml(b.name) + ' × ' + count + '</div><div class="building-desc">' + escapeHtml(b.desc) + '</div><div class="building-stats">' + escapeHtml(stats) + '</div></div><button class="btn-buy" ' + (!canBuy ? 'disabled' : '') + ' data-building="' + i + '" onclick="Game.buyBuilding(' + i + ')">' + escapeHtml(format(cost) + qtyLabel) + ' ' + ((RESOURCES[b.costRes] || { icon: '🪙' }).icon) + '</button></div>';
