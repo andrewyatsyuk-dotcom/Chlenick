@@ -62,16 +62,26 @@
     .view { display: none; width: 100%; max-width: 400px; flex-direction: column; align-items: center; opacity: 0; transition: opacity 0.15s ease; }
     .view.active { display: flex; opacity: 1; }
 
+    .currency-bar {
+      width: 100%; display: flex; justify-content: center; align-items: center; gap: 12px;
+      padding: 10px 14px; margin-bottom: 8px; background: linear-gradient(135deg, rgba(253,203,110,0.15), rgba(255,165,0,0.1));
+      border: 1px solid rgba(253,203,110,0.3); border-radius: 12px;
+    }
+    .coin-group { display: flex; align-items: center; gap: 3px; font-weight: 800; }
+    .coin-gold { color: #ffd700; font-size: 1.1rem; }
+    .coin-silver { color: #c0c0c0; font-size: 1rem; }
+    .coin-copper { color: #cd7f32; font-size: 0.95rem; }
+    .coin-cps { font-size: 0.65rem; opacity: 0.6; color: var(--success); margin-left: 4px; }
     .stats-panel {
       width: 100%; background: var(--card); border-radius: 12px; padding: 10px; margin-bottom: 10px;
-      border: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
-      max-height: 220px; overflow-y: auto;
+      border: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      max-height: 260px; overflow-y: auto;
     }
-    .stat { text-align: center; padding: 4px 2px; background: rgba(0,0,0,0.2); border-radius: 6px; font-size: 0.7rem; position: relative; overflow: hidden; }
-    .stat-val { font-weight: 800; color: var(--gold); font-size: 0.8rem; position: relative; z-index: 1; }
-    .stat-cps { font-size: 0.6rem; opacity: 0.7; color: var(--success); position: relative; z-index: 1; }
-    .stat-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: var(--success); opacity: 0.7; transition: width 0.3s ease; border-radius: 0 0 6px 6px; }
-    .stat-name { position: relative; z-index: 1; }
+    .stat { text-align: center; padding: 8px 4px; background: rgba(0,0,0,0.2); border-radius: 10px; font-size: 0.75rem; position: relative; overflow: hidden; }
+    .stat-val { font-weight: 800; color: var(--gold); font-size: 1rem; position: relative; z-index: 1; }
+    .stat-cps { font-size: 0.65rem; opacity: 0.7; color: var(--success); position: relative; z-index: 1; margin-top: 2px; }
+    .stat-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: var(--success); opacity: 0.7; transition: width 0.3s ease; border-radius: 0 0 10px 10px; }
+    .stat-name { position: relative; z-index: 1; font-size: 0.85rem; }
     .storage-timer {
       width: 100%; text-align: center; font-size: 0.8rem; padding: 6px 10px; margin-bottom: 6px;
       background: rgba(0,0,0,0.2); border-radius: 8px; color: var(--gold);
@@ -87,8 +97,6 @@
     }
 
     .settings-row { width: 100%; text-align: center; margin-top: 8px; }
-    .btn-reset { padding: 6px 12px; font-size: 0.75rem; background: rgba(233,69,96,0.3); border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); cursor: pointer; }
-    .btn-cheats { padding: 6px 12px; font-size: 0.75rem; background: rgba(46,213,115,0.3); border: 1px solid var(--success); border-radius: 8px; color: var(--success); cursor: pointer; margin-left: 6px; }
     .cheats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
     .btn-cheats-action { padding: 8px 12px; font-size: 0.8rem; background: rgba(46,213,115,0.2); border: 1px solid var(--success); border-radius: 8px; color: var(--success); cursor: pointer; }
 
@@ -116,15 +124,22 @@
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .section-header h2 { margin-bottom: 0; }
     .building, .upgrade-item, .achieve-item {
-      display: flex; align-items: center; justify-content: space-between; padding: 10px;
-      margin-bottom: 6px; background: rgba(0,0,0,0.2); border-radius: 10px;
-      transition: background 0.2s; gap: 8px;
+      display: flex; align-items: center; justify-content: space-between; padding: 7px 8px;
+      margin-bottom: 4px; background: rgba(0,0,0,0.2); border-radius: 8px;
+      transition: background 0.2s; gap: 6px;
     }
     .building:hover, .upgrade-item:hover { background: var(--card-hover); }
     .building-info, .upgrade-info { flex: 1; min-width: 0; }
-    .building-name, .upgrade-name { font-weight: 700; font-size: 0.9rem; }
-    .building-desc, .upgrade-desc { font-size: 0.7rem; opacity: 0.6; }
-    .building-stats { font-size: 0.7rem; color: var(--success); }
+    .building-name, .upgrade-name { font-weight: 700; font-size: 0.82rem; }
+    .building-desc, .upgrade-desc { font-size: 0.65rem; opacity: 0.6; }
+    .building-stats { font-size: 0.65rem; color: var(--success); }
+    .settings-section { width: 100%; background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid var(--border); }
+    .settings-section h2 { font-size: 0.95rem; margin-bottom: 10px; opacity: 0.9; }
+    .settings-row-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; }
+    .settings-label { font-size: 0.85rem; }
+    .settings-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; font-size: 0.8rem; cursor: pointer; }
+    .settings-btn:hover { background: var(--card-hover); }
+    .settings-btn.danger { border-color: var(--accent); color: var(--accent); }
     .btn-buy {
       padding: 8px 12px; background: linear-gradient(135deg, #667eea, #764ba2);
       border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 0.8rem;
@@ -256,14 +271,11 @@
   </div>
   <div class="app-content">
   <div id="view-main" class="view active">
+    <div class="currency-bar" id="currency-bar"></div>
     <div class="stats-panel" id="stats-panel"></div>
     <div class="tutorial-hint" id="tutorial-hint" style="display:none"></div>
     <div class="storage-timer" id="storage-timer"></div>
     <div class="overflow-hint" id="overflow-hint" style="display:none"></div>
-    <div class="settings-row">
-      <button class="btn-reset" onclick="Game.resetProgress()" title="Обнулити прогрес">🔄 Обнулити</button>
-      <button class="btn-cheats" id="sound-btn" onclick="Game.toggleSound()" title="Звук">🔊 Звук</button>
-    </div>
   </div>
 
   <div id="view-production" class="view">
@@ -310,6 +322,35 @@
     <div class="section"><h2>👥 Друзі та буст</h2><p style="font-size:0.8rem;opacity:0.8;margin-bottom:8px;">Друзі можуть дати буст ×2 на 30 хв (1 раз на день).</p><div id="friends-list"></div></div>
   </div>
 
+  <div id="view-settings" class="view">
+    <div class="settings-section">
+      <h2>⚙️ Налаштування</h2>
+      <div class="settings-row-item">
+        <span class="settings-label">🔊 Звук</span>
+        <button class="settings-btn" id="sound-btn" onclick="Game.toggleSound()">Увімк.</button>
+      </div>
+      <div class="settings-row-item">
+        <span class="settings-label">🔄 Обнулити прогрес</span>
+        <button class="settings-btn danger" onclick="Game.resetProgress()">Скинути</button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <h2>ℹ️ Інформація</h2>
+      <div class="settings-row-item">
+        <span class="settings-label">📊 Кліків зроблено</span>
+        <span class="settings-label" id="stats-clicks">0</span>
+      </div>
+      <div class="settings-row-item">
+        <span class="settings-label">🏆 Досягнень</span>
+        <span class="settings-label" id="stats-achievements">0</span>
+      </div>
+      <div class="settings-row-item">
+        <span class="settings-label">🏭 Будівель</span>
+        <span class="settings-label" id="stats-buildings">0</span>
+      </div>
+    </div>
+  </div>
+
   <div id="view-leaderboard" class="view">
     <div class="lb-list"><div id="lb-global" class="lb-empty">Завантаження...</div></div>
     <button class="lb-refresh" onclick="Game.loadLeaderboard()">🔄 Оновити</button>
@@ -330,6 +371,7 @@
     <button class="tab" onclick="Game.switchTab('trade')">🏪 Торгівля</button>
     <button class="tab" onclick="Game.switchTab('gifts')">🎁 Друзі</button>
     <button class="tab" onclick="Game.switchTab('leaderboard')">📊 Топ</button>
+    <button class="tab" onclick="Game.switchTab('settings')">⚙️</button>
   </div>
 
 <script>
@@ -425,6 +467,18 @@
     if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
     if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
     return Math.floor(n).toString();
+  }
+
+  function formatCoins(coins) {
+    coins = Math.floor(Math.max(0, coins));
+    var gold = Math.floor(coins / 10000);
+    var silver = Math.floor((coins % 10000) / 100);
+    var copper = coins % 100;
+    var parts = [];
+    if (gold > 0) parts.push('<span class="coin-group coin-gold">' + format(gold) + ' 🥇</span>');
+    if (silver > 0 || gold > 0) parts.push('<span class="coin-group coin-silver">' + silver + ' 🥈</span>');
+    parts.push('<span class="coin-group coin-copper">' + copper + ' 🪙</span>');
+    return parts.join(' ');
   }
 
   const Toast = {
@@ -1487,6 +1541,7 @@
       if (tab === 'upgrades') this.renderUpgrades(s);
       if (tab === 'achievements') this.renderAchievements();
       if (tab === 'main') this.renderMainExtra(s, cps);
+      if (tab === 'settings') this.renderSettings(s);
     },
 
     isResourceUnlocked: function(r, s) {
@@ -1503,22 +1558,29 @@
     },
 
     renderStats: function(s, cps) {
+      var coinCps = cps.coins || 0;
+      if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) coinCps *= s.boostMultiplier;
+      var coinCpsStr = coinCps >= 0 ? '+' + coinCps.toFixed(1) + '/с' : coinCps.toFixed(1) + '/с';
+      var curBar = document.getElementById('currency-bar');
+      if (curBar) curBar.innerHTML = formatCoins(s.coins || 0) + '<span class="coin-cps">' + escapeHtml(coinCpsStr) + '</span>';
+
       var html = '';
       for (var i = 0; i < RESOURCE_KEYS.length; i++) {
         var r = RESOURCE_KEYS[i];
+        if (r === 'coins') continue;
         if (!this.isResourceUnlocked(r, s)) continue;
         var res = RESOURCES[r] || { name: r, icon: '📦' };
-        var cap = r !== 'coins' ? this.getStorageCap(r) : null;
-        var capStr = cap != null && cap < 1e8 ? ' / ' + format(cap) : '';
+        var cap = this.getStorageCap(r);
+        var capStr = cap < 1e8 ? ' / ' + format(cap) : '';
         var cpsVal = cps[r] || 0;
         if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) cpsVal *= s.boostMultiplier;
         var boostTag = (s.boostActiveUntil || 0) > Date.now() ? ' ×2' : '';
         var cpsStr = cpsVal >= 0 ? '+' + cpsVal.toFixed(1) + '/с' : cpsVal.toFixed(1) + '/с';
         var val = s[r] || 0;
-        var valStr = (r === 'coins' && val > 0 && val < 10) ? Number(val).toFixed(1) : format(val);
-        var barWidth = (cap && cap > 0) ? Math.min(100, (val / cap) * 100) : 0;
+        var valStr = format(val);
+        var barWidth = cap > 0 ? Math.min(100, (val / cap) * 100) : 0;
         var barColor = barWidth > 90 ? 'var(--accent)' : 'var(--success)';
-        html += '<div class="stat"><div class="stat-val">' + escapeHtml(valStr + capStr) + '</div><span class="stat-name">' + res.icon + ' ' + escapeHtml(res.name) + '</span><div class="stat-cps" style="' + (cpsVal < 0 ? 'color:var(--accent)' : '') + '">' + escapeHtml(cpsStr + boostTag) + '</div>' + (cap ? '<div class="stat-bar" style="width:' + barWidth.toFixed(1) + '%;background:' + barColor + '"></div>' : '') + '</div>';
+        html += '<div class="stat"><div class="stat-val">' + escapeHtml(valStr + capStr) + '</div><span class="stat-name">' + res.icon + ' ' + escapeHtml(res.name) + '</span><div class="stat-cps" style="' + (cpsVal < 0 ? 'color:var(--accent)' : '') + '">' + escapeHtml(cpsStr + boostTag) + '</div><div class="stat-bar" style="width:' + barWidth.toFixed(1) + '%;background:' + barColor + '"></div></div>';
       }
       document.getElementById('stats-panel').innerHTML = html || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
 
@@ -1632,6 +1694,17 @@
         html += '<div class="achieve-item ' + (un ? 'unlocked' : '') + '"><span class="badge">' + a.icon + '</span><div><div class="upgrade-name">' + escapeHtml(a.name) + '</div><div class="upgrade-desc">' + escapeHtml(a.desc) + '</div></div>' + (un ? '✅' : '🔒') + '</div>';
       }
       el.innerHTML = html;
+    },
+
+    renderSettings: function(s) {
+      var clicksEl = document.getElementById('stats-clicks');
+      if (clicksEl) clicksEl.textContent = format(s.totalClicks || 0);
+      var achEl = document.getElementById('stats-achievements');
+      if (achEl) achEl.textContent = this.achievements.size + '/' + ACHIEVEMENTS.length;
+      var bldEl = document.getElementById('stats-buildings');
+      var totalB = 0;
+      for (var k in this.purchased) { if (this.purchased.hasOwnProperty(k)) totalB += this.purchased[k]; }
+      if (bldEl) bldEl.textContent = totalB;
     },
 
     renderFriends: function() {
