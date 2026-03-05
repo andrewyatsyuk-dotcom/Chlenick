@@ -77,11 +77,24 @@
       border: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
       max-height: 260px; overflow-y: auto;
     }
-    .stat { text-align: center; padding: 8px 4px; background: rgba(0,0,0,0.2); border-radius: 10px; font-size: 0.75rem; position: relative; overflow: hidden; }
+    .stat { text-align: center; padding: 8px 4px; background: rgba(0,0,0,0.25); border-radius: 10px; font-size: 0.75rem; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); transition: border-color 0.3s; }
+    .stat.stat-active { border-color: rgba(253,203,110,0.2); }
+    .stat-icon { font-size: 1.6rem; display: block; margin-bottom: 2px; position: relative; z-index: 1; filter: drop-shadow(0 0 4px rgba(253,203,110,0.3)); }
     .stat-val { font-weight: 800; color: var(--gold); font-size: 1rem; position: relative; z-index: 1; }
     .stat-cps { font-size: 0.65rem; opacity: 0.7; color: var(--success); position: relative; z-index: 1; margin-top: 2px; }
-    .stat-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: var(--success); opacity: 0.7; transition: width 0.3s ease; border-radius: 0 0 10px 10px; }
-    .stat-name { position: relative; z-index: 1; font-size: 0.85rem; }
+    .stat-bar { position: absolute; bottom: 0; left: 0; height: 5px; background: var(--success); opacity: 0.7; transition: width 0.3s ease; border-radius: 0 0 10px 10px; }
+    .stat-cap { font-size: 0.55rem; opacity: 0.5; position: relative; z-index: 1; }
+    .stage-indicator {
+      width: 100%; display: flex; align-items: center; gap: 4px; padding: 6px 10px; margin-bottom: 8px;
+      background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;
+    }
+    .stage-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;
+      background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+    .stage-dot.unlocked { background: rgba(0,184,148,0.2); border-color: var(--success); }
+    .stage-dot.current { background: rgba(253,203,110,0.25); border-color: var(--gold); box-shadow: 0 0 10px rgba(253,203,110,0.3); }
+    .stage-line { flex: 1; height: 2px; background: rgba(255,255,255,0.1); }
+    .stage-line.filled { background: var(--success); }
+    .building-icon { font-size: 1.3rem; flex-shrink: 0; }
     .storage-timer {
       width: 100%; text-align: center; font-size: 0.8rem; padding: 6px 10px; margin-bottom: 6px;
       background: rgba(0,0,0,0.2); border-radius: 8px; color: var(--gold);
@@ -103,7 +116,7 @@
     .clicker-wrap {
       flex-shrink: 0;
       display: flex; flex-direction: column; align-items: center; padding: 10px 0 6px;
-      margin-bottom: 4px;
+      margin-bottom: 4px; position: relative;
     }
     .clicker-hint { font-size: 0.75rem; opacity: 0.7; margin-top: 4px; }
     .clicker {
@@ -111,10 +124,33 @@
       background: linear-gradient(145deg, #2d5016, #4a7c23);
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
       font-size: 3.2rem; cursor: pointer; user-select: none;
-      box-shadow: 0 6px 24px rgba(74,124,35,0.5); transition: transform 0.08s;
+      box-shadow: 0 6px 24px rgba(74,124,35,0.5), 0 0 40px rgba(74,124,35,0.2);
+      transition: transform 0.08s, box-shadow 0.2s;
       border: 4px solid #5a9c2a; -webkit-tap-highlight-color: transparent;
+      animation: clickerPulse 2s ease-in-out infinite;
     }
-    .clicker:active { transform: scale(0.92); }
+    .clicker:active { transform: scale(0.92); box-shadow: 0 2px 12px rgba(74,124,35,0.8), 0 0 60px rgba(74,124,35,0.4); }
+    @keyframes clickerPulse {
+      0%, 100% { box-shadow: 0 6px 24px rgba(74,124,35,0.5), 0 0 40px rgba(74,124,35,0.2); }
+      50% { box-shadow: 0 6px 24px rgba(74,124,35,0.7), 0 0 60px rgba(74,124,35,0.35); }
+    }
+    .click-particle {
+      position: fixed; pointer-events: none; font-size: 1.4rem; z-index: 99;
+      animation: particleFly 0.7s ease-out forwards;
+    }
+    @keyframes particleFly {
+      0% { opacity: 1; transform: translate(0, 0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4); }
+    }
+    .bg-particle {
+      position: fixed; pointer-events: none; font-size: 1.2rem; opacity: 0.08; z-index: 0;
+      animation: bgFloat linear forwards;
+    }
+    @keyframes bgFloat {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.08; }
+      50% { opacity: 0.12; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
 
     .section {
       width: 100%; background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px;
@@ -272,6 +308,7 @@
   <div class="app-content">
   <div id="view-main" class="view active">
     <div class="currency-bar" id="currency-bar"></div>
+    <div class="stage-indicator" id="stage-indicator"></div>
     <div class="stats-panel" id="stats-panel"></div>
     <div class="tutorial-hint" id="tutorial-hint" style="display:none"></div>
     <div class="storage-timer" id="storage-timer"></div>
@@ -669,7 +706,7 @@
           if (s.seenIntro) introEl.classList.add('hidden');
           else self.state.seenIntro = false;
         }
-        if (s.seenIntro) self.startLoop();
+        if (s.seenIntro) { self.startLoop(); self.startBgParticles(); }
       });
     },
 
@@ -678,6 +715,7 @@
       this.save();
       document.getElementById('intro-modal').classList.add('hidden');
       this.startLoop();
+      this.startBgParticles();
     },
 
     getState: function() {
@@ -910,6 +948,46 @@
       el.style.top = '42%';
       document.body.appendChild(el);
       setTimeout(function() { if (el.parentNode) el.remove(); }, 800);
+      this.spawnClickParticles();
+    },
+
+    spawnClickParticles: function() {
+      var icons = ['🌾', '🪙', '✨', '💫'];
+      var clicker = document.getElementById('clicker');
+      if (!clicker) return;
+      var rect = clicker.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+      for (var i = 0; i < 4; i++) {
+        var p = document.createElement('div');
+        p.className = 'click-particle';
+        p.textContent = icons[Math.floor(Math.random() * icons.length)];
+        var angle = Math.random() * Math.PI * 2;
+        var dist = 40 + Math.random() * 50;
+        p.style.left = cx + 'px';
+        p.style.top = cy + 'px';
+        p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+        p.style.setProperty('--dy', Math.sin(angle) * dist - 20 + 'px');
+        document.body.appendChild(p);
+        setTimeout(function(el) { if (el.parentNode) el.remove(); }, 700, p);
+      }
+    },
+
+    _bgParticleTimer: null,
+    startBgParticles: function() {
+      var self = this;
+      var icons = ['🌾', '🍞', '🫙', '💧', '🍪', '🥐'];
+      this._bgParticleTimer = setInterval(function() {
+        var p = document.createElement('div');
+        p.className = 'bg-particle';
+        p.textContent = icons[Math.floor(Math.random() * icons.length)];
+        p.style.left = (Math.random() * 100) + 'vw';
+        p.style.top = '100vh';
+        p.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+        p.style.animationDuration = (8 + Math.random() * 12) + 's';
+        document.body.appendChild(p);
+        setTimeout(function() { if (p.parentNode) p.remove(); }, 20000);
+      }, 2000);
     },
 
     cycleBuyQuantity: function() {
@@ -1571,16 +1649,15 @@
         if (!this.isResourceUnlocked(r, s)) continue;
         var res = RESOURCES[r] || { name: r, icon: '📦' };
         var cap = this.getStorageCap(r);
-        var capStr = cap < 1e8 ? ' / ' + format(cap) : '';
         var cpsVal = cps[r] || 0;
         if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) cpsVal *= s.boostMultiplier;
         var boostTag = (s.boostActiveUntil || 0) > Date.now() ? ' ×2' : '';
         var cpsStr = cpsVal >= 0 ? '+' + cpsVal.toFixed(1) + '/с' : cpsVal.toFixed(1) + '/с';
         var val = s[r] || 0;
-        var valStr = format(val);
         var barWidth = cap > 0 ? Math.min(100, (val / cap) * 100) : 0;
         var barColor = barWidth > 90 ? 'var(--accent)' : 'var(--success)';
-        html += '<div class="stat"><div class="stat-val">' + escapeHtml(valStr + capStr) + '</div><span class="stat-name">' + res.icon + ' ' + escapeHtml(res.name) + '</span><div class="stat-cps" style="' + (cpsVal < 0 ? 'color:var(--accent)' : '') + '">' + escapeHtml(cpsStr + boostTag) + '</div><div class="stat-bar" style="width:' + barWidth.toFixed(1) + '%;background:' + barColor + '"></div></div>';
+        var isActive = cpsVal > 0 || val > 0;
+        html += '<div class="stat' + (isActive ? ' stat-active' : '') + '"><span class="stat-icon">' + res.icon + '</span><div class="stat-val">' + escapeHtml(format(val)) + '</div><div class="stat-cap">' + escapeHtml(format(cap)) + '</div><div class="stat-cps" style="' + (cpsVal < 0 ? 'color:var(--accent)' : '') + '">' + escapeHtml(cpsStr + boostTag) + '</div><div class="stat-bar" style="width:' + barWidth.toFixed(1) + '%;background:' + barColor + '"></div></div>';
       }
       document.getElementById('stats-panel').innerHTML = html || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
 
@@ -1603,7 +1680,32 @@
       return null;
     },
 
+    renderStageIndicator: function(s) {
+      var el = document.getElementById('stage-indicator');
+      if (!el) return;
+      var stages = [
+        { icon: '🌾', name: 'Зерно', check: true },
+        { icon: '🫙', name: 'Борошно', check: this.getCount('mill') > 0 },
+        { icon: '🍞', name: 'Хліб', check: this.getCount('baker') > 0 },
+        { icon: '🍪', name: 'Печиво', check: this.getCount('oven') > 0 },
+        { icon: '🥐', name: 'Булочки', check: this.getCount('buns_oven') > 0 },
+        { icon: '🥟', name: 'Пиріжки', check: this.getCount('pies_oven') > 0 },
+        { icon: '🎂', name: 'Торти', check: this.getCount('confectionery') > 0 }
+      ];
+      var html = '';
+      var lastUnlocked = 0;
+      for (var i = 0; i < stages.length; i++) { if (stages[i].check) lastUnlocked = i; }
+      for (var j = 0; j < stages.length; j++) {
+        var st = stages[j];
+        var cls = st.check ? (j === lastUnlocked ? 'current' : 'unlocked') : '';
+        html += '<div class="stage-dot ' + cls + '" title="' + escapeHtml(st.name) + '">' + st.icon + '</div>';
+        if (j < stages.length - 1) html += '<div class="stage-line' + (stages[j + 1].check ? ' filled' : '') + '"></div>';
+      }
+      el.innerHTML = html;
+    },
+
     renderMainExtra: function(s, cps) {
+      this.renderStageIndicator(s);
       var tutEl = document.getElementById('tutorial-hint');
       if (tutEl) {
         var hint = this.getTutorialHint(s);
@@ -1663,7 +1765,8 @@
           ? 'Місце: +' + (STORAGE_PER_LEVEL.wheat || 500) + '/рівень на ресурс'
           : '+' + b.prod + ' ' + ((res || {}).icon || '') + '/с';
         var qtyLabel = effectiveQty > 1 ? ' (×' + effectiveQty + ')' : '';
-        html += '<div class="building"><div class="building-info"><div class="building-name">' + escapeHtml(b.name) + ' × ' + count + '</div><div class="building-desc">' + escapeHtml(b.desc) + '</div><div class="building-stats">' + escapeHtml(stats) + '</div></div><button class="btn-buy" ' + (!canBuy ? 'disabled' : '') + ' data-building="' + i + '" onclick="Game.buyBuilding(' + i + ')">' + escapeHtml(format(cost) + qtyLabel) + ' ' + ((RESOURCES[b.costRes] || { icon: '🪙' }).icon) + '</button></div>';
+        var bIcon = b.isStorage ? '📦' : ((RESOURCES[b.resource] || {}).icon || '🏭');
+        html += '<div class="building"><span class="building-icon">' + bIcon + '</span><div class="building-info"><div class="building-name">' + escapeHtml(b.name) + ' × ' + count + '</div><div class="building-desc">' + escapeHtml(b.desc) + '</div><div class="building-stats">' + escapeHtml(stats) + '</div></div><button class="btn-buy" ' + (!canBuy ? 'disabled' : '') + ' data-building="' + i + '" onclick="Game.buyBuilding(' + i + ')">' + escapeHtml(format(cost) + qtyLabel) + ' ' + ((RESOURCES[b.costRes] || { icon: '🪙' }).icon) + '</button></div>';
       }
       el.innerHTML = html;
     },
