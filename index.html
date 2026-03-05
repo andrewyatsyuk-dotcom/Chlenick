@@ -824,9 +824,10 @@
         var res = RESOURCE_KEYS[i];
         var rate = cps[res] || 0;
         var amount = rate < 0.1 ? (res === 'wheat' ? 1 : 0) : clickPct * rate;
+        if (res === 'wheat' && amount < 1) amount = 1;
         if (amount > 0) {
           amount *= mult;
-          if (res !== 'coins') amount = Math.max(0, Math.floor(amount));
+          if (res !== 'coins') amount = Math.max(res === 'wheat' ? 1 : 0, Math.floor(amount));
           else amount = Math.max(0, (amount * 10) / 10);
           if (amount > 0) {
             this.add(res, amount);
