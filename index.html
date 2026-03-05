@@ -3,259 +3,161 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>🍞 Пекарня — Хліб → Печиво → Булочки → Пиріжки</title>
+  <title>⚔️ Королівство — Онлайн стратегія</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-      --card: rgba(255,255,255,0.08);
-      --card-hover: rgba(255,255,255,0.12);
-      --text: #e8e8e8;
+      --bg: linear-gradient(180deg, #0a0e1a 0%, #1a1a2e 50%, #0d1b2a 100%);
+      --card: rgba(255,255,255,0.06);
+      --card-hover: rgba(255,255,255,0.1);
+      --text: #d4d4d4;
       --accent: #e94560;
-      --gold: #fdcb6e;
+      --gold: #ffd700;
+      --wood: #8b6914;
+      --stone: #8899aa;
+      --food: #4caf50;
       --success: #00b894;
-      --border: rgba(255,255,255,0.1);
+      --danger: #e94560;
+      --border: rgba(255,255,255,0.08);
+      --blue: #5b7fff;
     }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      min-height: 100vh;
-      min-height: 100dvh;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 12px;
-      padding-top: max(12px, env(safe-area-inset-top) + 52px);
-      padding-left: max(12px, env(safe-area-inset-left));
-      padding-right: max(12px, env(safe-area-inset-right));
+      min-height: 100vh; min-height: 100dvh;
+      background: var(--bg); color: var(--text);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 8px;
+      padding-top: max(8px, env(safe-area-inset-top) + 48px);
+      padding-bottom: 0;
       overflow-x: hidden;
     }
-    .app-header { flex-shrink: 0; }
-    h1 { font-size: 1.3rem; margin-bottom: 8px; color: white; text-align: center; cursor: pointer; user-select: none; }
+    h1 { font-size: 1.2rem; margin-bottom: 6px; color: white; text-align: center; }
+    .res-bar {
+      width: 100%; max-width: 420px; display: flex; justify-content: space-around; align-items: center;
+      padding: 8px 6px; margin-bottom: 6px;
+      background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 10px;
+    }
+    .res-item { display: flex; align-items: center; gap: 3px; font-weight: 700; font-size: 0.8rem; }
+    .res-item .ri { font-size: 1rem; }
+    .res-gold { color: var(--gold); }
+    .res-wood { color: var(--wood); }
+    .res-stone { color: var(--stone); }
+    .res-food { color: var(--food); }
+    .res-rate { font-size: 0.55rem; opacity: 0.5; margin-left: 1px; }
+    .power-bar {
+      width: 100%; max-width: 420px; text-align: center; font-size: 0.7rem; padding: 4px;
+      margin-bottom: 6px; color: var(--accent); opacity: 0.8;
+    }
     .app-content {
-      flex: 1;
-      width: 100%;
-      max-width: 400px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding-left: 2px;
-      padding-right: 2px;
+      flex: 1; width: 100%; max-width: 420px;
+      overflow-y: auto; overflow-x: hidden;
     }
     .tabs {
-      display: flex;
-      gap: 6px;
-      margin-top: 10px;
-      padding: 10px 0;
-      padding-bottom: max(16px, env(safe-area-inset-bottom));
-      flex-wrap: wrap;
-      justify-content: center;
-      flex-shrink: 0;
+      display: flex; gap: 4px; padding: 6px 0;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      justify-content: center; flex-shrink: 0; flex-wrap: wrap;
     }
     .tab {
-      padding: 8px 14px; border: 1px solid var(--border); border-radius: 10px;
+      padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px;
       background: var(--card); color: var(--text); font-weight: 600; cursor: pointer;
-      font-size: 0.85rem; transition: all 0.2s;
+      font-size: 0.8rem; transition: all 0.2s;
     }
     .tab:hover, .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
-    .view { display: none; width: 100%; max-width: 400px; flex-direction: column; align-items: center; opacity: 0; transition: opacity 0.15s ease; }
-    .view.active { display: flex; opacity: 1; }
-
-    .currency-bar {
-      width: 100%; display: flex; justify-content: center; align-items: center; gap: 12px;
-      padding: 10px 14px; margin-bottom: 8px; background: linear-gradient(135deg, rgba(253,203,110,0.15), rgba(255,165,0,0.1));
-      border: 1px solid rgba(253,203,110,0.3); border-radius: 12px;
-    }
-    .coin-group { display: flex; align-items: center; gap: 3px; font-weight: 800; }
-    .coin-gold { color: #ffd700; font-size: 1.1rem; }
-    .coin-silver { color: #c0c0c0; font-size: 1rem; }
-    .coin-copper { color: #cd7f32; font-size: 0.95rem; }
-    .coin-cps { font-size: 0.65rem; opacity: 0.6; color: var(--success); margin-left: 4px; }
-    .stats-panel {
-      width: 100%; background: var(--card); border-radius: 12px; padding: 10px; margin-bottom: 10px;
-      border: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-      max-height: 260px; overflow-y: auto;
-    }
-    .stat { text-align: center; padding: 8px 4px; background: rgba(0,0,0,0.25); border-radius: 10px; font-size: 0.75rem; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); transition: border-color 0.3s; }
-    .stat.stat-active { border-color: rgba(253,203,110,0.2); }
-    .stat-icon { font-size: 1.6rem; display: block; margin-bottom: 2px; position: relative; z-index: 1; filter: drop-shadow(0 0 4px rgba(253,203,110,0.3)); }
-    .stat-val { font-weight: 800; color: var(--gold); font-size: 1rem; position: relative; z-index: 1; }
-    .stat-cps { font-size: 0.65rem; opacity: 0.7; color: var(--success); position: relative; z-index: 1; margin-top: 2px; }
-    .stat-bar { position: absolute; bottom: 0; left: 0; height: 5px; background: var(--success); opacity: 0.7; transition: width 0.3s ease; border-radius: 0 0 10px 10px; }
-    .stat-cap { font-size: 0.55rem; opacity: 0.5; position: relative; z-index: 1; }
-    .stage-indicator {
-      width: 100%; display: flex; align-items: center; gap: 4px; padding: 6px 10px; margin-bottom: 8px;
-      background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;
-    }
-    .stage-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;
-      background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); transition: all 0.3s; }
-    .stage-dot.unlocked { background: rgba(0,184,148,0.2); border-color: var(--success); }
-    .stage-dot.current { background: rgba(253,203,110,0.25); border-color: var(--gold); box-shadow: 0 0 10px rgba(253,203,110,0.3); }
-    .stage-line { flex: 1; height: 2px; background: rgba(255,255,255,0.1); }
-    .stage-line.filled { background: var(--success); }
-    .building-icon { font-size: 1.3rem; flex-shrink: 0; }
-    .storage-timer {
-      width: 100%; text-align: center; font-size: 0.8rem; padding: 6px 10px; margin-bottom: 6px;
-      background: rgba(0,0,0,0.2); border-radius: 8px; color: var(--gold);
-    }
-    .tutorial-hint {
-      width: 100%; text-align: center; font-size: 0.8rem; padding: 8px 12px; margin-bottom: 8px;
-      background: rgba(102,126,234,0.2); border: 1px solid rgba(102,126,234,0.4); border-radius: 8px;
-      color: #a8b8ff; line-height: 1.4;
-    }
-    .overflow-hint {
-      width: 100%; text-align: center; font-size: 0.7rem; padding: 4px 8px; margin-bottom: 6px;
-      background: rgba(233,69,96,0.15); border-radius: 6px; color: var(--accent); opacity: 0.9;
-    }
-
-    .settings-row { width: 100%; text-align: center; margin-top: 8px; }
-    .cheats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
-    .btn-cheats-action { padding: 8px 12px; font-size: 0.8rem; background: rgba(46,213,115,0.2); border: 1px solid var(--success); border-radius: 8px; color: var(--success); cursor: pointer; }
-
-    .clicker-wrap {
-      flex-shrink: 0;
-      display: flex; flex-direction: column; align-items: center; padding: 10px 0 6px;
-      margin-bottom: 4px; position: relative;
-    }
-    .clicker-hint { font-size: 0.75rem; opacity: 0.7; margin-top: 4px; }
-    .clicker {
-      width: 120px; height: 120px;
-      background: linear-gradient(145deg, #2d5016, #4a7c23);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 3.2rem; cursor: pointer; user-select: none;
-      box-shadow: 0 6px 24px rgba(74,124,35,0.5), 0 0 40px rgba(74,124,35,0.2);
-      transition: transform 0.08s, box-shadow 0.2s;
-      border: 4px solid #5a9c2a; -webkit-tap-highlight-color: transparent;
-      animation: clickerPulse 2s ease-in-out infinite;
-    }
-    .clicker:active { transform: scale(0.92); box-shadow: 0 2px 12px rgba(74,124,35,0.8), 0 0 60px rgba(74,124,35,0.4); }
-    @keyframes clickerPulse {
-      0%, 100% { box-shadow: 0 6px 24px rgba(74,124,35,0.5), 0 0 40px rgba(74,124,35,0.2); }
-      50% { box-shadow: 0 6px 24px rgba(74,124,35,0.7), 0 0 60px rgba(74,124,35,0.35); }
-    }
-    .click-particle {
-      position: fixed; pointer-events: none; font-size: 1.4rem; z-index: 99;
-      animation: particleFly 0.7s ease-out forwards;
-    }
-    @keyframes particleFly {
-      0% { opacity: 1; transform: translate(0, 0) scale(1); }
-      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4); }
-    }
-    .bg-particle {
-      position: fixed; pointer-events: none; font-size: 1.2rem; opacity: 0.08; z-index: 0;
-      animation: bgFloat linear forwards;
-    }
-    @keyframes bgFloat {
-      0% { transform: translateY(0) rotate(0deg); opacity: 0.08; }
-      50% { opacity: 0.12; }
-      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-    }
-
+    .view { display: none; width: 100%; flex-direction: column; gap: 8px; }
+    .view.active { display: flex; }
     .section {
-      width: 100%; background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px;
-      border: 1px solid var(--border); max-height: min(65vh, 520px); overflow-y: auto;
+      background: var(--card); border-radius: 10px; padding: 10px;
+      border: 1px solid var(--border);
     }
-    .section h2 { font-size: 0.95rem; margin-bottom: 10px; opacity: 0.9; }
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .section-header h2 { margin-bottom: 0; }
-    .building, .upgrade-item, .achieve-item {
-      display: flex; align-items: center; justify-content: space-between; padding: 7px 8px;
-      margin-bottom: 4px; background: rgba(0,0,0,0.2); border-radius: 8px;
-      transition: background 0.2s; gap: 6px;
+    .section h2 { font-size: 0.9rem; margin-bottom: 8px; opacity: 0.9; }
+    .row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 8px; margin-bottom: 3px; background: rgba(0,0,0,0.2);
+      border-radius: 8px; gap: 6px; min-height: 40px;
     }
-    .building:hover, .upgrade-item:hover { background: var(--card-hover); }
-    .building-info, .upgrade-info { flex: 1; min-width: 0; }
-    .building-name, .upgrade-name { font-weight: 700; font-size: 0.82rem; }
-    .building-desc, .upgrade-desc { font-size: 0.65rem; opacity: 0.6; }
-    .building-stats { font-size: 0.65rem; color: var(--success); }
-    .settings-section { width: 100%; background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid var(--border); }
-    .settings-section h2 { font-size: 0.95rem; margin-bottom: 10px; opacity: 0.9; }
-    .settings-row-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; }
-    .settings-label { font-size: 0.85rem; }
-    .settings-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; font-size: 0.8rem; cursor: pointer; }
-    .settings-btn:hover { background: var(--card-hover); }
-    .settings-btn.danger { border-color: var(--accent); color: var(--accent); }
-    .btn-buy {
-      padding: 8px 12px; background: linear-gradient(135deg, #667eea, #764ba2);
-      border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 0.8rem;
-      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    .row:hover { background: rgba(255,255,255,0.04); }
+    .row-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .row-info { flex: 1; min-width: 0; }
+    .row-name { font-weight: 700; font-size: 0.8rem; }
+    .row-desc { font-size: 0.62rem; opacity: 0.5; }
+    .row-stat { font-size: 0.65rem; color: var(--success); }
+    .btn {
+      padding: 6px 10px; border: none; border-radius: 6px; color: white;
+      font-weight: 700; font-size: 0.75rem; cursor: pointer; white-space: nowrap; flex-shrink: 0;
     }
-    .btn-buy:disabled { background: #555; cursor: not-allowed; opacity: 0.7; }
-    .btn-buy:active:not(:disabled) { transform: scale(0.95); }
-    .btn-qty {
-      padding: 4px 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--border);
-      border-radius: 6px; color: var(--gold); font-weight: 700; font-size: 0.75rem; cursor: pointer;
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .btn-danger { background: linear-gradient(135deg, #e94560, #c0392b); }
+    .btn-success { background: linear-gradient(135deg, #00b894, #2ecc71); }
+    .btn:disabled { background: #444; cursor: not-allowed; opacity: 0.6; }
+    .btn:active:not(:disabled) { transform: scale(0.95); }
+    .castle-visual {
+      text-align: center; padding: 16px 0 8px;
     }
-    .btn-qty:hover { background: rgba(255,255,255,0.2); }
-
-    .floating-coin {
-      position: fixed; pointer-events: none; font-size: 1.2rem; font-weight: 800; color: var(--gold);
-      animation: floatUp 0.8s ease-out forwards; z-index: 100;
+    .castle-icon { font-size: 4rem; filter: drop-shadow(0 4px 12px rgba(255,215,0,0.3)); }
+    .castle-name { font-size: 1.1rem; font-weight: 800; color: white; margin-top: 4px; }
+    .castle-level { font-size: 0.75rem; color: var(--gold); }
+    .troop-counter {
+      display: flex; align-items: center; gap: 4px; font-size: 0.85rem;
     }
-    @keyframes floatUp {
-      0% { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
+    .troop-counter input {
+      width: 50px; padding: 4px; border-radius: 4px; border: 1px solid var(--border);
+      background: rgba(0,0,0,0.3); color: var(--text); font-size: 0.8rem; text-align: center;
     }
-
-    .lb-list { width: 100%; background: var(--card); border-radius: 12px; overflow: hidden; }
-    .lb-row { display: flex; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); gap: 8px; }
-    .lb-row.lb-row-tg { cursor: pointer; }
-    .lb-row.me { background: rgba(233,69,96,0.2); }
-    .lb-row .lb-open { font-size: 1rem; opacity: 0.7; }
-    .lb-rank { font-weight: 900; width: 28px; text-align: center; }
-    .lb-name { flex: 1; font-weight: 600; font-size: 0.9rem; }
-    .lb-score { font-weight: 800; color: var(--gold); font-size: 0.9rem; }
-    .lb-empty { padding: 20px; text-align: center; opacity: 0.6; font-size: 0.9rem; }
-    .lb-refresh { width: 100%; padding: 12px; margin-top: 8px; background: var(--accent); border: none; border-radius: 10px; color: white; font-weight: 700; cursor: pointer; }
-
-    .achieve-item.unlocked { border-left: 4px solid var(--success); }
-    .achieve-item .badge { font-size: 1.2rem; margin-right: 8px; }
-
+    .player-card {
+      padding: 8px; margin-bottom: 4px; background: rgba(0,0,0,0.2);
+      border-radius: 8px; display: flex; align-items: center; gap: 8px;
+    }
+    .player-card.me { border-left: 3px solid var(--accent); }
+    .player-info { flex: 1; }
+    .player-name { font-weight: 700; font-size: 0.85rem; }
+    .player-power { font-size: 0.7rem; color: var(--accent); }
+    .player-rank { font-weight: 900; width: 24px; text-align: center; font-size: 0.85rem; }
+    .battle-log {
+      max-height: 200px; overflow-y: auto; font-size: 0.75rem; line-height: 1.6;
+      padding: 8px; background: rgba(0,0,0,0.2); border-radius: 8px;
+    }
+    .log-win { color: var(--success); }
+    .log-lose { color: var(--danger); }
+    .log-time { opacity: 0.4; font-size: 0.6rem; }
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200;
       display: flex; align-items: center; justify-content: center; padding: 20px;
     }
     .modal-overlay.hidden { display: none; }
     .modal-box {
-      background: linear-gradient(180deg, #1a1a2e, #16213e); border: 1px solid var(--border);
-      border-radius: 16px; padding: 24px; max-width: 340px; max-height: 85vh; overflow-y: auto;
+      background: linear-gradient(180deg, #0a0e1a, #1a1a2e); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; max-width: 340px; max-height: 85vh; overflow-y: auto;
     }
-    .modal-box h2 { font-size: 1.1rem; margin-bottom: 12px; color: var(--gold); }
-    .modal-box p { font-size: 0.9rem; line-height: 1.5; opacity: 0.9; margin-bottom: 12px; }
-    .modal-btn { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 10px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem; margin-top: 8px; }
+    .modal-box h2 { font-size: 1rem; margin-bottom: 10px; color: var(--gold); }
+    .modal-box p { font-size: 0.85rem; line-height: 1.5; opacity: 0.9; margin-bottom: 10px; }
+    .modal-btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 0.95rem; margin-top: 6px; }
     .modal-input {
-      width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
-      background: rgba(0,0,0,0.3); color: var(--text); font-size: 1rem; margin-bottom: 8px;
+      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+      background: rgba(0,0,0,0.3); color: var(--text); font-size: 0.95rem; margin-bottom: 6px;
     }
-    .modal-input:focus { outline: none; border-color: var(--accent); }
-    .trade-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; margin-bottom: 8px; background: rgba(0,0,0,0.2); border-radius: 10px; gap: 8px; flex-wrap: wrap; }
-    .trade-row .trade-desc { flex: 1; min-width: 0; font-size: 0.85rem; }
-    .gift-form select, .gift-form input { padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); margin: 4px 0; }
-    .friend-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; }
-    .boost-badge { font-size: 0.75rem; background: var(--success); color: white; padding: 2px 8px; border-radius: 6px; }
-
+    .shield-badge { display: inline-block; padding: 2px 8px; background: rgba(91,127,255,0.2); border: 1px solid var(--blue); border-radius: 6px; font-size: 0.65rem; color: var(--blue); margin-left: 6px; }
     #toast-container {
-      position: fixed; top: max(12px, env(safe-area-inset-top) + 8px); left: 50%; transform: translateX(-50%);
-      z-index: 300; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      position: fixed; top: max(8px, env(safe-area-inset-top) + 4px); left: 50%; transform: translateX(-50%);
+      z-index: 300; display: flex; flex-direction: column; align-items: center; gap: 4px;
       pointer-events: none; width: 90%; max-width: 360px;
     }
     .toast {
-      padding: 10px 16px; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
-      color: white; opacity: 0; transform: translateY(-20px); transition: all 0.3s ease;
+      padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+      color: white; opacity: 0; transform: translateY(-16px); transition: all 0.3s ease;
       pointer-events: auto; text-align: center; width: 100%;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
-    .toast.toast-visible { opacity: 1; transform: translateY(0); }
-    .toast-info { background: rgba(102,126,234,0.95); }
+    .toast.show { opacity: 1; transform: translateY(0); }
     .toast-success { background: rgba(0,184,148,0.95); }
     .toast-error { background: rgba(233,69,96,0.95); }
-    .toast-achievement {
-      background: linear-gradient(135deg, rgba(253,203,110,0.95), rgba(255,165,0,0.95));
-      color: #1a1a2e; font-size: 0.9rem;
-    }
-    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+    .toast-info { background: rgba(91,127,255,0.95); }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 4px; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 4px; }
+    .settings-row span { font-size: 0.8rem; }
+    .settings-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; font-size: 0.75rem; cursor: pointer; }
+    .settings-btn.danger { border-color: var(--accent); color: var(--accent); }
   </style>
 </head>
 <body>
@@ -263,1639 +165,550 @@
 
   <div id="intro-modal" class="modal-overlay">
     <div class="modal-box">
-      <h2>🌾 Як ти тут опинився</h2>
-      <p>Прокинувся ти в полі біля невеликого села. У кишені — кілька монет, під ногами — золота пшениця. Місцеві сказали: хто збирає зерно і вміє його перетворити на хліб — той тут і залишається.</p>
-      <p>Ти вирішив спробувати. Спочатку — серп і руки, потім млин, криниця, і нарешті власна пекарня. Шлях від зерна до буханки, від буханки до пекарні з ім'ям.</p>
-      <p>Добре, що саме ти тут. Починай збирати пшеницю.</p>
-      <button class="modal-btn" onclick="Game.closeIntro()">Почати гру</button>
+      <h2>⚔️ Ласкаво просимо, Лорде!</h2>
+      <p>Ви отримали землі на кордоні королівства. Побудуйте замок, зберіть армію та захистіть свої володіння від інших гравців.</p>
+      <p>Видобувайте ресурси, тренуйте воїнів і здійснюйте набіги на сусідів — або зміцнюйте оборону й торгуйте.</p>
+      <input class="modal-input" id="kingdom-name-input" type="text" placeholder="Назва вашого королівства" maxlength="24">
+      <button class="modal-btn" onclick="Game.startGame()">Почати правління</button>
     </div>
   </div>
 
-  <div id="cheats-modal" class="modal-overlay hidden">
+  <div id="battle-result-modal" class="modal-overlay hidden">
     <div class="modal-box">
-      <h2>🔓 Чіти</h2>
-      <div class="cheats-grid">
-        <button class="btn-cheats-action" onclick="Game.cheatAddCoins()">🪙 +10K монет</button>
-        <button class="btn-cheats-action" onclick="Game.cheatAddResources()">📦 Всі ресурси +1K</button>
-        <button class="btn-cheats-action" onclick="Game.cheatUnlockUpgrades()">⬆️ Всі апгрейди</button>
-        <button class="btn-cheats-action" onclick="Game.cheatUnlockAchievements()">🏆 Всі досягнення</button>
-        <button class="btn-cheats-action" onclick="Game.cheatMaxBuildings()">🏭 Макс будівлі</button>
-        <button class="btn-cheats-action" onclick="Game.cheatStorage()">📦 Макс склад</button>
-      </div>
-      <button class="modal-btn" onclick="Game.closeCheats()">Закрити</button>
+      <h2 id="battle-result-title"></h2>
+      <div id="battle-result-body" style="font-size:0.85rem;line-height:1.7;margin-bottom:10px;"></div>
+      <button class="modal-btn" onclick="document.getElementById('battle-result-modal').classList.add('hidden')">Зрозуміло</button>
     </div>
   </div>
 
-  <div id="offline-modal" class="modal-overlay hidden">
-    <div class="modal-box">
-      <h2>😴 Поки тебе не було...</h2>
-      <div id="offline-report" style="font-size:0.9rem;line-height:1.8;margin-bottom:12px;"></div>
-      <button class="modal-btn" onclick="document.getElementById('offline-modal').classList.add('hidden')">Забрати!</button>
-    </div>
-  </div>
+  <h1 id="kingdom-title">⚔️ Королівство</h1>
+  <div class="res-bar" id="res-bar"></div>
+  <div class="power-bar" id="power-bar"></div>
 
-  <div id="input-modal" class="modal-overlay hidden">
-    <div class="modal-box">
-      <h2 id="input-modal-title"></h2>
-      <input class="modal-input" id="input-modal-input" type="text" maxlength="30">
-      <button class="modal-btn" id="input-modal-btn">OK</button>
-    </div>
-  </div>
-
-  <div class="app-header">
-    <h1 id="app-title" onclick="Game.onTitleClick()">🍞 Пекарня</h1>
-  </div>
   <div class="app-content">
-  <div id="view-main" class="view active">
-    <div class="currency-bar" id="currency-bar"></div>
-    <div class="stage-indicator" id="stage-indicator"></div>
-    <div class="stats-panel" id="stats-panel"></div>
-    <div class="tutorial-hint" id="tutorial-hint" style="display:none"></div>
-    <div class="storage-timer" id="storage-timer"></div>
-    <div class="overflow-hint" id="overflow-hint" style="display:none"></div>
-  </div>
-
-  <div id="view-production" class="view">
-    <div class="section">
-      <div class="section-header">
-        <h2>🏭 Будівлі</h2>
-        <button class="btn-qty" id="buy-qty-btn" onclick="Game.cycleBuyQuantity()">×1</button>
-      </div>
-      <div id="buildings-list"></div>
-    </div>
-  </div>
-
-  <div id="view-upgrades" class="view">
-    <div class="section"><h2>⬆️ Покращення</h2><div id="upgrades-list"></div></div>
-  </div>
-
-  <div id="view-achievements" class="view">
-    <div class="section">
-      <h2>🏆 Досягнення <span id="achieve-count" style="font-size:0.75rem;opacity:0.6"></span></h2>
-      <div id="achievements-list"></div>
-    </div>
-  </div>
-
-  <div id="view-trade" class="view">
-    <div class="section">
-      <h2>🏪 Ринок</h2>
-      <p style="font-size:0.8rem;opacity:0.8;margin-bottom:8px;">Пропозиції інших гравців. Приймай угоду — ти віддаєш «Хочу», отримуєш «Віддаю».</p>
-      <button class="btn-buy" style="margin-bottom:8px" onclick="Game.loadMarket()">🔄 Оновити</button>
-      <div id="market-list"></div>
-    </div>
-    <div class="section">
-      <h2>📋 Мій обмін</h2>
-      <div id="my-offers-list"></div>
-    </div>
-    <div class="section">
-      <h2>➕ Виставити пропозицію</h2>
-      <p style="font-size:0.8rem;opacity:0.8;margin-bottom:6px;">Віддаю (ресурс + кількість) → Хочу отримати (ресурс + кількість).</p>
-      <div id="create-offer-form"></div>
-    </div>
-  </div>
-
-  <div id="view-gifts" class="view">
-    <div class="section"><h2>🎁 Подарунки</h2><p style="font-size:0.8rem;opacity:0.8;margin-bottom:8px;">Створи подарунок нижче і поділись посиланням — хто відкриє, отримає ресурси і стане другом.</p><div id="gifts-out-list"></div><h3 style="font-size:0.9rem;margin:12px 0 6px;">Надіслати подарунок</h3><div class="gift-form" id="gift-form"></div></div>
-    <div class="section"><h2>👥 Друзі та буст</h2><p style="font-size:0.8rem;opacity:0.8;margin-bottom:8px;">Друзі можуть дати буст ×2 на 30 хв (1 раз на день).</p><div id="friends-list"></div></div>
-  </div>
-
-  <div id="view-settings" class="view">
-    <div class="settings-section">
-      <h2>⚙️ Налаштування</h2>
-      <div class="settings-row-item">
-        <span class="settings-label">🔊 Звук</span>
-        <button class="settings-btn" id="sound-btn" onclick="Game.toggleSound()">Увімк.</button>
-      </div>
-      <div class="settings-row-item">
-        <span class="settings-label">🔄 Обнулити прогрес</span>
-        <button class="settings-btn danger" onclick="Game.resetProgress()">Скинути</button>
-      </div>
-    </div>
-    <div class="settings-section">
-      <h2>ℹ️ Інформація</h2>
-      <div class="settings-row-item">
-        <span class="settings-label">📊 Кліків зроблено</span>
-        <span class="settings-label" id="stats-clicks">0</span>
-      </div>
-      <div class="settings-row-item">
-        <span class="settings-label">🏆 Досягнень</span>
-        <span class="settings-label" id="stats-achievements">0</span>
-      </div>
-      <div class="settings-row-item">
-        <span class="settings-label">🏭 Будівель</span>
-        <span class="settings-label" id="stats-buildings">0</span>
-      </div>
-    </div>
-  </div>
-
-  <div id="view-leaderboard" class="view">
-    <div class="lb-list"><div id="lb-global" class="lb-empty">Завантаження...</div></div>
-    <button class="lb-refresh" onclick="Game.loadLeaderboard()">🔄 Оновити</button>
-  </div>
-  </div>
-
-  <div class="clicker-wrap">
-    <div class="clicker" id="clicker" onclick="Game.click()">⛏️</div>
-    <span class="clicker-hint">Бог дав дві лопати — копай!</span>
-    <span class="clicker-hint" id="click-percent" style="font-size:0.7rem;opacity:0.8;"></span>
+    <div id="view-city" class="view active"></div>
+    <div id="view-army" class="view"></div>
+    <div id="view-map" class="view"></div>
+    <div id="view-log" class="view"></div>
+    <div id="view-top" class="view"></div>
+    <div id="view-settings" class="view"></div>
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="Game.switchTab('main')">🎮 Гра</button>
-    <button class="tab" onclick="Game.switchTab('production')">🏭 Виробництво</button>
-    <button class="tab" onclick="Game.switchTab('upgrades')">⬆️ Апгрейди</button>
-    <button class="tab" onclick="Game.switchTab('achievements')">🏆 Досягнення</button>
-    <button class="tab" onclick="Game.switchTab('trade')">🏪 Торгівля</button>
-    <button class="tab" onclick="Game.switchTab('gifts')">🎁 Друзі</button>
-    <button class="tab" onclick="Game.switchTab('leaderboard')">📊 Топ</button>
-    <button class="tab" onclick="Game.switchTab('settings')">⚙️</button>
+    <button class="tab active" onclick="G.tab('city')">🏰 Місто</button>
+    <button class="tab" onclick="G.tab('army')">⚔️ Армія</button>
+    <button class="tab" onclick="G.tab('map')">🗺️ Карта</button>
+    <button class="tab" onclick="G.tab('log')">📜 Журнал</button>
+    <button class="tab" onclick="G.tab('top')">📊 Топ</button>
+    <button class="tab" onclick="G.tab('settings')">⚙️</button>
   </div>
 
 <script>
 (function() {
-  'use strict';
+'use strict';
 
-  const LS_KEY = 'bakery_game_v2';
-  const FIREBASE_URL = 'https://leaderboardcookie-default-rtdb.firebaseio.com';
-  const BOT_USERNAME = 'NeAntonina_bot';
-  const OFFLINE_MAX_SEC = 86400;
-  const SAVE_INTERVAL_MS = 30000;
-  const CLOUD_SYNC_DEBOUNCE_MS = 5000;
-  const BOOST_DURATION_MS = 30 * 60 * 1000;
-  const BOOST_COOLDOWN_MS = 24 * 60 * 60 * 1000;
-  const RENDER_THROTTLE_MS = 100;
-  const WHEAT_OVERFLOW_THRESHOLD = 10000;
-  const WHEAT_OVERFLOW_FLOOR = 8000;
-  const WHEAT_OVERFLOW_RATE = 3;
-  const WHEAT_TO_FLOUR_RATIO = 3;
-  const STARTING_COINS = 30;
-  const BASE_CLICK_COINS = 1;
-  const CLICK_BONUS_DEFAULT = 10;
-  const LEADERBOARD_SIZE = 10;
-  const BAKERY_NAME_MAX_LEN = 30;
-  const TITLE_CLICK_THRESHOLD = 3;
-  const TITLE_CLICK_TIMEOUT_MS = 3000;
-  const MAX_BUY_SAFETY = 1000;
+var FB = 'https://leaderboardcookie-default-rtdb.firebaseio.com';
+var LS = 'kingdom_v1';
+var SAVE_MS = 30000;
+var SYNC_MS = 5000;
+var SHIELD_MS = 3600000;
+var ATTACK_COOLDOWN_MS = 300000;
+var OFFLINE_MAX = 86400;
 
-  const RESOURCE_KEYS = ['wheat', 'flour', 'sugar', 'water', 'eggs', 'butter', 'dough', 'bread', 'cookies', 'buns', 'pies', 'cake', 'coins'];
+var RES_KEYS = ['gold','wood','stone','food'];
+var RES_META = {
+  gold: { icon: '🪙', name: 'Золото', cls: 'res-gold' },
+  wood: { icon: '🪵', name: 'Дерево', cls: 'res-wood' },
+  stone: { icon: '🪨', name: 'Камінь', cls: 'res-stone' },
+  food: { icon: '🌾', name: 'Їжа', cls: 'res-food' }
+};
 
-  function escapeHtml(str) {
-    if (typeof str !== 'string') return '';
-    const el = document.createElement('span');
-    el.textContent = str;
-    return el.innerHTML;
+var BUILDINGS = [
+  { id: 'castle', name: 'Замок', icon: '🏰', desc: 'Рівень замку визначає максимум будівель', maxLevel: 20, cost: function(l) { return { gold: 100*(l+1), wood: 80*(l+1), stone: 60*(l+1) }; }, effect: function(l) { return 'Макс. будівель: ' + (3 + l*2); } },
+  { id: 'farm', name: 'Ферма', icon: '🌾', desc: 'Виробляє їжу', maxLevel: 20, cost: function(l) { return { gold: 30*(l+1), wood: 20*(l+1) }; }, prod: { food: 2 }, effect: function(l) { return '+' + (2*(l+1)) + ' їжі/хв'; } },
+  { id: 'lumber', name: 'Лісопилка', icon: '🪵', desc: 'Виробляє дерево', maxLevel: 20, cost: function(l) { return { gold: 25*(l+1), stone: 15*(l+1) }; }, prod: { wood: 2 }, effect: function(l) { return '+' + (2*(l+1)) + ' дерева/хв'; } },
+  { id: 'quarry', name: 'Каменоломня', icon: '⛏️', desc: 'Виробляє камінь', maxLevel: 20, cost: function(l) { return { gold: 25*(l+1), wood: 15*(l+1) }; }, prod: { stone: 1.5 }, effect: function(l) { return '+' + (1.5*(l+1)).toFixed(1) + ' каменю/хв'; } },
+  { id: 'mine', name: 'Золотий рудник', icon: '💰', desc: 'Виробляє золото', maxLevel: 20, cost: function(l) { return { wood: 40*(l+1), stone: 30*(l+1) }; }, prod: { gold: 1 }, effect: function(l) { return '+' + (1*(l+1)) + ' золота/хв'; } },
+  { id: 'barracks', name: 'Казарма', icon: '⚔️', desc: 'Тренує воїнів, визначає макс. армію', maxLevel: 15, cost: function(l) { return { gold: 60*(l+1), wood: 40*(l+1), stone: 30*(l+1) }; }, effect: function(l) { return 'Макс. армія: ' + (10 + l*10); } },
+  { id: 'wall', name: 'Стіна', icon: '🧱', desc: 'Збільшує оборону', maxLevel: 15, cost: function(l) { return { stone: 80*(l+1), wood: 30*(l+1) }; }, effect: function(l) { return '+' + (20*(l+1)) + ' оборони'; } },
+  { id: 'tower', name: 'Вежа', icon: '🏹', desc: 'Збільшує оборону', maxLevel: 10, cost: function(l) { return { stone: 60*(l+1), gold: 40*(l+1) }; }, effect: function(l) { return '+' + (30*(l+1)) + ' оборони'; } }
+];
+
+var TROOPS = [
+  { id: 'warrior', name: 'Воїн', icon: '🗡️', atk: 10, def: 8, cost: { gold: 20, food: 10 }, desc: 'Збалансований боєць' },
+  { id: 'archer', name: 'Лучник', icon: '🏹', atk: 15, def: 5, cost: { gold: 30, food: 15 }, desc: 'Сильна атака, слабкий захист' },
+  { id: 'knight', name: 'Лицар', icon: '🐴', atk: 25, def: 20, cost: { gold: 80, food: 30 }, desc: 'Елітний воїн' }
+];
+
+function fmt(n) {
+  n = Math.floor(n);
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return n.toString();
+}
+function esc(s) { var e = document.createElement('span'); e.textContent = s; return e.innerHTML; }
+
+var Toast = {
+  show: function(msg, type) {
+    var c = document.getElementById('toast-container'); if (!c) return;
+    var el = document.createElement('div');
+    el.className = 'toast toast-' + (type||'info');
+    el.textContent = msg; c.appendChild(el);
+    requestAnimationFrame(function() { el.classList.add('show'); });
+    setTimeout(function() { el.classList.remove('show'); setTimeout(function() { if (el.parentNode) el.remove(); }, 300); }, 3000);
   }
+};
 
-  function debounce(fn, ms) {
-    let timer;
-    return function() {
-      const args = arguments;
-      const ctx = this;
-      clearTimeout(timer);
-      timer = setTimeout(function() { fn.apply(ctx, args); }, ms);
-    };
-  }
+var _syncTimer = null;
+function debouncedSync() {
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(function() { Game.syncCloud(); }, SYNC_MS);
+}
 
-  var _soundEnabled = true;
-  let _audioCtx = null;
-  function getAudioCtx() {
-    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return _audioCtx;
-  }
-  function playSound(type) {
-    if (!_soundEnabled) return;
+var _snd = true;
+function snd(t) {
+  if (!_snd) return;
+  try {
+    var c = new (window.AudioContext||window.webkitAudioContext)();
+    var o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    if (t==='click') { o.frequency.value=500; g.gain.setValueAtTime(0.08,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.06); o.start(); o.stop(c.currentTime+0.06); }
+    else if (t==='build') { o.frequency.value=700; g.gain.setValueAtTime(0.1,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.1); o.start(); o.stop(c.currentTime+0.1); }
+    else if (t==='battle') { o.frequency.value=300; o.type='sawtooth'; g.gain.setValueAtTime(0.12,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.2); o.start(); o.stop(c.currentTime+0.2); }
+  } catch(e) {}
+}
+
+var Game = {
+  s: { gold: 200, wood: 150, stone: 100, food: 100, name: '', started: false, lastSave: 0, shieldUntil: 0, lastAttack: 0, battleLog: [] },
+  b: {},
+  troops: { warrior: 0, archer: 0, knight: 0 },
+  userId: 'anon_' + Math.random().toString(36).slice(2,10),
+  userName: 'Лорд',
+  _tab: 'city',
+  _dirty: true,
+  _lastTick: 0,
+
+  init: function() {
     try {
-      const ctx = getAudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      if (type === 'click') {
-        osc.frequency.setValueAtTime(400, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.05);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.08);
-      } else if (type === 'buy') {
-        osc.frequency.setValueAtTime(600, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.12);
-      } else if (type === 'achievement') {
-        osc.frequency.setValueAtTime(440, ctx.currentTime);
-        osc.frequency.setValueAtTime(554, ctx.currentTime + 0.08);
-        osc.frequency.setValueAtTime(659, ctx.currentTime + 0.16);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.3);
-      }
-    } catch(e) { /* Audio API unavailable */ }
-  }
-
-  function format(val) {
-    const n = typeof val === 'object' && val.toNumber ? val.toNumber() : +val;
-    if (n >= 1e15) return (n / 1e15).toFixed(1) + 'Qd';
-    if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
-    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
-    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-    if (n > 0 && n < 10) return n.toFixed(1);
-    return Math.floor(n).toString();
-  }
-
-  function formatCoins(coins) {
-    coins = Math.floor(Math.max(0, coins));
-    var gold = Math.floor(coins / 10000);
-    var silver = Math.floor((coins % 10000) / 100);
-    var copper = coins % 100;
-    var parts = [];
-    if (gold > 0) parts.push('<span class="coin-group coin-gold">' + format(gold) + ' 🥇</span>');
-    if (silver > 0 || gold > 0) parts.push('<span class="coin-group coin-silver">' + silver + ' 🥈</span>');
-    parts.push('<span class="coin-group coin-copper">' + copper + ' 🪙</span>');
-    return parts.join(' ');
-  }
-
-  const Toast = {
-    show: function(message, type, duration) {
-      type = type || 'info';
-      duration = duration || 3000;
-      const container = document.getElementById('toast-container');
-      if (!container) return;
-      const el = document.createElement('div');
-      el.className = 'toast toast-' + type;
-      el.textContent = message;
-      container.appendChild(el);
-      requestAnimationFrame(function() { el.classList.add('toast-visible'); });
-      setTimeout(function() {
-        el.classList.remove('toast-visible');
-        setTimeout(function() { if (el.parentNode) el.remove(); }, 300);
-      }, duration);
-    },
-    success: function(msg) { this.show(msg, 'success'); },
-    error: function(msg) { this.show(msg, 'error', 5000); },
-    info: function(msg) { this.show(msg, 'info'); },
-    achievement: function(name, icon) { this.show((icon || '🏆') + ' ' + name, 'achievement', 4000); }
-  };
-
-  const RESOURCES = {
-    wheat: { key: 'wheat', name: 'Пшениця', icon: '🌾' },
-    flour: { key: 'flour', name: 'Борошно', icon: '🫙' },
-    sugar: { key: 'sugar', name: 'Цукор', icon: '🧂' },
-    water: { key: 'water', name: 'Вода', icon: '💧' },
-    eggs: { key: 'eggs', name: 'Яйця', icon: '🥚' },
-    butter: { key: 'butter', name: 'Масло', icon: '🧈' },
-    dough: { key: 'dough', name: 'Тісто', icon: '🥣' },
-    bread: { key: 'bread', name: 'Хліб', icon: '🍞', stage: 1 },
-    cookies: { key: 'cookies', name: 'Печиво', icon: '🍪', stage: 2 },
-    buns: { key: 'buns', name: 'Булочки', icon: '🥐', stage: 3 },
-    pies: { key: 'pies', name: 'Пиріжки', icon: '🥟', stage: 4 },
-    cake: { key: 'cake', name: 'Торт', icon: '🎂', stage: 5 },
-    coins: { key: 'coins', name: 'Монети', icon: '🪙' }
-  };
-
-  const STORAGE_BASE = { wheat: 500, flour: 400, water: 300, sugar: 200, eggs: 200, butter: 200, dough: 300, bread: 400, cookies: 300, buns: 300, pies: 200, cake: 200, coins: 1e9 };
-  const STORAGE_PER_LEVEL = { wheat: 500, flour: 400, water: 300, sugar: 200, eggs: 200, butter: 200, dough: 300, bread: 400, cookies: 300, buns: 300, pies: 200, cake: 200, coins: 0 };
-
-  const BUILDINGS = [
-    { id: 'storage', name: 'Склад', desc: 'Місце для пшениці, борошна тощо.', resource: 'storage', costRes: 'coins', cost: 50, costMult: 1.2, prod: 0, isStorage: true },
-    { id: 'wheat_farm', name: 'Ферма пшениці', desc: 'Вирощує пшеницю (вартість 0.1)', resource: 'wheat', costRes: 'coins', cost: 10, costMult: 1.15, prod: 0.5 },
-    { id: 'mill', name: 'Млин', desc: 'Пшениця→борошно', resource: 'flour', costRes: 'coins', cost: 80, costMult: 1.15, prod: 0.5, consumes: { wheat: 0.5 } },
-    { id: 'well', name: 'Криниця', desc: 'Добуває воду', resource: 'water', costRes: 'coins', cost: 40, costMult: 1.15, prod: 0.5 },
-    { id: 'baker', name: 'Пекарня', desc: 'Борошно+вода→хліб', resource: 'bread', costRes: 'coins', cost: 100, costMult: 1.15, prod: 0.5, consumes: { flour: 0.3, water: 0.15 } },
-    { id: 'bread_shop', name: 'Ларчик з хлібом', desc: 'Продає хліб за монети', resource: 'coins', costRes: 'bread', cost: 60, costMult: 1.2, prod: 0.75, consumes: { bread: 0.5 } },
-    { id: 'sugar_factory', name: 'Цукровий завод', desc: 'Виробляє цукор (вартість 0.15)', resource: 'sugar', costRes: 'coins', cost: 200, costMult: 1.15, prod: 0.3 },
-    { id: 'chicken_coop', name: 'Курник', desc: 'Несе яйця (вартість 0.2)', resource: 'eggs', costRes: 'coins', cost: 180, costMult: 1.15, prod: 0.2 },
-    { id: 'dairy_farm', name: 'Молочна ферма', desc: 'Корови→Масло (вартість 0.3)', resource: 'butter', costRes: 'coins', cost: 500, costMult: 1.15, prod: 0.15 },
-    { id: 'mixer', name: 'Міксер', desc: 'Борошно+вода+цукор+яйця→тісто', resource: 'dough', costRes: 'coins', cost: 800, costMult: 1.15, prod: 0.2, consumes: { flour: 0.1, water: 0.05, sugar: 0.03, eggs: 0.03 } },
-    { id: 'oven', name: 'Піч для печива', desc: 'Тісто+масло→печиво', resource: 'cookies', costRes: 'coins', cost: 1500, costMult: 1.15, prod: 0.15, consumes: { dough: 0.04, butter: 0.02 } },
-    { id: 'cookie_market', name: 'Ринок печива', desc: 'Продає печиво за монети', resource: 'coins', costRes: 'cookies', cost: 120, costMult: 1.15, prod: 1.5, consumes: { cookies: 0.15 } },
-    { id: 'buns_oven', name: 'Піч для булочок', desc: 'Тісто+масло+цукор→булочки', resource: 'buns', costRes: 'coins', cost: 3000, costMult: 1.15, prod: 0.1, consumes: { dough: 0.03, butter: 0.015, sugar: 0.008 } },
-    { id: 'buns_shop', name: 'Ларчик з булочками', desc: 'Продає булочки за монети', resource: 'coins', costRes: 'buns', cost: 180, costMult: 1.15, prod: 2, consumes: { buns: 0.1 } },
-    { id: 'pies_oven', name: 'Піч для пиріжків', desc: 'Тісто+масло+яйця→пиріжки', resource: 'pies', costRes: 'coins', cost: 6000, costMult: 1.15, prod: 0.08, consumes: { dough: 0.025, butter: 0.015, eggs: 0.01 } },
-    { id: 'pies_shop', name: 'Ларчик з пиріжками', desc: 'Продає пиріжки за монети', resource: 'coins', costRes: 'pies', cost: 350, costMult: 1.15, prod: 2.4, consumes: { pies: 0.08 } },
-    { id: 'confectionery', name: 'Кондитерська', desc: 'Тісто+масло+цукор+яйця→торт', resource: 'cake', costRes: 'coins', cost: 12000, costMult: 1.15, prod: 0.06, consumes: { dough: 0.02, butter: 0.01, sugar: 0.008, eggs: 0.008 } },
-    { id: 'cake_shop', name: 'Ларчик з тортами', desc: 'Продає торти за монети', resource: 'coins', costRes: 'cake', cost: 400, costMult: 1.15, prod: 3, consumes: { cake: 0.06 } },
-    { id: 'water_mill', name: 'Водяний млин', desc: 'Покращений млин з водою', resource: 'flour', costRes: 'coins', cost: 400, costMult: 1.15, prod: 1.2, consumes: { wheat: 1.0, water: 0.15 } },
-    { id: 'steam_mill', name: 'Паровий млин', desc: 'Найшвидший млин', resource: 'flour', costRes: 'coins', cost: 1200, costMult: 1.15, prod: 3, consumes: { wheat: 2.0, water: 0.4 } }
-  ];
-
-  const UPGRADES = [
-    { id: 'u1', name: 'Міцніші мішки', desc: '×2 пшениці', cost: 80, costRes: 'coins', target: 'wheat', mult: 2 },
-    { id: 'u1b', name: 'Ячмінні жорна', desc: '×1.5 борошна (за пшеницю)', cost: 120, costRes: 'wheat', target: 'flour', mult: 1.5 },
-    { id: 'u2', name: 'Жорна', desc: '×2 борошна', cost: 200, costRes: 'coins', target: 'flour', mult: 2 },
-    { id: 'u2b', name: 'Дріжджі', desc: '×2 хліба', cost: 150, costRes: 'coins', target: 'bread', mult: 2 },
-    { id: 'u3', name: 'Кран', desc: '×2 води', cost: 120, costRes: 'coins', target: 'water', mult: 2 },
-    { id: 'u4', name: 'Фермерські курки', desc: '×2 яєць', cost: 350, costRes: 'coins', target: 'eggs', mult: 2 },
-    { id: 'u5', name: 'Солодка печка', desc: '×2 печива', cost: 800, costRes: 'coins', target: 'cookies', mult: 2 },
-    { id: 'u6', name: 'Торгівельна ліцензія', desc: '×2 монет', cost: 500, costRes: 'coins', target: 'coins', mult: 2 },
-    { id: 'u7', name: 'Булочки свіжі', desc: '×2 булочок', cost: 1500, costRes: 'coins', target: 'buns', mult: 2 },
-    { id: 'u8', name: 'Пиріжки смачні', desc: '×2 пиріжок', cost: 3500, costRes: 'coins', target: 'pies', mult: 2 },
-    { id: 'u9', name: 'Торти преміум', desc: '×2 тортів', cost: 6000, costRes: 'coins', target: 'cake', mult: 2 },
-    { id: 'u10', name: 'Золоті жорна', desc: '×2 пшениці', cost: 200, costRes: 'coins', target: 'wheat', mult: 2 },
-    { id: 'uc1', name: 'Гострий серп', desc: '+5% з кліку (копай)', cost: 120, costRes: 'wheat', clickPercent: 5 },
-    { id: 'uc2', name: 'Міцні лопати', desc: '+5% з кліку', cost: 200, costRes: 'coins', clickPercent: 5 },
-    { id: 'uc3', name: 'Залізне лопата', desc: '+10% з кліку', cost: 800, costRes: 'coins', clickPercent: 10 },
-    { id: 'uc4', name: 'Борошняний удар', desc: '+5% з кліку', cost: 300, costRes: 'flour', clickPercent: 5 },
-    { id: 'uc5', name: 'Золоте лопато', desc: '+10% з кліку', cost: 3000, costRes: 'coins', clickPercent: 10 },
-    { id: 'uc6', name: 'Легенда копальні', desc: '+15% з кліку', cost: 10000, costRes: 'coins', clickPercent: 15 }
-  ];
-
-  const ACHIEVEMENTS = [
-    { id: 'a1', name: 'Перша пшениця', desc: '1K пшениці', icon: '🌾', check: function(s) { return s.wheat >= 1e3; } },
-    { id: 'a2', name: 'Мельник', desc: '1K борошна', icon: '🫙', check: function(s) { return s.flour >= 1e3; } },
-    { id: 'a2b', name: 'Пекар хліба', desc: '100 хліба', icon: '🍞', check: function(s) { return s.bread >= 100; } },
-    { id: 'a3', name: 'Пекар печива', desc: '100 печива', icon: '🍪', check: function(s) { return s.cookies >= 100; } },
-    { id: 'a3b', name: 'Булочник', desc: '50 булочок', icon: '🥐', check: function(s) { return s.buns >= 50; } },
-    { id: 'a4', name: 'Тисячник', desc: '1K монет', icon: '🪙', check: function(s) { return s.coins >= 1e3; } },
-    { id: 'a5', name: 'Магнат', desc: '1M монет', icon: '💰', check: function(s) { return s.coins >= 1e6; } },
-    { id: 'a6', name: 'Швидка рука', desc: '5 пшениці/сек', icon: '⚡', check: function(s) { return (s.wheatCps || 0) >= 5; } },
-    { id: 'a7', name: '10K пшениці', desc: '10K пшениці', icon: '🌾', check: function(s) { return s.wheat >= 1e4; } },
-    { id: 'a8', name: '5K борошна', desc: '5K борошна', icon: '🫙', check: function(s) { return s.flour >= 5e3; } },
-    { id: 'a9', name: '500 хліба', desc: '500 хліба', icon: '🍞', check: function(s) { return s.bread >= 500; } },
-    { id: 'a10', name: 'Кондитер', desc: '50 тортів', icon: '🎂', check: function(s) { return (s.cake || 0) >= 50; } },
-    { id: 'a11', name: 'Мільйонер', desc: '10M монет', icon: '💎', check: function(s) { return s.coins >= 1e7; } },
-    { id: 'a12', name: 'Перший клік', desc: '10 кліків', icon: '👆', check: function(s) { return (s.totalClicks || 0) >= 10; } },
-    { id: 'a13', name: 'Клікер', desc: '100 кліків', icon: '🖱️', check: function(s) { return (s.totalClicks || 0) >= 100; } },
-    { id: 'a14', name: 'Маніяк кліку', desc: '1000 кліків', icon: '🤯', check: function(s) { return (s.totalClicks || 0) >= 1000; } },
-    { id: 'a15', name: 'Фермер', desc: '5 ферм пшениці', icon: '🚜', check: function(s) { return (s.buildingCounts || {}).wheat_farm >= 5; } },
-    { id: 'a16', name: 'Промисловець', desc: '10 будівель (будь-яких)', icon: '🏗️', check: function(s) { return (s.totalBuildings || 0) >= 10; } },
-    { id: 'a17', name: 'Імператор', desc: '50 будівель', icon: '👑', check: function(s) { return (s.totalBuildings || 0) >= 50; } },
-    { id: 'a18', name: 'Пиріжковий бос', desc: '100 пиріжків', icon: '🥟', check: function(s) { return (s.pies || 0) >= 100; } },
-    { id: 'a19', name: 'Водовоз', desc: '1K води', icon: '💧', check: function(s) { return s.water >= 1e3; } },
-    { id: 'a20', name: 'Яєчний барон', desc: '500 яєць', icon: '🥚', check: function(s) { return (s.eggs || 0) >= 500; } },
-    { id: 'a21', name: 'Масляний король', desc: '300 масла', icon: '🧈', check: function(s) { return (s.butter || 0) >= 300; } },
-    { id: 'a22', name: 'Цукрова лихоманка', desc: '500 цукру', icon: '🧂', check: function(s) { return (s.sugar || 0) >= 500; } },
-    { id: 'a23', name: 'Тістоман', desc: '1K тіста', icon: '🥣', check: function(s) { return (s.dough || 0) >= 1e3; } },
-    { id: 'a24', name: 'Мільярдер', desc: '1B монет', icon: '🏦', check: function(s) { return s.coins >= 1e9; } }
-  ];
-
-  // Precomputed upgrade multiplier cache
-  var _upgMultCache = {};
-  function invalidateUpgradeCache() { _upgMultCache = {}; }
-  function getUpgradeMultiplier(resource, boughtUpgrades) {
-    if (_upgMultCache[resource] !== undefined) return _upgMultCache[resource];
-    var mult = 1;
-    for (var i = 0; i < UPGRADES.length; i++) {
-      var u = UPGRADES[i];
-      if (boughtUpgrades.has(u.id) && u.target === resource) mult *= u.mult;
-    }
-    _upgMultCache[resource] = mult;
-    return mult;
-  }
-
-  var Game = {
-    state: {},
-    purchased: {},
-    boughtUpgrades: new Set(),
-    achievements: new Set(),
-    lastSave: 0,
-    _lastTick: 0,
-    _raf: null,
-    _dirty: true,
-    _renderTimer: null,
-    _activeTab: 'main',
-    _buyQuantity: 1,
-    _titleClicks: 0,
-    _titleClickTimer: null,
-    userId: 'anon_' + Math.random().toString(36).slice(2, 10),
-    userName: 'Гравець',
-
-    markDirty: function() { this._dirty = true; },
-
-    init: function() {
-      try {
-        var tg = window.Telegram && window.Telegram.WebApp;
-        if (tg) {
-          tg.ready();
-          tg.expand();
-          var u = tg.initDataUnsafe && tg.initDataUnsafe.user;
-          if (u) {
-            this.userId = String(u.id);
-            this.userName = (u.first_name || '') + (u.last_name ? ' ' + u.last_name[0] + '.' : '');
-          }
-        }
-      } catch(e) { /* Telegram API unavailable */ }
-      this.load();
-      var startParam = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.start_param) || '';
-      var self = this;
-      if (startParam && startParam.indexOf('gift_') === 0) {
-        this.claimGift(startParam.replace('gift_', '')).then(function() {
-          self.continueInit();
-        });
-      } else {
-        this.continueInit();
-      }
-      setInterval(function() { self.save(); }, SAVE_INTERVAL_MS);
-      window.addEventListener('beforeunload', function() { self.save(); });
-    },
-
-    continueInit: function() {
-      var self = this;
-      Promise.resolve(this.loadFromCloud()).then(function() {
-        return self.applyBoostsFromCloud();
-      }).then(function() {
-        self.applyOffline();
-        self.markDirty();
-        self.render();
-        var s = self.getState();
-        var introEl = document.getElementById('intro-modal');
-        if (introEl) {
-          if (s.seenIntro) introEl.classList.add('hidden');
-          else self.state.seenIntro = false;
-        }
-        if (s.seenIntro) { self.startLoop(); self.startBgParticles(); }
-      });
-    },
-
-    closeIntro: function() {
-      this.state.seenIntro = true;
-      this.save();
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if (tg) { tg.ready(); tg.expand(); var u = tg.initDataUnsafe && tg.initDataUnsafe.user; if (u) { this.userId = String(u.id); this.userName = (u.first_name||'')+(u.last_name?' '+u.last_name[0]+'.':''); } }
+    } catch(e) {}
+    this.load();
+    if (this.s.started) {
       document.getElementById('intro-modal').classList.add('hidden');
+      this.applyOffline();
       this.startLoop();
-      this.startBgParticles();
-    },
+    }
+    var self = this;
+    setInterval(function() { self.save(); }, SAVE_MS);
+    window.addEventListener('beforeunload', function() { self.save(); });
+  },
 
-    getState: function() {
-      var s = this.state;
-      var out = {
-        wheat: 0, flour: 0, sugar: 0, water: 0, eggs: 0, butter: 0,
-        dough: 0, bread: 0, cookies: 0, buns: 0, pies: 0, cake: 0, coins: 0,
-        seenIntro: false, bakeryName: '', boostActiveUntil: 0, boostMultiplier: 1,
-        clickBonusPercent: CLICK_BONUS_DEFAULT, totalClicks: 0
+  startGame: function() {
+    var name = document.getElementById('kingdom-name-input').value.trim() || 'Нове Королівство';
+    this.s.name = name.slice(0,24);
+    this.s.started = true;
+    this.s.shieldUntil = Date.now() + SHIELD_MS;
+    this.b.castle = 1; this.b.farm = 1;
+    this.save();
+    document.getElementById('intro-modal').classList.add('hidden');
+    Toast.show('Ласкаво просимо, ' + esc(this.s.name) + '!', 'success');
+    this.startLoop();
+  },
+
+  load: function() {
+    try {
+      var d = localStorage.getItem(LS);
+      if (d) { var data = JSON.parse(d); this.s = data.s || this.s; this.b = data.b || {}; this.troops = data.troops || { warrior:0, archer:0, knight:0 }; }
+    } catch(e) {}
+  },
+
+  save: function() {
+    this.s.lastSave = Date.now();
+    try { localStorage.setItem(LS, JSON.stringify({ s: this.s, b: this.b, troops: this.troops })); } catch(e) {}
+    debouncedSync();
+  },
+
+  syncCloud: function() {
+    if (!FB || /^anon_/.test(this.userId)) return;
+    var payload = { name: this.s.name, userName: this.userName, power: this.getPower(), castle: this.b.castle||0, troops: this.troops, buildings: this.b, resources: { gold: Math.floor(this.s.gold), wood: Math.floor(this.s.wood), stone: Math.floor(this.s.stone), food: Math.floor(this.s.food) }, shieldUntil: this.s.shieldUntil||0, updatedAt: Date.now(), save: { s: this.s, b: this.b, troops: this.troops } };
+    fetch(FB+'/kingdoms/'+this.userId+'.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }).catch(function(){});
+  },
+
+  loadFromCloud: function() {
+    if (!FB || /^anon_/.test(this.userId)) return Promise.resolve();
+    var self = this;
+    return fetch(FB+'/kingdoms/'+this.userId+'.json').then(function(r){return r.json();}).then(function(d) {
+      if (!d||!d.save) return;
+      if ((d.save.s.lastSave||0) >= (self.s.lastSave||0)) {
+        self.s = d.save.s; self.b = d.save.b||{}; self.troops = d.save.troops||{warrior:0,archer:0,knight:0};
+        try { localStorage.setItem(LS, JSON.stringify({s:self.s,b:self.b,troops:self.troops})); } catch(e){}
+      }
+    }).catch(function(){});
+  },
+
+  getMaxBuildings: function() { return 3 + (this.b.castle||0) * 2; },
+  getTotalBuildings: function() { var t=0; for(var k in this.b) { if(k!=='castle') t += (this.b[k]||0); } return t; },
+  getMaxArmy: function() { return 10 + (this.b.barracks||0) * 10; },
+  getTotalTroops: function() { var t=0; for(var k in this.troops) t += (this.troops[k]||0); return t; },
+
+  getProduction: function() {
+    var prod = { gold: 0, wood: 0, stone: 0, food: 0 };
+    for (var i=0; i<BUILDINGS.length; i++) {
+      var bd = BUILDINGS[i];
+      if (!bd.prod) continue;
+      var lvl = this.b[bd.id] || 0;
+      if (lvl <= 0) continue;
+      for (var r in bd.prod) { prod[r] += bd.prod[r] * lvl; }
+    }
+    var armyFood = this.getTotalTroops() * 0.5;
+    prod.food -= armyFood;
+    return prod;
+  },
+
+  getDefense: function() {
+    var def = 0;
+    var wall = this.b.wall || 0;
+    var tower = this.b.tower || 0;
+    def += wall * 20; def += tower * 30;
+    for (var k in this.troops) { var td = TROOPS.find(function(t){return t.id===k;}); if (td) def += (this.troops[k]||0) * td.def; }
+    return def;
+  },
+
+  getAttackPower: function() {
+    var atk = 0;
+    for (var k in this.troops) { var td = TROOPS.find(function(t){return t.id===k;}); if (td) atk += (this.troops[k]||0) * td.atk; }
+    return atk;
+  },
+
+  getPower: function() { return this.getAttackPower() + this.getDefense() + (this.b.castle||0)*50; },
+
+  canAfford: function(cost) {
+    for (var r in cost) { if ((this.s[r]||0) < cost[r]) return false; }
+    return true;
+  },
+
+  spend: function(cost) { for (var r in cost) this.s[r] = Math.max(0, (this.s[r]||0) - cost[r]); },
+
+  upgradeBuilding: function(id) {
+    var bd = BUILDINGS.find(function(b){return b.id===id;});
+    if (!bd) return;
+    var lvl = this.b[id] || 0;
+    if (lvl >= bd.maxLevel) { Toast.show('Максимальний рівень!','error'); return; }
+    if (id !== 'castle' && this.getTotalBuildings() >= this.getMaxBuildings() && lvl === 0) {
+      Toast.show('Покращте замок для нових будівель','error'); return;
+    }
+    var cost = bd.cost(lvl);
+    if (!this.canAfford(cost)) { Toast.show('Не вистачає ресурсів','error'); return; }
+    this.spend(cost);
+    this.b[id] = lvl + 1;
+    snd('build');
+    Toast.show(bd.icon + ' ' + bd.name + ' → рівень ' + (lvl+1), 'success');
+    this.save(); this._dirty = true;
+  },
+
+  trainTroop: function(id, qty) {
+    var td = TROOPS.find(function(t){return t.id===id;});
+    if (!td) return;
+    qty = Math.max(1, Math.min(qty, 50));
+    if (this.getTotalTroops() + qty > this.getMaxArmy()) {
+      qty = this.getMaxArmy() - this.getTotalTroops();
+      if (qty <= 0) { Toast.show('Армія повна! Покращте казарму','error'); return; }
+    }
+    var cost = {}; for (var r in td.cost) cost[r] = td.cost[r] * qty;
+    if (!this.canAfford(cost)) { Toast.show('Не вистачає ресурсів','error'); return; }
+    this.spend(cost);
+    this.troops[id] = (this.troops[id]||0) + qty;
+    snd('build');
+    Toast.show(td.icon + ' +' + qty + ' ' + td.name, 'success');
+    this.save(); this._dirty = true;
+  },
+
+  attack: function(targetId) {
+    if (!FB || /^anon_/.test(this.userId)) return;
+    if (this.getAttackPower() <= 0) { Toast.show('Немає армії для атаки!','error'); return; }
+    if (Date.now() - (this.s.lastAttack||0) < ATTACK_COOLDOWN_MS) {
+      var left = Math.ceil((ATTACK_COOLDOWN_MS - (Date.now() - this.s.lastAttack)) / 60000);
+      Toast.show('Армія відпочиває! Зачекайте ' + left + ' хв','info'); return;
+    }
+    var self = this;
+    Toast.show('⚔️ Атакуємо...','info');
+    fetch(FB+'/kingdoms/'+targetId+'.json').then(function(r){return r.json();}).then(function(target) {
+      if (!target) { Toast.show('Ціль не знайдена','error'); return; }
+      if ((target.shieldUntil||0) > Date.now()) { Toast.show('У цілі активний щит!','error'); return; }
+      var myAtk = self.getAttackPower();
+      var theirDef = 0;
+      var tw = target.buildings && target.buildings.wall || 0;
+      var tt = target.buildings && target.buildings.tower || 0;
+      theirDef += tw * 20 + tt * 30;
+      if (target.troops) { for (var k in target.troops) { var td = TROOPS.find(function(t){return t.id===k;}); if (td) theirDef += (target.troops[k]||0) * td.def; } }
+
+      var ratio = myAtk / Math.max(1, theirDef);
+      var win = ratio > 0.8;
+      var lossRate = win ? Math.max(0.1, 1 - ratio*0.5) : 0.6;
+
+      for (var tk in self.troops) {
+        var lost = Math.ceil((self.troops[tk]||0) * lossRate * (0.3 + Math.random()*0.3));
+        self.troops[tk] = Math.max(0, (self.troops[tk]||0) - lost);
+      }
+
+      var loot = { gold: 0, wood: 0, stone: 0, food: 0 };
+      if (win && target.resources) {
+        var stealPct = Math.min(0.3, ratio * 0.15);
+        for (var rk in loot) {
+          loot[rk] = Math.floor((target.resources[rk]||0) * stealPct);
+          self.s[rk] = (self.s[rk]||0) + loot[rk];
+        }
+        if (target.troops) {
+          var defLoss = {};
+          for (var dk in target.troops) {
+            defLoss[dk] = Math.ceil((target.troops[dk]||0) * 0.3);
+            target.troops[dk] = Math.max(0, target.troops[dk] - defLoss[dk]);
+          }
+        }
+        for (var lr in loot) {
+          target.resources[lr] = Math.max(0, (target.resources[lr]||0) - loot[lr]);
+        }
+        if (target.save) {
+          target.save.s.gold = target.resources.gold; target.save.s.wood = target.resources.wood;
+          target.save.s.stone = target.resources.stone; target.save.s.food = target.resources.food;
+          if (target.troops) target.save.troops = target.troops;
+        }
+        fetch(FB+'/kingdoms/'+targetId+'.json', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(target) }).catch(function(){});
+      }
+
+      self.s.lastAttack = Date.now();
+      var logEntry = {
+        time: Date.now(), win: win, target: target.name || 'Невідомий',
+        loot: loot, myPower: myAtk, theirDef: theirDef
       };
-      for (var k in s) { if (s.hasOwnProperty(k)) out[k] = s[k]; }
-      for (var i = 0; i < RESOURCE_KEYS.length; i++) {
-        var r = RESOURCE_KEYS[i];
-        out[r] = Math.max(0, out[r] || 0);
+      if (!self.s.battleLog) self.s.battleLog = [];
+      self.s.battleLog.unshift(logEntry);
+      if (self.s.battleLog.length > 20) self.s.battleLog = self.s.battleLog.slice(0, 20);
+
+      snd('battle');
+      var titleEl = document.getElementById('battle-result-title');
+      var bodyEl = document.getElementById('battle-result-body');
+      if (win) {
+        titleEl.textContent = '⚔️ Перемога!';
+        bodyEl.innerHTML = 'Ви розбили <b>' + esc(target.name||'Невідомий') + '</b>!<br>' +
+          '🪙 +' + fmt(loot.gold) + ' 🪵 +' + fmt(loot.wood) + ' 🪨 +' + fmt(loot.stone) + ' 🌾 +' + fmt(loot.food);
+      } else {
+        titleEl.textContent = '💀 Поразка!';
+        bodyEl.innerHTML = 'Оборона <b>' + esc(target.name||'Невідомий') + '</b> виявилась занадто сильною.<br>Ваша армія зазнала втрат.';
       }
-      return out;
-    },
-
-    getCount: function(id) { return this.purchased[id] || 0; },
-
-    getCost: function(b, extraOwned) {
-      var n = this.getCount(b.id) + (extraOwned || 0);
-      return Math.floor(b.cost * Math.pow(b.costMult, n));
-    },
-
-    getMultiBuyCost: function(b, quantity) {
-      var total = 0;
-      var startCount = this.getCount(b.id);
-      for (var i = 0; i < quantity; i++) {
-        total += Math.floor(b.cost * Math.pow(b.costMult, startCount + i));
-      }
-      return total;
-    },
-
-    getMaxBuyable: function(b) {
-      var s = this.getState();
-      var available = s[b.costRes] || 0;
-      var count = 0;
-      var currentOwned = this.getCount(b.id);
-      while (count < MAX_BUY_SAFETY) {
-        var cost = Math.floor(b.cost * Math.pow(b.costMult, currentOwned + count));
-        if (cost > available) break;
-        available -= cost;
-        count++;
-      }
-      return count;
-    },
-
-    canAfford: function(res, amount) {
-      var s = this.getState();
-      return (s[res] || 0) >= amount;
-    },
-
-    spend: function(res, amount) {
-      var cur = this.state[res] || 0;
-      this.state[res] = Math.max(0, cur - amount);
-    },
-
-    getStorageCap: function(res) {
-      if (res === 'coins') return 1e9;
-      var base = STORAGE_BASE[res] || 500;
-      var perLevel = STORAGE_PER_LEVEL[res] || 500;
-      var levels = this.getCount('storage') || 0;
-      return base + perLevel * levels;
-    },
-
-    getTimeToFullStorage: function() {
-      var s = this.getState();
-      var cps = this.calcCPS();
-      var best = null;
-      for (var i = 0; i < RESOURCE_KEYS.length; i++) {
-        var r = RESOURCE_KEYS[i];
-        if (r === 'coins') continue;
-        var cap = this.getStorageCap(r);
-        var cur = s[r] || 0;
-        var rate = cps[r] || 0;
-        if (rate <= 0 || cur >= cap) continue;
-        var sec = (cap - cur) / rate;
-        if (sec > 0 && (!best || sec < best.sec)) {
-          var res = RESOURCES[r] || { name: r, icon: '📦' };
-          best = { res: r, name: res.name, icon: res.icon, sec: sec };
-        }
-      }
-      return best;
-    },
-
-    formatTime: function(sec) {
-      if (sec >= 3600) return (sec / 3600).toFixed(1) + ' год';
-      if (sec >= 60) return Math.ceil(sec / 60) + ' хв';
-      return Math.ceil(sec) + ' с';
-    },
-
-    add: function(res, amount) {
-      if (amount <= 0) return;
-      var cap = this.getStorageCap(res);
-      var cur = Math.max(0, this.state[res] || 0);
-      this.state[res] = Math.min(cap, cur + amount);
-    },
-
-    calcCPS: function() {
-      var s = this.getState();
-      var cps = {};
-      var consumption = {};
-      for (var i = 0; i < RESOURCE_KEYS.length; i++) {
-        cps[RESOURCE_KEYS[i]] = 0;
-        consumption[RESOURCE_KEYS[i]] = 0;
-      }
-
-      for (var bi = 0; bi < BUILDINGS.length; bi++) {
-        var b = BUILDINGS[bi];
-        if (b.isStorage) continue;
-        var n = this.getCount(b.id);
-        if (n <= 0) continue;
-        var mult = getUpgradeMultiplier(b.resource, this.boughtUpgrades);
-        var prod = b.prod * n * mult;
-        var bn = 1;
-        if (b.consumes) {
-          var keys = Object.keys(b.consumes);
-          for (var ci = 0; ci < keys.length; ci++) {
-            var cres = keys[ci];
-            var req = b.consumes[cres];
-            var avail = s[cres] || 0;
-            var needPerSec = req * n;
-            if (needPerSec > 0 && avail < needPerSec * 2) bn = Math.min(bn, Math.max(0.1, avail / (needPerSec * 2)));
-          }
-          prod *= bn;
-          for (var ci2 = 0; ci2 < keys.length; ci2++) {
-            var cres2 = keys[ci2];
-            if (consumption[cres2] !== undefined) consumption[cres2] += b.consumes[cres2] * n * bn;
-          }
-        }
-        cps[b.resource] += prod;
-      }
-
-      for (var ri = 0; ri < RESOURCE_KEYS.length; ri++) {
-        var rk = RESOURCE_KEYS[ri];
-        cps[rk] = (cps[rk] || 0) - (consumption[rk] || 0);
-      }
-      if ((s.wheat || 0) > WHEAT_OVERFLOW_THRESHOLD) {
-        cps.wheat = (cps.wheat || 0) - WHEAT_OVERFLOW_RATE;
-        cps.flour = (cps.flour || 0) + WHEAT_OVERFLOW_RATE / WHEAT_TO_FLOUR_RATIO;
-      }
-      return cps;
-    },
-
-    tick: function(dt) {
-      for (var bi = 0; bi < BUILDINGS.length; bi++) {
-        var b = BUILDINGS[bi];
-        if (b.isStorage) continue;
-        var n = this.getCount(b.id);
-        if (n <= 0) continue;
-        var mult = getUpgradeMultiplier(b.resource, this.boughtUpgrades);
-        var prod = b.prod * n * mult * dt;
-
-        if (b.consumes) {
-          var minScale = 1;
-          var keys = Object.keys(b.consumes);
-          for (var ci = 0; ci < keys.length; ci++) {
-            var cres = keys[ci];
-            var avail = this.state[cres] || 0;
-            var need = b.consumes[cres] * n * dt;
-            if (need > 0) minScale = Math.min(minScale, avail >= need ? 1 : Math.max(0, avail / need));
-          }
-          prod *= minScale;
-          for (var ci2 = 0; ci2 < keys.length; ci2++) {
-            var cres2 = keys[ci2];
-            var take = Math.min(this.state[cres2] || 0, b.consumes[cres2] * n * dt * minScale);
-            if (take > 0) this.spend(cres2, take);
-          }
-        }
-
-        var prodMult = 1;
-        if ((this.state.boostActiveUntil || 0) > Date.now() && (this.state.boostMultiplier || 1) > 1) prodMult = this.state.boostMultiplier;
-        this.add(b.resource, prod * prodMult);
-      }
-
-      if ((this.state.wheat || 0) > WHEAT_OVERFLOW_THRESHOLD) {
-        var have = this.state.wheat || 0;
-        var excess = Math.min(have - WHEAT_OVERFLOW_FLOOR, WHEAT_OVERFLOW_RATE * dt, have);
-        if (excess > 0) {
-          this.spend('wheat', excess);
-          this.add('flour', excess / WHEAT_TO_FLOUR_RATIO);
-        }
-      }
-      for (var ri = 0; ri < RESOURCE_KEYS.length; ri++) {
-        var rk = RESOURCE_KEYS[ri];
-        if (this.state[rk] < 0) this.state[rk] = 0;
-      }
-    },
-
-    click: function() {
-      var s = this.getState();
-      var cps = this.calcCPS();
-      var mult = (s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1 ? s.boostMultiplier : 1;
-      var clickPct = (s.clickBonusPercent || CLICK_BONUS_DEFAULT) / 100;
-      var gained = [];
-      for (var i = 0; i < RESOURCE_KEYS.length; i++) {
-        var res = RESOURCE_KEYS[i];
-        var rate = cps[res] || 0;
-        var amount = rate < 0.1 ? (res === 'wheat' ? 1 : 0) : clickPct * rate;
-        if (res === 'wheat' && amount < 1) amount = 1;
-        if (amount > 0) {
-          amount *= mult;
-          if (res !== 'coins') amount = Math.max(res === 'wheat' ? 1 : 0, Math.floor(amount));
-          else amount = Math.max(0, (amount * 10) / 10);
-          if (amount > 0) {
-            this.add(res, amount);
-            var icon = (RESOURCES[res] || {}).icon || '📦';
-            var show = res === 'coins' && amount < 10 ? amount.toFixed(1) : (amount >= 1e6 ? (amount/1e6).toFixed(1) + 'M' : amount >= 1e3 ? (amount/1e3).toFixed(1) + 'K' : Math.floor(amount));
-            gained.push(icon + ' ' + show);
-          }
-        }
-      }
-      if ((cps.coins || 0) < BASE_CLICK_COINS && mult >= 1) this.add('coins', BASE_CLICK_COINS);
-      this.state.totalClicks = (this.state.totalClicks || 0) + 1;
-      this.showFloating(gained.length ? '+' + (s.clickBonusPercent || CLICK_BONUS_DEFAULT) + '% ' + gained.slice(0, 5).join(' ') : '+копай!');
-      try {
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-      } catch(e) { /* Haptics unavailable */ }
-      playSound('click');
-      this.markDirty();
-      this.save();
-    },
-
-    showFloating: function(text) {
-      var el = document.createElement('div');
-      el.className = 'floating-coin';
-      el.textContent = text;
-      el.style.left = (window.innerWidth / 2 - 30 + (Math.random() - 0.5) * 40) + 'px';
-      el.style.top = '42%';
-      document.body.appendChild(el);
-      setTimeout(function() { if (el.parentNode) el.remove(); }, 800);
-      this.spawnClickParticles();
-    },
-
-    spawnClickParticles: function() {
-      var icons = ['🌾', '🪙', '✨', '💫'];
-      var clicker = document.getElementById('clicker');
-      if (!clicker) return;
-      var rect = clicker.getBoundingClientRect();
-      var cx = rect.left + rect.width / 2;
-      var cy = rect.top + rect.height / 2;
-      for (var i = 0; i < 4; i++) {
-        var p = document.createElement('div');
-        p.className = 'click-particle';
-        p.textContent = icons[Math.floor(Math.random() * icons.length)];
-        var angle = Math.random() * Math.PI * 2;
-        var dist = 40 + Math.random() * 50;
-        p.style.left = cx + 'px';
-        p.style.top = cy + 'px';
-        p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
-        p.style.setProperty('--dy', Math.sin(angle) * dist - 20 + 'px');
-        document.body.appendChild(p);
-        setTimeout(function(el) { if (el.parentNode) el.remove(); }, 700, p);
-      }
-    },
-
-    _bgParticleTimer: null,
-    startBgParticles: function() {
-      var self = this;
-      var icons = ['🌾', '🍞', '🫙', '💧', '🍪', '🥐'];
-      this._bgParticleTimer = setInterval(function() {
-        var p = document.createElement('div');
-        p.className = 'bg-particle';
-        p.textContent = icons[Math.floor(Math.random() * icons.length)];
-        p.style.left = (Math.random() * 100) + 'vw';
-        p.style.top = '100vh';
-        p.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
-        p.style.animationDuration = (8 + Math.random() * 12) + 's';
-        document.body.appendChild(p);
-        setTimeout(function() { if (p.parentNode) p.remove(); }, 20000);
-      }, 2000);
-    },
-
-    cycleBuyQuantity: function() {
-      if (this._buyQuantity === 1) this._buyQuantity = 10;
-      else if (this._buyQuantity === 10) this._buyQuantity = -1;
-      else this._buyQuantity = 1;
-      var btn = document.getElementById('buy-qty-btn');
-      if (btn) btn.textContent = this._buyQuantity === -1 ? 'Макс' : '×' + this._buyQuantity;
-      this.markDirty();
-    },
-
-    buyBuilding: function(bIndex) {
-      var b = BUILDINGS[bIndex];
-      if (!b) return;
-      var qty = this._buyQuantity;
-      if (qty === -1) qty = this.getMaxBuyable(b);
-      if (qty <= 0) return;
-
-      var totalCost = this.getMultiBuyCost(b, qty);
-      if (!this.canAfford(b.costRes, totalCost)) {
-        qty = this.getMaxBuyable(b);
-        if (qty <= 0) return;
-        totalCost = this.getMultiBuyCost(b, qty);
-      }
-
-      this.spend(b.costRes, totalCost);
-      this.purchased[b.id] = (this.purchased[b.id] || 0) + qty;
-      invalidateUpgradeCache();
-
-      if (b.id === 'baker' && this.getCount('baker') >= 1 && !this.getState().bakeryName) {
-        this.showInputModal('Назви свою пекарню', 'Моя пекарня', function(name) {
-          Game.state.bakeryName = String(name || 'Моя пекарня').slice(0, BAKERY_NAME_MAX_LEN);
-          Game.save();
-          Game.markDirty();
-        });
-      }
-      playSound('buy');
-      if (qty > 1) Toast.success('Куплено ' + escapeHtml(b.name) + ' ×' + qty);
-      this.save();
-      this.markDirty();
-    },
-
-    buyUpgrade: function(uIndex) {
-      var u = UPGRADES[uIndex];
-      if (!u) return;
-      if (this.boughtUpgrades.has(u.id)) return;
-      if (!this.canAfford(u.costRes, u.cost)) return;
-      this.spend(u.costRes, u.cost);
-      this.boughtUpgrades.add(u.id);
-      invalidateUpgradeCache();
-      if (u.clickPercent) this.state.clickBonusPercent = (this.getState().clickBonusPercent || CLICK_BONUS_DEFAULT) + u.clickPercent;
-      playSound('buy');
-      Toast.success('Куплено: ' + escapeHtml(u.name));
-      this.save();
-      this.markDirty();
-    },
-
-    checkAchievements: function() {
-      var s = this.getState();
-      var cps = this.calcCPS();
-      s.wheatCps = cps.wheat;
-      s.breadCps = cps.bread;
-      s.cookiesCps = cps.cookies;
-      s.buildingCounts = this.purchased;
-      var totalB = 0;
-      for (var k in this.purchased) { if (this.purchased.hasOwnProperty(k)) totalB += this.purchased[k]; }
-      s.totalBuildings = totalB;
-      for (var i = 0; i < ACHIEVEMENTS.length; i++) {
-        var a = ACHIEVEMENTS[i];
-        if (!this.achievements.has(a.id) && a.check(s)) {
-          this.achievements.add(a.id);
-          playSound('achievement');
-          Toast.achievement(a.name, a.icon);
-        }
-      }
-    },
-
-    resetProgress: function() {
-      if (!confirm('Обнулити весь прогрес? Це не можна скасувати.')) return;
-      this.state = {};
-      this.purchased = {};
-      this.boughtUpgrades = new Set();
-      this.achievements = new Set();
-      invalidateUpgradeCache();
-      this.state.coins = STARTING_COINS;
-      this.state.seenIntro = false;
-      this.state.bakeryName = '';
-      this.state.totalClicks = 0;
-      this.lastSave = 0;
-      try {
-        localStorage.setItem(LS_KEY, JSON.stringify({ state: this.state, purchased: {}, boughtUpgrades: [], achievements: [] }));
-      } catch(e) { Toast.error('Не вдалося зберегти'); }
-      document.getElementById('intro-modal').classList.remove('hidden');
-      this.markDirty();
-      this.render();
-      this.switchTab('main');
-    },
-
-    onTitleClick: function() {
-      var self = this;
-      this._titleClicks++;
-      clearTimeout(this._titleClickTimer);
-      this._titleClickTimer = setTimeout(function() { self._titleClicks = 0; }, TITLE_CLICK_TIMEOUT_MS);
-      if (this._titleClicks >= TITLE_CLICK_THRESHOLD) {
-        this._titleClicks = 0;
-        this.openCheats();
-      }
-    },
-
-    openCheats: function() {
-      var el = document.getElementById('cheats-modal');
-      if (el) el.classList.remove('hidden');
-    },
-    closeCheats: function() {
-      var el = document.getElementById('cheats-modal');
-      if (el) el.classList.add('hidden');
-    },
-    toggleSound: function() {
-      _soundEnabled = !_soundEnabled;
-      var btn = document.getElementById('sound-btn');
-      if (btn) btn.textContent = _soundEnabled ? '🔊 Звук' : '🔇 Тихо';
-      if (_soundEnabled) playSound('click');
-    },
-    cheatAddCoins: function() {
-      this.add('coins', 10000);
-      this.save(); this.markDirty(); playSound('achievement');
-      Toast.success('+10K монет');
-    },
-    cheatAddResources: function() {
-      var self = this;
-      RESOURCE_KEYS.forEach(function(r) { if (r !== 'coins') self.add(r, 1000); });
-      this.add('coins', 5000);
-      this.save(); this.markDirty(); playSound('achievement');
-      Toast.success('Всі ресурси +1K');
-    },
-    cheatUnlockUpgrades: function() {
-      UPGRADES.forEach(function(u) { Game.boughtUpgrades.add(u.id); });
-      invalidateUpgradeCache();
-      this.save(); this.markDirty(); playSound('achievement');
-      Toast.success('Всі апгрейди розблоковано');
-    },
-    cheatUnlockAchievements: function() {
-      ACHIEVEMENTS.forEach(function(a) { Game.achievements.add(a.id); });
-      this.save(); this.markDirty(); playSound('achievement');
-      Toast.success('Всі досягнення отримано');
-    },
-    cheatMaxBuildings: function() {
-      BUILDINGS.filter(function(b) { return !b.isStorage; }).forEach(function(b) { Game.purchased[b.id] = (Game.purchased[b.id] || 0) + 50; });
-      this.purchased['storage'] = (this.purchased['storage'] || 0) + 20;
-      invalidateUpgradeCache();
-      this.save(); this.markDirty(); playSound('achievement');
-      Toast.success('Будівлі на максимум');
-    },
-    cheatStorage: function() {
-      this.purchased['storage'] = (this.purchased['storage'] || 0) + 50;
-      this.save(); this.markDirty(); playSound('achievement');
-      Toast.success('Склад збільшено');
-    },
-
-    showInputModal: function(title, placeholder, callback) {
-      var modal = document.getElementById('input-modal');
-      document.getElementById('input-modal-title').textContent = title;
-      var input = document.getElementById('input-modal-input');
-      input.value = '';
-      input.placeholder = placeholder;
-      modal.classList.remove('hidden');
-      var submitted = false;
-      var submit = function() {
-        if (submitted) return;
-        submitted = true;
-        var val = input.value.trim();
-        modal.classList.add('hidden');
-        callback(val);
-      };
-      document.getElementById('input-modal-btn').onclick = submit;
-      input.onkeypress = function(e) { if (e.key === 'Enter') submit(); };
-      setTimeout(function() { input.focus(); }, 100);
-    },
-
-    applyOffline: function() {
-      var offline = Math.min((Date.now() - (this.lastSave || Date.now())) / 1000, OFFLINE_MAX_SEC);
-      if (offline <= 10) return;
-      var before = {};
-      for (var i = 0; i < RESOURCE_KEYS.length; i++) {
-        before[RESOURCE_KEYS[i]] = this.state[RESOURCE_KEYS[i]] || 0;
-      }
-      this.tick(offline);
-      this.lastSave = Date.now();
-      this.save();
-      var lines = [];
-      for (var j = 0; j < RESOURCE_KEYS.length; j++) {
-        var r = RESOURCE_KEYS[j];
-        var diff = (this.state[r] || 0) - (before[r] || 0);
-        if (diff > 0.5) {
-          var res = RESOURCES[r] || { icon: '📦', name: r };
-          lines.push(res.icon + ' ' + res.name + ': +' + format(Math.floor(diff)));
-        }
-      }
-      if (lines.length > 0) {
-        var reportEl = document.getElementById('offline-report');
-        if (reportEl) {
-          reportEl.innerHTML = '<p style="opacity:0.7;margin-bottom:8px;">⏱ Офлайн: ' + escapeHtml(this.formatTime(offline)) + '</p>' + lines.join('<br>');
-          document.getElementById('offline-modal').classList.remove('hidden');
-        }
-      }
-    },
-
-    save: function() {
-      this.state.lastSave = Date.now();
-      this.lastSave = Date.now();
-      var data = {
-        state: this.state,
-        purchased: this.purchased,
-        boughtUpgrades: Array.from(this.boughtUpgrades),
-        achievements: Array.from(this.achievements)
-      };
-      try {
-        localStorage.setItem(LS_KEY, JSON.stringify(data));
-      } catch(e) { /* localStorage full or unavailable */ }
-      this._debouncedSyncCloud();
-    },
-
-    _debouncedSyncCloud: debounce(function() { Game.syncCloud(); }, CLOUD_SYNC_DEBOUNCE_MS),
-
-    load: function() {
-      try {
-        var d = localStorage.getItem(LS_KEY);
-        if (d) {
-          var data = JSON.parse(d);
-          this.state = data.state || {};
-          this.purchased = data.purchased || {};
-          this.boughtUpgrades = new Set(data.boughtUpgrades || []);
-          this.achievements = new Set(data.achievements || []);
-          this.lastSave = data.state && data.state.lastSave;
-        }
-        var s = this.getState();
-        if ((s.coins || 0) === 0 && (s.wheat || 0) === 0 && Object.keys(this.purchased).length === 0) {
-          this.state.coins = STARTING_COINS;
-        }
-      } catch(e) { Toast.error('Помилка завантаження збереження'); }
-    },
-
-    syncCloud: function() {
-      if (!FIREBASE_URL || /^anon_/.test(this.userId)) return;
-      var score = Math.floor(this.getState().coins || 0);
-      var payload = {
-        userName: this.userName,
-        cookies: score,
-        updatedAt: Date.now(),
-        save: {
-          state: this.state,
-          purchased: this.purchased,
-          boughtUpgrades: Array.from(this.boughtUpgrades),
-          achievements: Array.from(this.achievements),
-          lastSave: this.state.lastSave || Date.now()
-        }
-      };
-      fetch(FIREBASE_URL + '/players/' + this.userId + '.json', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(function() { /* Cloud sync failed silently */ });
-    },
-
-    loadFromCloud: function() {
-      if (!FIREBASE_URL || /^anon_/.test(this.userId)) return Promise.resolve();
-      var self = this;
-      return fetch(FIREBASE_URL + '/players/' + this.userId + '.json')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (!data || !data.save) return;
-          var cloud = data.save;
-          var cloudTime = cloud.lastSave || 0;
-          var localTime = self.lastSave || 0;
-          if (cloudTime >= localTime) {
-            self.state = cloud.state || {};
-            self.purchased = cloud.purchased || {};
-            self.boughtUpgrades = new Set(cloud.boughtUpgrades || []);
-            self.achievements = new Set(cloud.achievements || []);
-            self.lastSave = cloud.lastSave;
-            invalidateUpgradeCache();
-            try {
-              localStorage.setItem(LS_KEY, JSON.stringify({ state: self.state, purchased: self.purchased, boughtUpgrades: Array.from(self.boughtUpgrades), achievements: Array.from(self.achievements) }));
-            } catch(e) { /* localStorage write failed */ }
-          }
-        })
-        .catch(function() { /* Cloud load failed */ });
-    },
-
-    loadMarket: function() {
-      var marketEl = document.getElementById('market-list');
-      var myEl = document.getElementById('my-offers-list');
-      if (!FIREBASE_URL || !marketEl) return;
-      if (/^anon_/.test(this.userId)) {
-        marketEl.innerHTML = '<p style="opacity:0.8;font-size:0.9rem;">Увійди через Telegram, щоб торгувати з іншими гравцями.</p>';
-        if (myEl) myEl.innerHTML = '';
-        var formEl = document.getElementById('create-offer-form');
-        if (formEl) formEl.innerHTML = '';
-        return;
-      }
-      marketEl.innerHTML = '<span class="spinner"></span> Завантаження...';
-      var self = this;
-      fetch(FIREBASE_URL + '/market.json').then(function(r) {
-        if (!r.ok) throw new Error('Сервер: ' + r.status);
-        return r.json();
-      }).then(function(data) {
-        var raw = (data && typeof data === 'object' && !Array.isArray(data))
-          ? Object.entries(data).map(function(e) { return Object.assign({ id: e[0] }, e[1] || {}); })
-          : [];
-        var offers = raw.filter(function(o) { return o && o.give && o.get && typeof o.give === 'object' && typeof o.get === 'object' && Object.keys(o.give).length > 0 && Object.keys(o.get).length > 0; });
-        var others = offers.filter(function(o) { return o.fromUserId !== self.userId; });
-        var mine = offers.filter(function(o) { return o.fromUserId === self.userId; });
-
-        if (others.length === 0) {
-          marketEl.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">Поки немає пропозицій. Вистав свою!</p>';
-        } else {
-          marketEl.innerHTML = '';
-          others.forEach(function(o) {
-            var giveStr = Object.entries(o.give || {}).map(function(e) { return format(e[1]) + ' ' + ((RESOURCES[e[0]] || {}).icon || e[0]); }).join(', ');
-            var getStr = Object.entries(o.get || {}).map(function(e) { return format(e[1]) + ' ' + ((RESOURCES[e[0]] || {}).icon || e[0]); }).join(', ');
-            var can = true;
-            Object.entries(o.get || {}).forEach(function(e) { if ((self.getState()[e[0]] || 0) < e[1]) can = false; });
-            var row = document.createElement('div');
-            row.className = 'trade-row';
-            var desc = document.createElement('span');
-            desc.className = 'trade-desc';
-            desc.textContent = (o.fromUserName || 'Гравець') + ': віддає ' + giveStr + ' → хоче ' + getStr;
-            var btn = document.createElement('button');
-            btn.className = 'btn-buy';
-            btn.textContent = 'Прийняти';
-            btn.disabled = !can;
-            btn.setAttribute('data-offer-id', o.id);
-            btn.onclick = function() { Game.acceptOffer(this.getAttribute('data-offer-id')); };
-            row.appendChild(desc);
-            row.appendChild(btn);
-            marketEl.appendChild(row);
-          });
-        }
-
-        if (mine.length === 0) {
-          myEl.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">Твоїх пропозицій немає.</p>';
-        } else {
-          myEl.innerHTML = '';
-          mine.forEach(function(o) {
-            var giveStr = Object.entries(o.give || {}).map(function(e) { return format(e[1]) + ' ' + ((RESOURCES[e[0]] || {}).icon || e[0]); }).join(', ');
-            var getStr = Object.entries(o.get || {}).map(function(e) { return format(e[1]) + ' ' + ((RESOURCES[e[0]] || {}).icon || e[0]); }).join(', ');
-            var row = document.createElement('div');
-            row.className = 'trade-row';
-            var desc = document.createElement('span');
-            desc.className = 'trade-desc';
-            desc.textContent = giveStr + ' → ' + getStr;
-            var btn = document.createElement('button');
-            btn.className = 'btn-buy';
-            btn.textContent = 'Зняти';
-            btn.setAttribute('data-offer-id', o.id);
-            btn.onclick = function() { Game.cancelOffer(this.getAttribute('data-offer-id')); };
-            row.appendChild(desc);
-            row.appendChild(btn);
-            myEl.appendChild(row);
-          });
-        }
-
-        var formEl = document.getElementById('create-offer-form');
-        if (formEl) {
-          formEl.innerHTML = '';
-          var wrap = document.createElement('div');
-          wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;';
-          var giveLabel = document.createElement('span'); giveLabel.textContent = 'Віддаю:';
-          var giveSelect = document.createElement('select'); giveSelect.id = 'offer-give-res';
-          var giveAmt = document.createElement('input'); giveAmt.type = 'number'; giveAmt.id = 'offer-give-amt'; giveAmt.min = '1'; giveAmt.value = '100'; giveAmt.style.width = '70px';
-          var arrow = document.createElement('span'); arrow.textContent = '→ Хочу:';
-          var getSelect = document.createElement('select'); getSelect.id = 'offer-get-res';
-          var getAmt = document.createElement('input'); getAmt.type = 'number'; getAmt.id = 'offer-get-amt'; getAmt.min = '1'; getAmt.value = '50'; getAmt.style.width = '70px';
-          RESOURCE_KEYS.forEach(function(r) {
-            var opt1 = document.createElement('option'); opt1.value = r; opt1.textContent = ((RESOURCES[r] || {}).icon || '') + ' ' + ((RESOURCES[r] || {}).name || r);
-            var opt2 = opt1.cloneNode(true);
-            giveSelect.appendChild(opt1);
-            getSelect.appendChild(opt2);
-          });
-          wrap.appendChild(giveLabel); wrap.appendChild(giveSelect); wrap.appendChild(giveAmt);
-          wrap.appendChild(arrow); wrap.appendChild(getSelect); wrap.appendChild(getAmt);
-          formEl.appendChild(wrap);
-          var submitBtn = document.createElement('button');
-          submitBtn.className = 'btn-buy';
-          submitBtn.textContent = 'Виставити пропозицію';
-          submitBtn.onclick = function() {
-            Game.createMarketOffer(
-              document.getElementById('offer-give-res').value,
-              document.getElementById('offer-give-amt').value,
-              document.getElementById('offer-get-res').value,
-              document.getElementById('offer-get-amt').value
-            );
-          };
-          formEl.appendChild(submitBtn);
-        }
-      }).catch(function(e) { marketEl.innerHTML = 'Помилка: ' + escapeHtml(e.message || 'завантаження'); });
-    },
-
-    createMarketOffer: function(giveRes, giveAmt, getRes, getAmt) {
-      var s = this.getState();
-      giveAmt = Math.floor(+giveAmt); getAmt = Math.floor(+getAmt);
-      if (giveAmt < 1 || getAmt < 1) { Toast.error('Мінімум 1'); return; }
-      if ((s[giveRes] || 0) < giveAmt) { Toast.error('Не вистачає ресурсу'); return; }
-      if (giveRes === getRes) { Toast.error('Обери різні ресурси'); return; }
-      this.spend(giveRes, giveAmt);
-      var offerId = 'o' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-      var payload = { fromUserId: this.userId, fromUserName: this.userName, give: { [giveRes]: giveAmt }, get: { [getRes]: getAmt }, createdAt: Date.now() };
-      var self = this;
-      fetch(FIREBASE_URL + '/market/' + encodeURIComponent(offerId) + '.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-        .then(function(r) {
-          if (!r.ok) throw new Error(r.status + '');
-          self.save();
-          self.markDirty();
-          self.loadMarket();
-          Toast.success('Пропозицію виставлено!');
-        })
-        .catch(function(e) {
-          self.add(giveRes, giveAmt);
-          Toast.error('Не вдалося виставити: ' + (e.message || 'мережа'));
-        });
-    },
-
-    acceptOffer: function(offerId) {
-      if (!FIREBASE_URL || !offerId) return;
-      var self = this;
-      fetch(FIREBASE_URL + '/market/' + encodeURIComponent(offerId) + '.json').then(function(r) { return r.json(); }).then(function(offer) {
-        if (!offer || offer.fromUserId === self.userId) return;
-        var getRes = Object.keys(offer.get || {})[0], getAmt = offer.get[getRes];
-        var giveRes = Object.keys(offer.give || {})[0], giveAmt = offer.give[giveRes];
-        var myState = self.getState();
-        if ((myState[getRes] || 0) < getAmt) { Toast.error('Не вистачає ресурсів'); return; }
-        fetch(FIREBASE_URL + '/market/' + encodeURIComponent(offerId) + '.json', { method: 'DELETE' }).then(function() {
-          self.spend(getRes, getAmt);
-          self.add(giveRes, giveAmt);
-          var ownerId = offer.fromUserId;
-          fetch(FIREBASE_URL + '/players/' + ownerId + '/save.json').then(function(r) { return r.json(); }).then(function(save) {
-            if (!save) return;
-            var state = save.state || {};
-            state[getRes] = (state[getRes] || 0) + getAmt;
-            save.state = state;
-            fetch(FIREBASE_URL + '/players/' + ownerId + '/save.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(save) }).catch(function() {});
-          }).catch(function() {});
-          self.save();
-          self.markDirty();
-          self.loadMarket();
-          Toast.success('Угоду прийнято!');
-        });
-      });
-    },
-
-    cancelOffer: function(offerId) {
-      if (!FIREBASE_URL || !offerId) return;
-      var self = this;
-      fetch(FIREBASE_URL + '/market/' + encodeURIComponent(offerId) + '.json').then(function(r) { return r.json(); }).then(function(offer) {
-        if (!offer || offer.fromUserId !== self.userId) return;
-        var give = offer.give || {};
-        Object.entries(give).forEach(function(e) { self.add(e[0], e[1]); });
-        fetch(FIREBASE_URL + '/market/' + encodeURIComponent(offerId) + '.json', { method: 'DELETE' }).then(function() {
-          self.save();
-          self.markDirty();
-          self.loadMarket();
-          Toast.info('Пропозицію знято');
-        });
-      });
-    },
-
-    createGift: function(resource, amount) {
-      var s = this.getState();
-      amount = Math.floor(+amount);
-      if (amount < 1) { Toast.error('Мінімум 1'); return; }
-      if ((s[resource] || 0) < amount) { Toast.error('Не вистачає ресурсу'); return; }
-      this.spend(resource, amount);
-      var code = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-      var payload = { fromUserId: this.userId, fromUserName: this.userName, resource: resource, amount: amount, createdAt: Date.now() };
-      fetch(FIREBASE_URL + '/gifts/' + code + '.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(function() { Toast.error('Помилка надсилання подарунку'); });
-      this.save();
-      this.markDirty();
-      var link = BOT_USERNAME && BOT_USERNAME !== 'YOUR_BOT_USERNAME' ? 'https://t.me/' + BOT_USERNAME + '?start=gift_' + code : '(Вкажи BOT_USERNAME в коді)';
-      Toast.success('Подарунок створено!');
-      this.showInputModal('Поділись посиланням', link, function() {});
-      var inputEl = document.getElementById('input-modal-input');
-      if (inputEl) { inputEl.value = link; inputEl.select(); }
-    },
-
-    claimGift: function(code) {
-      if (!FIREBASE_URL || !code) return Promise.resolve();
-      var self = this;
-      return fetch(FIREBASE_URL + '/gifts/' + code + '.json').then(function(r) { return r.json(); }).then(function(data) {
-        if (!data || data.claimedBy) return;
-        self.add(data.resource, data.amount);
-        fetch(FIREBASE_URL + '/gifts/' + code + '/claimedBy.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(self.userId) }).catch(function() {});
-        var fromId = data.fromUserId;
-        if (fromId && fromId !== self.userId) {
-          fetch(FIREBASE_URL + '/friends/' + self.userId + '/' + fromId + '.json', { method: 'PUT', body: 'true' }).catch(function() {});
-          fetch(FIREBASE_URL + '/friends/' + fromId + '/' + self.userId + '.json', { method: 'PUT', body: 'true' }).catch(function() {});
-        }
-        self.save();
-        if (data.fromUserName) Toast.success('Подарунок від ' + data.fromUserName + ': +' + data.amount + ' ' + ((RESOURCES[data.resource] || {}).name || data.resource));
-      }).catch(function() {});
-    },
-
-    applyBoostsFromCloud: function() {
-      if (!FIREBASE_URL || /^anon_/.test(this.userId)) return Promise.resolve();
-      var self = this;
-      return fetch(FIREBASE_URL + '/boosts/' + this.userId + '.json').then(function(r) { return r.json(); }).then(function(data) {
-        if (!data || !data.expiresAt || data.expiresAt <= Date.now()) return;
-        self.state.boostActiveUntil = data.expiresAt;
-        self.state.boostMultiplier = 2;
-        fetch(FIREBASE_URL + '/boosts/' + self.userId + '.json', { method: 'DELETE' }).catch(function() {});
-        self.save();
-        Toast.success('Буст ×2 активовано!');
-      }).catch(function() {});
-    },
-
-    giveBoostToFriend: function(friendId) {
-      if (!FIREBASE_URL || /^anon_/.test(this.userId)) return;
-      var self = this;
-      fetch(FIREBASE_URL + '/lastBoostGiven/' + this.userId + '/' + friendId + '.json').then(function(r) { return r.json(); }).then(function(last) {
-        if (last && (Date.now() - last) < BOOST_COOLDOWN_MS) {
-          Toast.info('Буст цьому другу вже давали сьогодні. Раз на день.');
-          return;
-        }
-        var expiresAt = Date.now() + BOOST_DURATION_MS;
-        var payload = { fromUserId: self.userId, fromUserName: self.userName, expiresAt: expiresAt, givenAt: Date.now() };
-        fetch(FIREBASE_URL + '/boosts/' + friendId + '.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(function() {
-          fetch(FIREBASE_URL + '/lastBoostGiven/' + self.userId + '/' + friendId + '.json', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Date.now()) }).catch(function() {});
-          Toast.success('Буст ×2 на 30 хв надіслано другу!');
-        }).catch(function() { Toast.error('Не вдалося надіслати буст'); });
-      });
-    },
-
-    openPlayerInTG: function(uid) {
-      if (!uid || /^anon_/.test(uid)) return;
-      try {
-        var link = 'tg://user?id=' + uid;
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-          window.Telegram.WebApp.openTelegramLink(link);
-        } else {
-          window.open(link, '_blank');
-        }
-      } catch(e) { /* TG link unavailable */ }
-    },
-
-    loadLeaderboard: function() {
-      var el = document.getElementById('lb-global');
-      if (!FIREBASE_URL) { el.textContent = 'Додай FIREBASE_URL'; return; }
-      el.innerHTML = '<span class="spinner"></span> Завантаження...';
-      var self = this;
-      fetch(FIREBASE_URL + '/players.json')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (!data) { el.textContent = 'Ніхто ще не грав'; return; }
-          var players = Object.entries(data).map(function(e) { return Object.assign({ uid: e[0] }, e[1]); });
-          players.sort(function(a, b) { return (b.cookies || 0) - (a.cookies || 0); });
-          var rankEmoji = ['🥇', '🥈', '🥉'];
-          el.innerHTML = '';
-          players.slice(0, LEADERBOARD_SIZE).forEach(function(p, i) {
-            var isMe = p.uid === self.userId;
-            var row = document.createElement('div');
-            row.className = 'lb-row' + (isMe ? ' me' : '') + (/^anon_/.test(p.uid) ? '' : ' lb-row-tg');
-            if (!/^anon_/.test(p.uid)) {
-              row.setAttribute('data-uid', p.uid);
-              row.onclick = function() { Game.openPlayerInTG(this.getAttribute('data-uid')); };
-            }
-            var rk = document.createElement('span');
-            rk.className = 'lb-rank';
-            rk.textContent = i < 3 ? rankEmoji[i] : '#' + (i + 1);
-            var nm = document.createElement('span');
-            nm.className = 'lb-name';
-            nm.textContent = p.userName || 'Гравець';
-            var sc = document.createElement('span');
-            sc.className = 'lb-score';
-            sc.textContent = format(p.cookies || 0) + ' 🪙';
-            var ico = document.createElement('span');
-            ico.className = 'lb-open';
-            ico.textContent = '👤';
-            row.appendChild(rk); row.appendChild(nm); row.appendChild(sc); row.appendChild(ico);
-            el.appendChild(row);
-          });
-        })
-        .catch(function() { el.textContent = 'Не вдалось завантажити'; });
-    },
-
-    startLoop: function() {
-      var self = this;
-      var loop = function(t) {
-        var dt = (t - (self._lastTick || t)) / 1000;
-        self._lastTick = t;
-        if (dt > 0 && dt < 1) {
-          self.tick(dt);
-          self.markDirty();
-        }
-        self.checkAchievements();
-        self._raf = requestAnimationFrame(loop);
-      };
-      this._raf = requestAnimationFrame(loop);
-      this._renderTimer = setInterval(function() {
-        if (self._dirty) {
-          self._dirty = false;
-          self.render();
-        }
-      }, RENDER_THROTTLE_MS);
-    },
-
-    switchTab: function(tab) {
-      this._activeTab = tab;
-      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
-      var tabBtn = document.querySelector('.tab[onclick*="\'' + tab + '\'"]');
-      if (tabBtn) tabBtn.classList.add('active');
-      var v = document.getElementById('view-' + tab);
-      if (v) v.classList.add('active');
-      var clickerWrap = document.querySelector('.clicker-wrap');
-      if (clickerWrap) clickerWrap.style.display = tab === 'main' ? 'flex' : 'none';
-      if (tab === 'leaderboard') this.loadLeaderboard();
-      if (tab === 'gifts') this.renderFriends();
-      if (tab === 'trade') this.loadMarket();
-      this.markDirty();
-    },
-
-    render: function() {
-      var s = this.getState();
-      var cps = this.calcCPS();
-
-      this.renderStats(s, cps);
-
-      var tab = this._activeTab || 'main';
-      if (tab === 'production') this.renderBuildings(s);
-      if (tab === 'upgrades') this.renderUpgrades(s);
-      if (tab === 'achievements') this.renderAchievements();
-      if (tab === 'main') this.renderMainExtra(s, cps);
-      if (tab === 'settings') this.renderSettings(s);
-    },
-
-    isResourceUnlocked: function(r, s) {
-      if (r === 'wheat' || r === 'coins') return true;
-      if ((s[r] || 0) > 0) return true;
-      for (var i = 0; i < BUILDINGS.length; i++) {
-        var b = BUILDINGS[i];
-        if (this.getCount(b.id) <= 0) continue;
-        if (b.resource === r) return true;
-        if (b.consumes && b.consumes[r]) return true;
-        if (b.costRes === r) return true;
-      }
-      return false;
-    },
-
-    renderStats: function(s, cps) {
-      var coinCps = cps.coins || 0;
-      if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) coinCps *= s.boostMultiplier;
-      var coinCpsStr = coinCps >= 0 ? '+' + coinCps.toFixed(1) + '/с' : coinCps.toFixed(1) + '/с';
-      var curBar = document.getElementById('currency-bar');
-      if (curBar) curBar.innerHTML = formatCoins(s.coins || 0) + '<span class="coin-cps">' + escapeHtml(coinCpsStr) + '</span>';
-
-      var html = '';
-      for (var i = 0; i < RESOURCE_KEYS.length; i++) {
-        var r = RESOURCE_KEYS[i];
-        if (r === 'coins') continue;
-        if (!this.isResourceUnlocked(r, s)) continue;
-        var res = RESOURCES[r] || { name: r, icon: '📦' };
-        var cap = this.getStorageCap(r);
-        var cpsVal = cps[r] || 0;
-        if ((s.boostActiveUntil || 0) > Date.now() && (s.boostMultiplier || 1) > 1) cpsVal *= s.boostMultiplier;
-        var boostTag = (s.boostActiveUntil || 0) > Date.now() ? ' ×2' : '';
-        var cpsStr = cpsVal >= 0 ? '+' + cpsVal.toFixed(1) + '/с' : cpsVal.toFixed(1) + '/с';
-        var val = s[r] || 0;
-        var barWidth = cap > 0 ? Math.min(100, (val / cap) * 100) : 0;
-        var barColor = barWidth > 90 ? 'var(--accent)' : 'var(--success)';
-        var isActive = cpsVal > 0 || val > 0;
-        html += '<div class="stat' + (isActive ? ' stat-active' : '') + '"><span class="stat-icon">' + res.icon + '</span><div class="stat-val">' + escapeHtml(format(val)) + '</div><div class="stat-cap">' + escapeHtml(format(cap)) + '</div><div class="stat-cps" style="' + (cpsVal < 0 ? 'color:var(--accent)' : '') + '">' + escapeHtml(cpsStr + boostTag) + '</div><div class="stat-bar" style="width:' + barWidth.toFixed(1) + '%;background:' + barColor + '"></div></div>';
-      }
-      document.getElementById('stats-panel').innerHTML = html || '<div class="stat" style="grid-column:1/-1">Клікай пшеницю — збирай урожай</div>';
-
-      var titleEl = document.getElementById('app-title');
-      if (titleEl) titleEl.textContent = s.bakeryName ? s.bakeryName + ' 🍞' : '🍞 Пекарня';
-      var clickPctEl = document.getElementById('click-percent');
-      if (clickPctEl) clickPctEl.textContent = 'Клік: ' + (s.clickBonusPercent || CLICK_BONUS_DEFAULT) + '%';
-      if ((s.boostActiveUntil || 0) <= Date.now()) { this.state.boostMultiplier = 1; this.state.boostActiveUntil = 0; }
-    },
-
-    getTutorialHint: function(s) {
-      var totalBuildings = 0;
-      for (var k in this.purchased) { if (this.purchased.hasOwnProperty(k)) totalBuildings += this.purchased[k]; }
-      if (totalBuildings === 0 && (s.wheat || 0) < 5) return '👆 Натисни ⛏️ щоб зібрати пшеницю та монети';
-      if (this.getCount('wheat_farm') === 0) return '🏭 Перейди у Виробництво і купи Ферму пшениці (10 🪙)';
-      if (this.getCount('mill') === 0 && this.getCount('well') === 0) return '💡 Купи Криницю (💧 вода) і Млин (🫙 борошно) — це основа для хліба';
-      if (this.getCount('baker') === 0 && this.getCount('mill') > 0 && this.getCount('well') > 0) return '🍞 Купи Пекарню — борошно + вода = хліб!';
-      if (this.getCount('bread_shop') === 0 && this.getCount('baker') > 0) return '🪙 Купи Ларчик з хлібом — продавай хліб за монети (пасивний дохід!)';
-      if (totalBuildings < 10) return '📈 Купуй більше будівель щоб збільшити виробництво';
-      return null;
-    },
-
-    renderStageIndicator: function(s) {
-      var el = document.getElementById('stage-indicator');
-      if (!el) return;
-      var stages = [
-        { icon: '🌾', name: 'Зерно', check: true },
-        { icon: '🫙', name: 'Борошно', check: this.getCount('mill') > 0 },
-        { icon: '🍞', name: 'Хліб', check: this.getCount('baker') > 0 },
-        { icon: '🍪', name: 'Печиво', check: this.getCount('oven') > 0 },
-        { icon: '🥐', name: 'Булочки', check: this.getCount('buns_oven') > 0 },
-        { icon: '🥟', name: 'Пиріжки', check: this.getCount('pies_oven') > 0 },
-        { icon: '🎂', name: 'Торти', check: this.getCount('confectionery') > 0 }
-      ];
-      var html = '';
-      var lastUnlocked = 0;
-      for (var i = 0; i < stages.length; i++) { if (stages[i].check) lastUnlocked = i; }
-      for (var j = 0; j < stages.length; j++) {
-        var st = stages[j];
-        var cls = st.check ? (j === lastUnlocked ? 'current' : 'unlocked') : '';
-        html += '<div class="stage-dot ' + cls + '" title="' + escapeHtml(st.name) + '">' + st.icon + '</div>';
-        if (j < stages.length - 1) html += '<div class="stage-line' + (stages[j + 1].check ? ' filled' : '') + '"></div>';
-      }
-      el.innerHTML = html;
-    },
-
-    renderMainExtra: function(s, cps) {
-      this.renderStageIndicator(s);
-      var tutEl = document.getElementById('tutorial-hint');
-      if (tutEl) {
-        var hint = this.getTutorialHint(s);
-        if (hint) { tutEl.textContent = hint; tutEl.style.display = 'block'; }
-        else { tutEl.style.display = 'none'; }
-      }
-      var toFull = this.getTimeToFullStorage();
-      var timerEl = document.getElementById('storage-timer');
-      if (timerEl) {
-        if (toFull) {
-          timerEl.textContent = 'Склад заповниться (' + toFull.icon + ' ' + toFull.name + '): через ' + this.formatTime(toFull.sec);
-          timerEl.style.display = 'block';
-        } else {
-          timerEl.style.display = 'none';
-        }
-      }
-      var overflowEl = document.getElementById('overflow-hint');
-      if (overflowEl) {
-        if ((s.wheat || 0) > WHEAT_OVERFLOW_THRESHOLD) {
-          overflowEl.textContent = '⚠️ Пшениці > ' + format(WHEAT_OVERFLOW_THRESHOLD) + ' — надлишок автоматично перетворюється на борошно (' + WHEAT_OVERFLOW_RATE + '/с → ' + (WHEAT_OVERFLOW_RATE / WHEAT_TO_FLOUR_RATIO).toFixed(1) + ' борошна/с)';
-          overflowEl.style.display = 'block';
-        } else {
-          overflowEl.style.display = 'none';
-        }
-      }
-    },
-
-    isBuildingUnlocked: function(b, s) {
-      if (b.isStorage) return true;
-      if (this.getCount(b.id) > 0) return true;
-      if (this.canAfford(b.costRes, Math.floor(b.cost))) return true;
-      var prevUnlocked = false;
-      for (var i = 0; i < BUILDINGS.length; i++) {
-        var pb = BUILDINGS[i];
-        if (pb.id === b.id) return prevUnlocked;
-        if (!pb.isStorage && this.getCount(pb.id) > 0) prevUnlocked = true;
-        else if (!pb.isStorage) prevUnlocked = false;
-      }
-      return false;
-    },
-
-    renderBuildings: function(s) {
-      var self = this;
-      var el = document.getElementById('buildings-list');
-      if (!el) return;
-      var html = '';
-      for (var i = 0; i < BUILDINGS.length; i++) {
-        var b = BUILDINGS[i];
-        if (!this.isBuildingUnlocked(b, s)) continue;
-        var qty = self._buyQuantity;
-        var effectiveQty = qty === -1 ? self.getMaxBuyable(b) : qty;
-        var cost = effectiveQty > 0 ? self.getMultiBuyCost(b, effectiveQty) : self.getCost(b);
-        var canBuy = effectiveQty > 0 && self.canAfford(b.costRes, cost);
-        var count = self.getCount(b.id);
-        var res = RESOURCES[b.resource];
-        var actualProd = b.prod;
-        var starved = '';
-        if (!b.isStorage && count > 0 && b.consumes) {
-          var st = self.getState();
-          var bn = 1;
-          var keys = Object.keys(b.consumes);
-          for (var ci = 0; ci < keys.length; ci++) {
-            var cr = keys[ci];
-            var avail = st[cr] || 0;
-            var need = b.consumes[cr] * count;
-            if (need > 0 && avail < need * 2) {
-              bn = Math.min(bn, Math.max(0.1, avail / (need * 2)));
-              starved = '⚠️ ' + ((RESOURCES[cr] || {}).icon || '') + '↓';
-            }
-          }
-          var mult = getUpgradeMultiplier(b.resource, self.boughtUpgrades);
-          actualProd = b.prod * count * mult * bn;
-        }
-        var stats = b.isStorage
-          ? 'Місце: +' + (STORAGE_PER_LEVEL.wheat || 500) + '/рівень на ресурс'
-          : (count > 0 && b.consumes ? '+' + actualProd.toFixed(1) + ' ' + ((res || {}).icon || '') + '/с ' + starved : '+' + b.prod + ' ' + ((res || {}).icon || '') + '/с');
-        var qtyLabel = effectiveQty > 1 ? ' (×' + effectiveQty + ')' : '';
-        var bIcon = b.isStorage ? '📦' : ((RESOURCES[b.resource] || {}).icon || '🏭');
-        html += '<div class="building"><span class="building-icon">' + bIcon + '</span><div class="building-info"><div class="building-name">' + escapeHtml(b.name) + ' × ' + count + '</div><div class="building-desc">' + escapeHtml(b.desc) + '</div><div class="building-stats">' + escapeHtml(stats) + '</div></div><button class="btn-buy" ' + (!canBuy ? 'disabled' : '') + ' data-building="' + i + '" onclick="Game.buyBuilding(' + i + ')">' + escapeHtml(format(cost) + qtyLabel) + ' ' + ((RESOURCES[b.costRes] || { icon: '🪙' }).icon) + '</button></div>';
-      }
-      el.innerHTML = html;
-    },
-
-    renderUpgrades: function(s) {
-      var self = this;
-      var el = document.getElementById('upgrades-list');
-      if (!el) return;
-      var html = '';
-      for (var i = 0; i < UPGRADES.length; i++) {
-        var u = UPGRADES[i];
-        var bought = self.boughtUpgrades.has(u.id);
-        var canBuy = !bought && self.canAfford(u.costRes, u.cost);
-        html += '<div class="upgrade-item"><div class="upgrade-info"><div class="upgrade-name">' + escapeHtml(u.name) + (bought ? ' ✓' : '') + '</div><div class="upgrade-desc">' + escapeHtml(u.desc) + '</div></div><button class="btn-buy" ' + (!canBuy ? 'disabled' : '') + ' onclick="Game.buyUpgrade(' + i + ')">' + (bought ? 'Куплено' : escapeHtml(format(u.cost)) + ' ' + ((RESOURCES[u.costRes] || { icon: '🪙' }).icon)) + '</button></div>';
-      }
-      el.innerHTML = html;
-    },
-
-    renderAchievements: function() {
-      var el = document.getElementById('achievements-list');
-      if (!el) return;
-      var countEl = document.getElementById('achieve-count');
-      if (countEl) countEl.textContent = '(' + this.achievements.size + '/' + ACHIEVEMENTS.length + ')';
-      var html = '';
-      for (var i = 0; i < ACHIEVEMENTS.length; i++) {
-        var a = ACHIEVEMENTS[i];
-        var un = this.achievements.has(a.id);
-        html += '<div class="achieve-item ' + (un ? 'unlocked' : '') + '"><span class="badge">' + a.icon + '</span><div><div class="upgrade-name">' + escapeHtml(a.name) + '</div><div class="upgrade-desc">' + escapeHtml(a.desc) + '</div></div>' + (un ? '✅' : '🔒') + '</div>';
-      }
-      el.innerHTML = html;
-    },
-
-    renderSettings: function(s) {
-      var clicksEl = document.getElementById('stats-clicks');
-      if (clicksEl) clicksEl.textContent = format(s.totalClicks || 0);
-      var achEl = document.getElementById('stats-achievements');
-      if (achEl) achEl.textContent = this.achievements.size + '/' + ACHIEVEMENTS.length;
-      var bldEl = document.getElementById('stats-buildings');
-      var totalB = 0;
-      for (var k in this.purchased) { if (this.purchased.hasOwnProperty(k)) totalB += this.purchased[k]; }
-      if (bldEl) bldEl.textContent = totalB;
-    },
-
-    renderFriends: function() {
-      var el = document.getElementById('friends-list');
-      if (!el || !FIREBASE_URL || /^anon_/.test(this.userId)) {
-        if (el) el.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">Увійди через Telegram і обміняйся подарунками — друзі з\'являться тут.</p>';
-        return;
-      }
-      el.innerHTML = '<span class="spinner"></span> Завантаження...';
-      var self = this;
-      fetch(FIREBASE_URL + '/friends/' + this.userId + '.json').then(function(r) { return r.json(); }).then(function(friends) {
-        if (!friends || typeof friends !== 'object') { el.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">Поки немає друзів. Надішли подарунок — хто отримає, стане другом.</p>'; return; }
-        var ids = Object.keys(friends);
-        if (ids.length === 0) { el.innerHTML = '<p style="opacity:0.7;font-size:0.85rem;">Поки немає друзів.</p>'; return; }
-        Promise.all(ids.map(function(uid) {
-          return fetch(FIREBASE_URL + '/players/' + uid + '.json').then(function(r) { return r.json(); }).then(function(p) { return { uid: uid, name: (p && p.userName) || 'Гравець' }; });
-        })).then(function(arr) {
-          el.innerHTML = '';
-          arr.forEach(function(f) {
-            var row = document.createElement('div');
-            row.className = 'friend-row';
-            var nm = document.createElement('span');
-            nm.textContent = f.name;
-            var btn = document.createElement('button');
-            btn.className = 'btn-buy';
-            btn.textContent = 'Дати буст ×2';
-            btn.setAttribute('data-uid', f.uid);
-            btn.onclick = function() { Game.giveBoostToFriend(this.getAttribute('data-uid')); };
-            row.appendChild(nm);
-            row.appendChild(btn);
-            el.appendChild(row);
-          });
-        });
-      }).catch(function() { el.textContent = 'Помилка завантаження'; });
-
-      var giftForm = document.getElementById('gift-form');
-      if (giftForm) {
-        giftForm.innerHTML = '';
-        var sel = document.createElement('select');
-        sel.id = 'gift-res';
-        RESOURCE_KEYS.forEach(function(r) {
-          var opt = document.createElement('option');
-          opt.value = r;
-          opt.textContent = ((RESOURCES[r] || {}).icon || '') + ' ' + ((RESOURCES[r] || {}).name || r);
-          sel.appendChild(opt);
-        });
-        var amtInput = document.createElement('input');
-        amtInput.type = 'number';
-        amtInput.id = 'gift-amt';
-        amtInput.min = '1';
-        amtInput.value = '50';
-        amtInput.style.width = '80px';
-        var sendBtn = document.createElement('button');
-        sendBtn.className = 'btn-buy';
-        sendBtn.textContent = 'Надіслати';
-        sendBtn.onclick = function() {
-          Game.createGift(document.getElementById('gift-res').value, +document.getElementById('gift-amt').value);
-        };
-        giftForm.appendChild(sel);
-        giftForm.appendChild(document.createTextNode(' '));
-        giftForm.appendChild(amtInput);
-        giftForm.appendChild(document.createTextNode(' '));
-        giftForm.appendChild(sendBtn);
+      document.getElementById('battle-result-modal').classList.remove('hidden');
+      self.save(); self._dirty = true;
+    }).catch(function() { Toast.show('Помилка мережі','error'); });
+  },
+
+  tick: function(dt) {
+    var prod = this.getProduction();
+    for (var i = 0; i < RES_KEYS.length; i++) {
+      var r = RES_KEYS[i];
+      var perSec = (prod[r]||0) / 60;
+      this.s[r] = Math.max(0, (this.s[r]||0) + perSec * dt);
+    }
+  },
+
+  applyOffline: function() {
+    var off = Math.min((Date.now() - (this.s.lastSave||Date.now())) / 1000, OFFLINE_MAX);
+    if (off <= 5) return;
+    this.tick(off);
+    this.save();
+  },
+
+  startLoop: function() {
+    var self = this;
+    var loop = function(t) {
+      var dt = (t - (self._lastTick||t)) / 1000;
+      self._lastTick = t;
+      if (dt > 0 && dt < 1) { self.tick(dt); self._dirty = true; }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+    setInterval(function() { if (self._dirty) { self._dirty = false; self.render(); } }, 150);
+  },
+
+  tab: function(t) {
+    this._tab = t;
+    document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('active');});
+    document.querySelectorAll('.view').forEach(function(el){el.classList.remove('active');});
+    var btn = document.querySelector('.tab[onclick*="\''+t+'\'"]');
+    if (btn) btn.classList.add('active');
+    var v = document.getElementById('view-'+t);
+    if (v) v.classList.add('active');
+    if (t==='top') this.loadLeaderboard();
+    if (t==='map') this.loadMap();
+    this._dirty = true;
+  },
+
+  render: function() {
+    this.renderResBar();
+    var t = this._tab;
+    if (t==='city') this.renderCity();
+    else if (t==='army') this.renderArmy();
+    else if (t==='log') this.renderLog();
+    else if (t==='settings') this.renderSettings();
+  },
+
+  renderResBar: function() {
+    var prod = this.getProduction();
+    var html = '';
+    for (var i=0; i<RES_KEYS.length; i++) {
+      var r = RES_KEYS[i]; var m = RES_META[r];
+      var rate = prod[r]||0;
+      var rateStr = rate >= 0 ? '+'+rate.toFixed(1) : rate.toFixed(1);
+      html += '<div class="res-item '+m.cls+'"><span class="ri">'+m.icon+'</span> '+fmt(this.s[r]||0)+'<span class="res-rate">'+rateStr+'/хв</span></div>';
+    }
+    document.getElementById('res-bar').innerHTML = html;
+    var shield = (this.s.shieldUntil||0) > Date.now();
+    var shieldStr = shield ? '<span class="shield-badge">🛡️ Щит: ' + Math.ceil(((this.s.shieldUntil||0)-Date.now())/60000) + ' хв</span>' : '';
+    document.getElementById('power-bar').innerHTML = '⚔️ Сила: '+fmt(this.getPower()) + ' | 🗡️ Атака: '+fmt(this.getAttackPower())+' | 🛡️ Оборона: '+fmt(this.getDefense()) + shieldStr;
+    document.getElementById('kingdom-title').textContent = '⚔️ ' + (this.s.name || 'Королівство');
+  },
+
+  renderCity: function() {
+    var el = document.getElementById('view-city');
+    var castleLvl = this.b.castle || 0;
+    var icons = ['🏚️','🏠','🏡','🏘️','🏰','🏰','🏯','🏯','🏛️','🏛️','👑'];
+    var cIcon = icons[Math.min(Math.floor(castleLvl/2), icons.length-1)];
+    var html = '<div class="castle-visual"><div class="castle-icon">'+cIcon+'</div><div class="castle-name">'+esc(this.s.name||'Королівство')+'</div><div class="castle-level">Рівень замку: '+castleLvl+' | Будівлі: '+this.getTotalBuildings()+'/'+this.getMaxBuildings()+'</div></div>';
+    html += '<div class="section"><h2>🏗️ Будівлі</h2>';
+    for (var i=0; i<BUILDINGS.length; i++) {
+      var bd = BUILDINGS[i];
+      var lvl = this.b[bd.id]||0;
+      var cost = bd.cost(lvl);
+      var can = this.canAfford(cost) && lvl < bd.maxLevel;
+      if (bd.id !== 'castle' && lvl === 0 && this.getTotalBuildings() >= this.getMaxBuildings()) can = false;
+      var costStr = '';
+      for (var r in cost) costStr += (RES_META[r]?RES_META[r].icon:'') + fmt(cost[r]) + ' ';
+      html += '<div class="row"><span class="row-icon">'+bd.icon+'</span><div class="row-info"><div class="row-name">'+esc(bd.name)+' <span style="opacity:0.5">Lv.'+lvl+'</span></div><div class="row-desc">'+esc(bd.desc)+'</div><div class="row-stat">'+bd.effect(lvl)+'</div></div><button class="btn btn-primary" '+(can?'':'disabled')+' onclick="G.upgradeBuilding(\''+bd.id+'\')">'+costStr+'</button></div>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+  },
+
+  renderArmy: function() {
+    var el = document.getElementById('view-army');
+    var html = '<div class="section"><h2>🪖 Армія <span style="opacity:0.5;font-size:0.7rem">'+this.getTotalTroops()+'/'+this.getMaxArmy()+'</span></h2>';
+    if ((this.b.barracks||0) <= 0) {
+      html += '<p style="opacity:0.6;font-size:0.8rem;padding:10px;">Побудуйте Казарму щоб тренувати воїнів</p>';
+    } else {
+      for (var i=0; i<TROOPS.length; i++) {
+        var td = TROOPS[i];
+        var have = this.troops[td.id]||0;
+        var costStr = '';
+        for (var r in td.cost) costStr += (RES_META[r]?RES_META[r].icon:'') + td.cost[r] + ' ';
+        html += '<div class="row"><span class="row-icon">'+td.icon+'</span><div class="row-info"><div class="row-name">'+esc(td.name)+' <span style="opacity:0.5">×'+have+'</span></div><div class="row-desc">'+esc(td.desc)+' | ⚔️'+td.atk+' 🛡️'+td.def+'</div></div><div class="troop-counter"><button class="btn btn-primary" onclick="G.trainTroop(\''+td.id+'\',1)">+1</button><button class="btn btn-success" onclick="G.trainTroop(\''+td.id+'\',5)">+5</button></div></div>';
       }
     }
-  };
+    html += '</div>';
+    html += '<div class="section"><h2>📊 Бойова статистика</h2>';
+    html += '<div class="row"><span class="row-icon">⚔️</span><div class="row-info"><div class="row-name">Атака</div></div><span style="font-weight:700;color:var(--accent)">'+fmt(this.getAttackPower())+'</span></div>';
+    html += '<div class="row"><span class="row-icon">🛡️</span><div class="row-info"><div class="row-name">Оборона</div></div><span style="font-weight:700;color:var(--blue)">'+fmt(this.getDefense())+'</span></div>';
+    html += '<div class="row"><span class="row-icon">🌾</span><div class="row-info"><div class="row-name">Утримання армії</div><div class="row-desc">'+this.getTotalTroops()+' воїнів × 0.5 їжі/хв</div></div><span style="font-weight:700;color:var(--food)">-'+(this.getTotalTroops()*0.5).toFixed(1)+'/хв</span></div>';
+    html += '</div>';
+    el.innerHTML = html;
+  },
 
-  window.Game = Game;
-  Game.init();
+  loadMap: function() {
+    var el = document.getElementById('view-map');
+    if (!FB) { el.innerHTML = '<p style="padding:20px;opacity:0.6">Мережа недоступна</p>'; return; }
+    el.innerHTML = '<div class="section"><h2>🗺️ Сусідні королівства</h2><p style="opacity:0.6;font-size:0.75rem"><span class="spinner"></span> Пошук цілей...</p></div>';
+    var self = this;
+    fetch(FB+'/kingdoms.json').then(function(r){return r.json();}).then(function(data) {
+      if (!data) { el.innerHTML = '<div class="section"><p style="opacity:0.6">Поки нікого немає</p></div>'; return; }
+      var players = Object.entries(data).filter(function(e){return e[0]!==self.userId && e[1] && e[1].name;}).map(function(e){return {uid:e[0], name:e[1].name||'???', power:e[1].power||0, castle:e[1].castle||0, shield:(e[1].shieldUntil||0)>Date.now()};});
+      players.sort(function(a,b){return a.power-b.power;});
+      var html = '<div class="section"><h2>🗺️ Сусідні королівства</h2>';
+      if (players.length === 0) html += '<p style="opacity:0.6;font-size:0.8rem;padding:8px">Поки нікого немає. Запроси друзів!</p>';
+      for (var i=0; i<Math.min(players.length,15); i++) {
+        var p = players[i];
+        html += '<div class="player-card"><span class="row-icon">🏰</span><div class="player-info"><div class="player-name">'+esc(p.name)+(p.shield?' <span class="shield-badge">🛡️</span>':'')+'</div><div class="player-power">⚔️ Сила: '+fmt(p.power)+' | 🏰 Lv.'+p.castle+'</div></div><button class="btn btn-danger" '+(p.shield?'disabled':'')+' onclick="G.attack(\''+p.uid+'\')">⚔️</button></div>';
+      }
+      html += '</div>';
+      el.innerHTML = html;
+    }).catch(function(){ el.innerHTML = '<div class="section"><p style="opacity:0.6">Помилка завантаження</p></div>'; });
+  },
+
+  loadLeaderboard: function() {
+    var el = document.getElementById('view-top');
+    el.innerHTML = '<div class="section"><p><span class="spinner"></span> Завантаження...</p></div>';
+    var self = this;
+    fetch(FB+'/kingdoms.json').then(function(r){return r.json();}).then(function(data) {
+      if (!data) { el.innerHTML = '<div class="section"><p style="opacity:0.6">Порожньо</p></div>'; return; }
+      var players = Object.entries(data).filter(function(e){return e[1]&&e[1].name;}).map(function(e){return {uid:e[0],name:e[1].name||'???',power:e[1].power||0,castle:e[1].castle||0};});
+      players.sort(function(a,b){return b.power-a.power;});
+      var ranks = ['🥇','🥈','🥉'];
+      var html = '<div class="section"><h2>📊 Рейтинг</h2>';
+      for (var i=0; i<Math.min(players.length,10); i++) {
+        var p = players[i]; var isMe = p.uid===self.userId;
+        html += '<div class="player-card'+(isMe?' me':'')+'"><span class="player-rank">'+(i<3?ranks[i]:'#'+(i+1))+'</span><div class="player-info"><div class="player-name">'+esc(p.name)+'</div><div class="player-power">⚔️ '+fmt(p.power)+' | 🏰 Lv.'+p.castle+'</div></div></div>';
+      }
+      html += '</div>';
+      el.innerHTML = html;
+    }).catch(function(){ el.innerHTML = '<div class="section"><p style="opacity:0.6">Помилка</p></div>'; });
+  },
+
+  renderLog: function() {
+    var el = document.getElementById('view-log');
+    var logs = this.s.battleLog || [];
+    var html = '<div class="section"><h2>📜 Журнал битв</h2>';
+    if (logs.length === 0) {
+      html += '<p style="opacity:0.6;font-size:0.8rem;padding:8px">Ще не було битв. Йдіть на Карту та атакуйте!</p>';
+    } else {
+      html += '<div class="battle-log">';
+      for (var i=0; i<logs.length; i++) {
+        var lg = logs[i];
+        var d = new Date(lg.time);
+        var timeStr = d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+        if (lg.win) {
+          html += '<div class="log-win">⚔️ Перемога над <b>'+esc(lg.target)+'</b>: 🪙+'+fmt(lg.loot.gold)+' 🪵+'+fmt(lg.loot.wood)+' <span class="log-time">'+timeStr+'</span></div>';
+        } else {
+          html += '<div class="log-lose">💀 Поразка від <b>'+esc(lg.target)+'</b> <span class="log-time">'+timeStr+'</span></div>';
+        }
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+  },
+
+  renderSettings: function() {
+    var el = document.getElementById('view-settings');
+    var html = '<div class="section"><h2>⚙️ Налаштування</h2>';
+    html += '<div class="settings-row"><span>🔊 Звук</span><button class="settings-btn" onclick="G.toggleSound()" id="snd-btn">'+(_snd?'Увімк.':'Вимк.')+'</button></div>';
+    html += '<div class="settings-row"><span>🔄 Скинути прогрес</span><button class="settings-btn danger" onclick="G.resetProgress()">Скинути</button></div>';
+    html += '</div>';
+    html += '<div class="section"><h2>📊 Статистика</h2>';
+    html += '<div class="settings-row"><span>🏰 Рівень замку</span><span>'+(this.b.castle||0)+'</span></div>';
+    html += '<div class="settings-row"><span>🪖 Армія</span><span>'+this.getTotalTroops()+'/'+this.getMaxArmy()+'</span></div>';
+    html += '<div class="settings-row"><span>⚔️ Битв</span><span>'+(this.s.battleLog||[]).length+'</span></div>';
+    html += '<div class="settings-row"><span>🏆 Перемог</span><span>'+(this.s.battleLog||[]).filter(function(l){return l.win;}).length+'</span></div>';
+    html += '</div>';
+    el.innerHTML = html;
+  },
+
+  toggleSound: function() {
+    _snd = !_snd;
+    var btn = document.getElementById('snd-btn');
+    if (btn) btn.textContent = _snd ? 'Увімк.' : 'Вимк.';
+    if (_snd) snd('click');
+  },
+
+  resetProgress: function() {
+    if (!confirm('Скинути весь прогрес? Це не можна скасувати.')) return;
+    this.s = { gold:200, wood:150, stone:100, food:100, name:'', started:false, lastSave:0, shieldUntil:0, lastAttack:0, battleLog:[] };
+    this.b = {}; this.troops = { warrior:0, archer:0, knight:0 };
+    try { localStorage.removeItem(LS); } catch(e) {}
+    location.reload();
+  }
+};
+
+window.Game = Game;
+window.G = Game;
+Game.init();
 })();
 </script>
 </body>
