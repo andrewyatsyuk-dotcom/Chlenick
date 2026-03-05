@@ -76,6 +76,11 @@
       width: 100%; text-align: center; font-size: 0.8rem; padding: 6px 10px; margin-bottom: 6px;
       background: rgba(0,0,0,0.2); border-radius: 8px; color: var(--gold);
     }
+    .tutorial-hint {
+      width: 100%; text-align: center; font-size: 0.8rem; padding: 8px 12px; margin-bottom: 8px;
+      background: rgba(102,126,234,0.2); border: 1px solid rgba(102,126,234,0.4); border-radius: 8px;
+      color: #a8b8ff; line-height: 1.4;
+    }
     .overflow-hint {
       width: 100%; text-align: center; font-size: 0.7rem; padding: 4px 8px; margin-bottom: 6px;
       background: rgba(233,69,96,0.15); border-radius: 6px; color: var(--accent); opacity: 0.9;
@@ -230,6 +235,14 @@
     </div>
   </div>
 
+  <div id="offline-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2>😴 Поки тебе не було...</h2>
+      <div id="offline-report" style="font-size:0.9rem;line-height:1.8;margin-bottom:12px;"></div>
+      <button class="modal-btn" onclick="document.getElementById('offline-modal').classList.add('hidden')">Забрати!</button>
+    </div>
+  </div>
+
   <div id="input-modal" class="modal-overlay hidden">
     <div class="modal-box">
       <h2 id="input-modal-title"></h2>
@@ -244,10 +257,12 @@
   <div class="app-content">
   <div id="view-main" class="view active">
     <div class="stats-panel" id="stats-panel"></div>
+    <div class="tutorial-hint" id="tutorial-hint" style="display:none"></div>
     <div class="storage-timer" id="storage-timer"></div>
     <div class="overflow-hint" id="overflow-hint" style="display:none"></div>
     <div class="settings-row">
       <button class="btn-reset" onclick="Game.resetProgress()" title="Обнулити прогрес">🔄 Обнулити</button>
+      <button class="btn-cheats" id="sound-btn" onclick="Game.toggleSound()" title="Звук">🔊 Звук</button>
     </div>
   </div>
 
@@ -362,12 +377,14 @@
     };
   }
 
+  var _soundEnabled = true;
   let _audioCtx = null;
   function getAudioCtx() {
     if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     return _audioCtx;
   }
   function playSound(type) {
+    if (!_soundEnabled) return;
     try {
       const ctx = getAudioCtx();
       const osc = ctx.createOscillator();
@@ -463,13 +480,13 @@
     { id: 'dairy_farm', name: 'Молочна ферма', desc: 'Корови→Масло (вартість 0.3)', resource: 'butter', costRes: 'coins', cost: 500, costMult: 1.15, prod: 0.15 },
     { id: 'mixer', name: 'Міксер', desc: '1 борошно+0.5 води+0.3 цукру+0.3 яйця→1 тісто', resource: 'dough', costRes: 'coins', cost: 800, costMult: 1.15, prod: 0.2, consumes: { flour: 0.2, water: 0.1, sugar: 0.06, eggs: 0.06 } },
     { id: 'oven', name: 'Піч для печива', desc: '0.4 тіста+0.2 масла→1 печиво', resource: 'cookies', costRes: 'coins', cost: 1500, costMult: 1.15, prod: 0.15, consumes: { dough: 0.06, butter: 0.03 } },
-    { id: 'cookie_market', name: 'Ринок печива', desc: '3 печива→1 монета', resource: 'coins', costRes: 'cookies', cost: 120, costMult: 1.15, prod: 1, consumes: { cookies: 3 } },
+    { id: 'cookie_market', name: 'Ринок печива', desc: '2 печива→1.5 монети', resource: 'coins', costRes: 'cookies', cost: 120, costMult: 1.15, prod: 1.5, consumes: { cookies: 2 } },
     { id: 'buns_oven', name: 'Піч для булочок', desc: '0.4 тіста+0.2 масла+0.1 цукру→1 булочка', resource: 'buns', costRes: 'coins', cost: 3000, costMult: 1.15, prod: 0.1, consumes: { dough: 0.04, butter: 0.02, sugar: 0.01 } },
-    { id: 'buns_shop', name: 'Ларчик з булочками', desc: '2 булочки→1 монета', resource: 'coins', costRes: 'buns', cost: 180, costMult: 1.15, prod: 1.5, consumes: { buns: 3 } },
+    { id: 'buns_shop', name: 'Ларчик з булочками', desc: '2 булочки→2 монети', resource: 'coins', costRes: 'buns', cost: 180, costMult: 1.15, prod: 2, consumes: { buns: 2 } },
     { id: 'pies_oven', name: 'Піч для пиріжків', desc: '0.4 тіста+0.25 масла+0.15 яєць→1 пиріжок', resource: 'pies', costRes: 'coins', cost: 6000, costMult: 1.15, prod: 0.08, consumes: { dough: 0.032, butter: 0.02, eggs: 0.012 } },
     { id: 'pies_shop', name: 'Ларчик з пиріжками', desc: '1 пиріжок→1 монета', resource: 'coins', costRes: 'pies', cost: 350, costMult: 1.15, prod: 2.4, consumes: { pies: 2.4 } },
     { id: 'confectionery', name: 'Кондитерська', desc: '0.5 тіста+0.25 масла+0.2 цукру+0.2 яєць→1 торт', resource: 'cake', costRes: 'coins', cost: 12000, costMult: 1.15, prod: 0.06, consumes: { dough: 0.03, butter: 0.015, sugar: 0.012, eggs: 0.012 } },
-    { id: 'cake_shop', name: 'Ларчик з тортами', desc: '0.5 торта→1 монета', resource: 'coins', costRes: 'cake', cost: 400, costMult: 1.15, prod: 1.5, consumes: { cake: 0.75 } },
+    { id: 'cake_shop', name: 'Ларчик з тортами', desc: '1 торт→3 монети', resource: 'coins', costRes: 'cake', cost: 400, costMult: 1.15, prod: 3, consumes: { cake: 1 } },
     { id: 'water_mill', name: 'Водяний млин', desc: '2.5 пшениці+0.3 води→1 борошно', resource: 'flour', costRes: 'coins', cost: 400, costMult: 1.15, prod: 1.2, consumes: { wheat: 3, water: 0.36 } },
     { id: 'steam_mill', name: 'Паровий млин', desc: '2 пшениці+0.4 води→1 борошно', resource: 'flour', costRes: 'coins', cost: 1200, costMult: 1.15, prod: 3, consumes: { wheat: 6, water: 1.2 } }
   ];
@@ -955,6 +972,12 @@
       var el = document.getElementById('cheats-modal');
       if (el) el.classList.add('hidden');
     },
+    toggleSound: function() {
+      _soundEnabled = !_soundEnabled;
+      var btn = document.getElementById('sound-btn');
+      if (btn) btn.textContent = _soundEnabled ? '🔊 Звук' : '🔇 Тихо';
+      if (_soundEnabled) playSound('click');
+    },
     cheatAddCoins: function() {
       this.add('coins', 10000);
       this.save(); this.markDirty(); playSound('achievement');
@@ -1013,10 +1036,30 @@
 
     applyOffline: function() {
       var offline = Math.min((Date.now() - (this.lastSave || Date.now())) / 1000, OFFLINE_MAX_SEC);
-      if (offline <= 0) return;
+      if (offline <= 10) return;
+      var before = {};
+      for (var i = 0; i < RESOURCE_KEYS.length; i++) {
+        before[RESOURCE_KEYS[i]] = this.state[RESOURCE_KEYS[i]] || 0;
+      }
       this.tick(offline);
       this.lastSave = Date.now();
       this.save();
+      var lines = [];
+      for (var j = 0; j < RESOURCE_KEYS.length; j++) {
+        var r = RESOURCE_KEYS[j];
+        var diff = (this.state[r] || 0) - (before[r] || 0);
+        if (diff > 0.5) {
+          var res = RESOURCES[r] || { icon: '📦', name: r };
+          lines.push(res.icon + ' ' + res.name + ': +' + format(Math.floor(diff)));
+        }
+      }
+      if (lines.length > 0) {
+        var reportEl = document.getElementById('offline-report');
+        if (reportEl) {
+          reportEl.innerHTML = '<p style="opacity:0.7;margin-bottom:8px;">⏱ Офлайн: ' + escapeHtml(this.formatTime(offline)) + '</p>' + lines.join('<br>');
+          document.getElementById('offline-modal').classList.remove('hidden');
+        }
+      }
     },
 
     save: function() {
@@ -1485,7 +1528,25 @@
       if ((s.boostActiveUntil || 0) <= Date.now()) { this.state.boostMultiplier = 1; this.state.boostActiveUntil = 0; }
     },
 
+    getTutorialHint: function(s) {
+      var totalBuildings = 0;
+      for (var k in this.purchased) { if (this.purchased.hasOwnProperty(k)) totalBuildings += this.purchased[k]; }
+      if (totalBuildings === 0 && (s.wheat || 0) < 5) return '👆 Натисни ⛏️ щоб зібрати пшеницю та монети';
+      if (this.getCount('wheat_farm') === 0) return '🏭 Перейди у Виробництво і купи Ферму пшениці (10 🪙)';
+      if (this.getCount('mill') === 0 && this.getCount('well') === 0) return '💡 Купи Криницю (💧 вода) і Млин (🫙 борошно) — це основа для хліба';
+      if (this.getCount('baker') === 0 && this.getCount('mill') > 0 && this.getCount('well') > 0) return '🍞 Купи Пекарню — борошно + вода = хліб!';
+      if (this.getCount('bread_shop') === 0 && this.getCount('baker') > 0) return '🪙 Купи Ларчик з хлібом — продавай хліб за монети (пасивний дохід!)';
+      if (totalBuildings < 10) return '📈 Купуй більше будівель щоб збільшити виробництво';
+      return null;
+    },
+
     renderMainExtra: function(s, cps) {
+      var tutEl = document.getElementById('tutorial-hint');
+      if (tutEl) {
+        var hint = this.getTutorialHint(s);
+        if (hint) { tutEl.textContent = hint; tutEl.style.display = 'block'; }
+        else { tutEl.style.display = 'none'; }
+      }
       var toFull = this.getTimeToFullStorage();
       var timerEl = document.getElementById('storage-timer');
       if (timerEl) {
@@ -1507,6 +1568,20 @@
       }
     },
 
+    isBuildingUnlocked: function(b, s) {
+      if (b.isStorage) return true;
+      if (this.getCount(b.id) > 0) return true;
+      if (this.canAfford(b.costRes, Math.floor(b.cost))) return true;
+      var prevUnlocked = false;
+      for (var i = 0; i < BUILDINGS.length; i++) {
+        var pb = BUILDINGS[i];
+        if (pb.id === b.id) return prevUnlocked;
+        if (!pb.isStorage && this.getCount(pb.id) > 0) prevUnlocked = true;
+        else if (!pb.isStorage) prevUnlocked = false;
+      }
+      return false;
+    },
+
     renderBuildings: function(s) {
       var self = this;
       var el = document.getElementById('buildings-list');
@@ -1514,6 +1589,7 @@
       var html = '';
       for (var i = 0; i < BUILDINGS.length; i++) {
         var b = BUILDINGS[i];
+        if (!this.isBuildingUnlocked(b, s)) continue;
         var qty = self._buyQuantity;
         var effectiveQty = qty === -1 ? self.getMaxBuyable(b) : qty;
         var cost = effectiveQty > 0 ? self.getMultiBuyCost(b, effectiveQty) : self.getCost(b);
