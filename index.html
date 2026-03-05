@@ -40,6 +40,7 @@
     .mbtn{width:100%;padding:10px;background:var(--accent);border:none;border-radius:8px;color:white;font-weight:700;cursor:pointer;font-size:0.9rem;margin-top:4px}
     canvas{display:block;margin:0 auto;border-radius:8px;border:2px solid var(--border);background:#000;touch-action:none}
     .game-hud{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;font-size:0.7rem;color:var(--neon);margin-bottom:4px}
+    .quit-btn{padding:4px 10px;background:rgba(255,62,108,0.3);border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-weight:700;font-size:0.7rem;cursor:pointer}
     .game-target{text-align:center;padding:6px;margin-bottom:6px;background:rgba(255,62,108,0.1);border:1px solid rgba(255,62,108,0.2);border-radius:6px;font-size:0.8rem;color:var(--accent)}
     .speed-bar{height:4px;background:rgba(255,255,255,0.05);border-radius:2px;margin-bottom:4px;overflow:hidden}
     .speed-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--warn),var(--accent));transition:width 0.3s;border-radius:2px}
@@ -325,12 +326,29 @@ var G={
     this.save();this.sync();this._d=true;
   },
 
+  _alive:false,
+
+  quitGame:function(){
+    var id=this._game;
+    if(!id)return;
+    this._alive=false;
+    var scoreEl=document.getElementById('g-score');
+    var score=scoreEl?parseInt(scoreEl.textContent.replace(/[^0-9]/g,''))||0:0;
+    document.onkeydown=null;document.onkeyup=null;
+    this.endGame(id,score);
+  },
+
+  gameHud:function(icon,label){
+    return '<div class="game-hud"><span id="g-score">'+icon+' 0</span><span id="g-speed">Швидкість: 100%</span><button class="quit-btn" onclick="G.quitGame()">✕ Вийти</button></div>';
+  },
+
   // === SNAKE ===
   playSnake:function(){
     var el=document.getElementById('v-play');
     var W=20,H=20,SZ=Math.min(18,Math.floor((window.innerWidth-40)/W));
-    el.innerHTML='<div class="game-hud"><span id="g-score">🍎 0</span><span id="g-speed">Швидкість: 100%</span></div>'+(this._rival?'<div class="game-target">🎯 Побий рекорд <b>'+esc(this._rival.name)+'</b>: '+this._rival.score+'</div>':'')+'<div class="speed-bar"><div class="speed-fill" id="g-bar" style="width:0%"></div></div><canvas id="gc" width="'+(W*SZ)+'" height="'+(H*SZ)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Свайпай або ← ↑ → ↓</p>';
+    el.innerHTML=this.gameHud('🍎')+(this._rival?'<div class="game-target">🎯 Побий рекорд <b>'+esc(this._rival.name)+'</b>: '+this._rival.score+'</div>':'')+'<div class="speed-bar"><div class="speed-fill" id="g-bar" style="width:0%"></div></div><canvas id="gc" width="'+(W*SZ)+'" height="'+(H*SZ)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Свайпай або ← ↑ → ↓</p>';
     var cv=document.getElementById('gc'),cx=cv.getContext('2d');
+    G._alive=true;
     var snake=[{x:10,y:10}],dir={x:1,y:0},food={x:5,y:5},score=0,alive=true;
     var baseInterval=150,speed=100,startTime=Date.now();
 
@@ -341,7 +359,7 @@ var G={
       snake.forEach(function(s,i){cx.fillStyle=i===0?'#39ff14':'#2a9d0f';cx.fillRect(s.x*SZ,s.y*SZ,SZ-1,SZ-1);});
     }
     function step(){
-      if(!alive)return;
+      if(!alive||!G._alive)return;
       speed=100+Math.floor((Date.now()-startTime)/3000);
       document.getElementById('g-speed').textContent='Швидкість: '+speed+'%';
       document.getElementById('g-bar').style.width=Math.min(100,(speed-100)*2)+'%';
@@ -365,11 +383,12 @@ var G={
   playTetris:function(){
     var el=document.getElementById('v-play');
     var COLS=10,ROWS=18,SZ=Math.min(20,Math.floor((window.innerWidth-40)/COLS));
-    el.innerHTML='<div class="game-hud"><span id="g-score">🧱 0</span><span id="g-speed">Швидкість: 100%</span></div>'+(this._rival?'<div class="game-target">🎯 Побий <b>'+esc(this._rival.name)+'</b>: '+this._rival.score+'</div>':'')+'<div class="speed-bar"><div class="speed-fill" id="g-bar" style="width:0%"></div></div><canvas id="gc" width="'+(COLS*SZ)+'" height="'+(ROWS*SZ)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">← → крутити ↑ швидше ↓ | свайп</p>';
+    el.innerHTML=this.gameHud('🧱')+(this._rival?'<div class="game-target">🎯 Побий <b>'+esc(this._rival.name)+'</b>: '+this._rival.score+'</div>':'')+'<div class="speed-bar"><div class="speed-fill" id="g-bar" style="width:0%"></div></div><canvas id="gc" width="'+(COLS*SZ)+'" height="'+(ROWS*SZ)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">← → крутити ↑ швидше ↓ | свайп</p>';
     var cv=document.getElementById('gc'),cx=cv.getContext('2d');
     var grid=[];for(var i=0;i<ROWS;i++){grid[i]=[];for(var j=0;j<COLS;j++)grid[i][j]=0;}
     var SHAPES=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0],[1,0],[1,1]],[[0,1],[0,1],[1,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]]];
     var COLORS=['#00f0f0','#f0f000','#a000f0','#f0a000','#0000f0','#00f000','#f00000'];
+    G._alive=true;
     var score=0,alive=true,cur=null,cx2,cy2,ci,startTime=Date.now(),speed=100;
 
     function newPiece(){ci=Math.floor(Math.random()*SHAPES.length);cur=SHAPES[ci].map(function(r){return r.slice();});cx2=Math.floor((COLS-cur[0].length)/2);cy2=0;if(!fits(cur,cx2,cy2)){alive=false;G.endGame('tetris',score);}}
@@ -384,7 +403,7 @@ var G={
       if(cur)for(var r2=0;r2<cur.length;r2++)for(var c2=0;c2<cur[r2].length;c2++)if(cur[r2][c2]){cx.fillStyle=COLORS[ci];cx.fillRect((cx2+c2)*SZ,(cy2+r2)*SZ,SZ-1,SZ-1);}
     }
     function step(){
-      if(!alive)return;
+      if(!alive||!G._alive)return;
       speed=100+Math.floor((Date.now()-startTime)/3000);
       document.getElementById('g-speed').textContent='Швидкість: '+speed+'%';
       document.getElementById('g-bar').style.width=Math.min(100,(speed-100)*2)+'%';
@@ -401,8 +420,9 @@ var G={
   // === REACTION ===
   playReaction:function(){
     var el=document.getElementById('v-play');
-    el.innerHTML='<div class="game-hud"><span id="g-score">⚡ 0</span><span id="g-speed">Швидкість: 100%</span></div>'+(this._rival?'<div class="game-target">🎯 Побий <b>'+esc(this._rival.name)+'</b>: '+this._rival.score+'</div>':'')+'<div class="speed-bar"><div class="speed-fill" id="g-bar" style="width:0%"></div></div><div id="react-zone" style="width:100%;height:300px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;cursor:pointer;user-select:none;background:#222;border:2px solid var(--border)">Зачекай...</div><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Натисни коли стане зеленим!</p>';
+    el.innerHTML=this.gameHud('⚡')+(this._rival?'<div class="game-target">🎯 Побий <b>'+esc(this._rival.name)+'</b>: '+this._rival.score+'</div>':'')+'<div class="speed-bar"><div class="speed-fill" id="g-bar" style="width:0%"></div></div><div id="react-zone" style="width:100%;height:300px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;cursor:pointer;user-select:none;background:#222;border:2px solid var(--border)">Зачекай...</div><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Натисни коли стане зеленим!</p>';
     var zone=document.getElementById('react-zone');
+    G._alive=true;
     var score=0,round=0,maxRounds=10,alive=true,startTime=Date.now(),waiting=false,greenTime=0;
     var speed=100;
 
@@ -446,8 +466,9 @@ var G={
     var el=document.getElementById('v-play');
     var W=300,H=400,SZ=Math.min(W,window.innerWidth-24);
     var scale=SZ/W;
-    el.innerHTML='<div class="game-hud"><span id="g-score">💀 0</span><span id="g-speed">Швидкість: 100%</span></div>'+(this._rival?'<div class="game-target">🎯 Побий <b>'+esc(this._rival.name)+'</b>: '+this._rival.score+'</div>':'')+'<div class="speed-bar"><div class="speed-fill" id="g-bar" style="width:0%"></div></div><canvas id="gc" width="'+Math.floor(W*scale)+'" height="'+Math.floor(H*scale)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Рухай пальцем або ← →</p>';
+    el.innerHTML=this.gameHud('💀')+(this._rival?'<div class="game-target">🎯 Побий <b>'+esc(this._rival.name)+'</b>: '+this._rival.score+'</div>':'')+'<div class="speed-bar"><div class="speed-fill" id="g-bar" style="width:0%"></div></div><canvas id="gc" width="'+Math.floor(W*scale)+'" height="'+Math.floor(H*scale)+'"></canvas><p style="text-align:center;font-size:0.6rem;opacity:0.3;margin-top:4px">Рухай пальцем або ← →</p>';
     var cv=document.getElementById('gc'),cx=cv.getContext('2d');
+    G._alive=true;
     var px=W/2,pw=30,ph=20,alive=true,score=0,startTime=Date.now(),speed=100;
     var obs=[];
 
@@ -462,7 +483,7 @@ var G={
 
     var lastFrame=0;
     function frame(t){
-      if(!alive)return;
+      if(!alive||!G._alive)return;
       var dt=Math.min((t-lastFrame)/1000,0.05);lastFrame=t;
       speed=100+Math.floor((Date.now()-startTime)/3000);
       document.getElementById('g-speed').textContent='Швидкість: '+speed+'%';
