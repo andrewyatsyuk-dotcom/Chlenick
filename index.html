@@ -158,6 +158,7 @@
     .settings-row span { font-size: 0.8rem; }
     .settings-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; font-size: 0.75rem; cursor: pointer; }
     .settings-btn.danger { border-color: var(--accent); color: var(--accent); }
+    .guide-hint { width: 100%; padding: 8px 12px; margin-bottom: 6px; background: rgba(91,127,255,0.15); border: 1px solid rgba(91,127,255,0.3); border-radius: 8px; font-size: 0.8rem; color: #8fa8ff; text-align: center; line-height: 1.4; max-width: 420px; }
   </style>
 </head>
 <body>
@@ -166,10 +167,18 @@
   <div id="intro-modal" class="modal-overlay">
     <div class="modal-box">
       <h2>⚔️ Ласкаво просимо, Лорде!</h2>
-      <p>Ви отримали землі на кордоні королівства. Побудуйте замок, зберіть армію та захистіть свої володіння від інших гравців.</p>
-      <p>Видобувайте ресурси, тренуйте воїнів і здійснюйте набіги на сусідів — або зміцнюйте оборону й торгуйте.</p>
-      <input class="modal-input" id="kingdom-name-input" type="text" placeholder="Назва вашого королівства" maxlength="24">
-      <button class="modal-btn" onclick="Game.startGame()">Почати правління</button>
+      <p>Ви отримали землі на кордоні королівства. Тут нічого немає — лише поле і мішок з ресурсами.</p>
+      <p>Побудуйте ферму, зведіть замок, зберіть армію — і захистіть свої володіння від сусідів.</p>
+      <button class="modal-btn" onclick="Game.startGame()">Почати будівництво</button>
+    </div>
+  </div>
+
+  <div id="name-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2>👑 Ваше королівство зростає!</h2>
+      <p>Замок досяг 3 рівня. Час дати назву вашим володінням!</p>
+      <input class="modal-input" id="kingdom-name-input" type="text" placeholder="Назва королівства" maxlength="24">
+      <button class="modal-btn" onclick="Game.nameKingdom()">Затвердити</button>
     </div>
   </div>
 
@@ -184,9 +193,11 @@
   <h1 id="kingdom-title">⚔️ Королівство</h1>
   <div class="res-bar" id="res-bar"></div>
   <div class="power-bar" id="power-bar"></div>
+  <div class="guide-hint" id="guide-hint" style="display:none"></div>
 
   <div class="app-content">
-    <div id="view-city" class="view active"></div>
+    <div id="view-resources" class="view active"></div>
+    <div id="view-city" class="view"></div>
     <div id="view-army" class="view"></div>
     <div id="view-map" class="view"></div>
     <div id="view-log" class="view"></div>
@@ -195,7 +206,8 @@
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="G.tab('city')">🏰 Місто</button>
+    <button class="tab active" onclick="G.tab('resources')">⛏️ Ресурси</button>
+    <button class="tab" onclick="G.tab('city')">🏰 Місто</button>
     <button class="tab" onclick="G.tab('army')">⚔️ Армія</button>
     <button class="tab" onclick="G.tab('map')">🗺️ Карта</button>
     <button class="tab" onclick="G.tab('log')">📜 Журнал</button>
@@ -223,16 +235,19 @@ var RES_META = {
   food: { icon: '🌾', name: 'Їжа', cls: 'res-food' }
 };
 
-var BUILDINGS = [
-  { id: 'castle', name: 'Замок', icon: '🏰', desc: 'Рівень замку визначає максимум будівель', maxLevel: 20, cost: function(l) { return { gold: 100*(l+1), wood: 80*(l+1), stone: 60*(l+1) }; }, effect: function(l) { return 'Макс. будівель: ' + (3 + l*2); } },
+var RES_BUILDINGS = [
   { id: 'farm', name: 'Ферма', icon: '🌾', desc: 'Виробляє їжу', maxLevel: 20, cost: function(l) { return { gold: 30*(l+1), wood: 20*(l+1) }; }, prod: { food: 2 }, effect: function(l) { return '+' + (2*(l+1)) + ' їжі/хв'; } },
-  { id: 'lumber', name: 'Лісопилка', icon: '🪵', desc: 'Виробляє дерево', maxLevel: 20, cost: function(l) { return { gold: 25*(l+1), stone: 15*(l+1) }; }, prod: { wood: 2 }, effect: function(l) { return '+' + (2*(l+1)) + ' дерева/хв'; } },
+  { id: 'lumber', name: 'Лісопилка', icon: '🪵', desc: 'Виробляє дерево', maxLevel: 20, cost: function(l) { return { gold: 25*(l+1), stone: 10*(l+1) }; }, prod: { wood: 2 }, effect: function(l) { return '+' + (2*(l+1)) + ' дерева/хв'; } },
   { id: 'quarry', name: 'Каменоломня', icon: '⛏️', desc: 'Виробляє камінь', maxLevel: 20, cost: function(l) { return { gold: 25*(l+1), wood: 15*(l+1) }; }, prod: { stone: 1.5 }, effect: function(l) { return '+' + (1.5*(l+1)).toFixed(1) + ' каменю/хв'; } },
-  { id: 'mine', name: 'Золотий рудник', icon: '💰', desc: 'Виробляє золото', maxLevel: 20, cost: function(l) { return { wood: 40*(l+1), stone: 30*(l+1) }; }, prod: { gold: 1 }, effect: function(l) { return '+' + (1*(l+1)) + ' золота/хв'; } },
+  { id: 'mine', name: 'Золотий рудник', icon: '💰', desc: 'Виробляє золото', maxLevel: 20, cost: function(l) { return { wood: 40*(l+1), stone: 30*(l+1) }; }, prod: { gold: 1 }, effect: function(l) { return '+' + (1*(l+1)) + ' золота/хв'; } }
+];
+var CITY_BUILDINGS = [
+  { id: 'castle', name: 'Замок', icon: '🏰', desc: 'Рівень замку визначає максимум будівель', maxLevel: 20, cost: function(l) { return { gold: 80*(l+1), wood: 60*(l+1), stone: 40*(l+1) }; }, effect: function(l) { return 'Макс. будівель: ' + (3 + l*2); } },
   { id: 'barracks', name: 'Казарма', icon: '⚔️', desc: 'Тренує воїнів, визначає макс. армію', maxLevel: 15, cost: function(l) { return { gold: 60*(l+1), wood: 40*(l+1), stone: 30*(l+1) }; }, effect: function(l) { return 'Макс. армія: ' + (10 + l*10); } },
   { id: 'wall', name: 'Стіна', icon: '🧱', desc: 'Збільшує оборону', maxLevel: 15, cost: function(l) { return { stone: 80*(l+1), wood: 30*(l+1) }; }, effect: function(l) { return '+' + (20*(l+1)) + ' оборони'; } },
   { id: 'tower', name: 'Вежа', icon: '🏹', desc: 'Збільшує оборону', maxLevel: 10, cost: function(l) { return { stone: 60*(l+1), gold: 40*(l+1) }; }, effect: function(l) { return '+' + (30*(l+1)) + ' оборони'; } }
 ];
+var BUILDINGS = RES_BUILDINGS.concat(CITY_BUILDINGS);
 
 var TROOPS = [
   { id: 'warrior', name: 'Воїн', icon: '🗡️', atk: 10, def: 8, cost: { gold: 20, food: 10 }, desc: 'Збалансований боєць' },
@@ -279,12 +294,12 @@ function snd(t) {
 }
 
 var Game = {
-  s: { gold: 200, wood: 150, stone: 100, food: 100, name: '', started: false, lastSave: 0, shieldUntil: 0, lastAttack: 0, battleLog: [] },
+  s: { gold: 300, wood: 200, stone: 100, food: 150, name: '', started: false, lastSave: 0, shieldUntil: 0, lastAttack: 0, battleLog: [], guideStep: 0, named: false },
   b: {},
   troops: { warrior: 0, archer: 0, knight: 0 },
   userId: 'anon_' + Math.random().toString(36).slice(2,10),
   userName: 'Лорд',
-  _tab: 'city',
+  _tab: 'resources',
   _dirty: true,
   _lastTick: 0,
 
@@ -305,15 +320,24 @@ var Game = {
   },
 
   startGame: function() {
-    var name = document.getElementById('kingdom-name-input').value.trim() || 'Нове Королівство';
-    this.s.name = name.slice(0,24);
+    this.s.name = '';
     this.s.started = true;
-    this.s.shieldUntil = Date.now() + SHIELD_MS;
-    this.b.castle = 1; this.b.farm = 1;
+    this.s.guideStep = 0;
+    this.s.shieldUntil = Date.now() + SHIELD_MS * 2;
     this.save();
     document.getElementById('intro-modal').classList.add('hidden');
-    Toast.show('Ласкаво просимо, ' + esc(this.s.name) + '!', 'success');
+    Toast.show('Починайте будівництво!', 'success');
     this.startLoop();
+  },
+
+  nameKingdom: function() {
+    var name = document.getElementById('kingdom-name-input').value.trim() || 'Нове Королівство';
+    this.s.name = name.slice(0,24);
+    this.s.named = true;
+    document.getElementById('name-modal').classList.add('hidden');
+    Toast.show('👑 ' + esc(this.s.name) + ' — нехай живе!', 'success');
+    snd('build');
+    this.save(); this._dirty = true;
   },
 
   load: function() {
@@ -545,11 +569,43 @@ var Game = {
 
   render: function() {
     this.renderResBar();
+    this.renderGuide();
+    this.checkNamePrompt();
     var t = this._tab;
-    if (t==='city') this.renderCity();
+    if (t==='resources') this.renderBuildingList('view-resources', RES_BUILDINGS, '⛏️ Виробничі будівлі');
+    else if (t==='city') this.renderBuildingList('view-city', CITY_BUILDINGS, '🏰 Військові будівлі');
     else if (t==='army') this.renderArmy();
     else if (t==='log') this.renderLog();
     else if (t==='settings') this.renderSettings();
+  },
+
+  GUIDE_STEPS: [
+    { check: function(g){return (g.b.farm||0)>=1;}, hint: '🌾 Побудуй Ферму! Перейди на вкладку ⛏️ Ресурси', tab: 'resources' },
+    { check: function(g){return (g.b.lumber||0)>=1;}, hint: '🪵 Тепер побудуй Лісопилку для дерева', tab: 'resources' },
+    { check: function(g){return (g.b.castle||0)>=1;}, hint: '🏰 Зведи Замок! Перейди на вкладку 🏰 Місто', tab: 'city' },
+    { check: function(g){return (g.b.quarry||0)>=1;}, hint: '⛏️ Побудуй Каменоломню для каменю', tab: 'resources' },
+    { check: function(g){return (g.b.mine||0)>=1;}, hint: '💰 Побудуй Золотий рудник', tab: 'resources' },
+    { check: function(g){return (g.b.barracks||0)>=1;}, hint: '⚔️ Побудуй Казарму для армії → вкладка 🏰 Місто', tab: 'city' },
+    { check: function(g){return g.getTotalTroops()>=5;}, hint: '🗡️ Натренуй 5 воїнів → вкладка ⚔️ Армія', tab: 'army' },
+    { check: function(g){return (g.b.castle||0)>=3;}, hint: '🏰 Покращ Замок до рівня 3 щоб назвати королівство', tab: 'city' }
+  ],
+
+  renderGuide: function() {
+    var el = document.getElementById('guide-hint');
+    if (!el) return;
+    var step = this.s.guideStep || 0;
+    if (step >= this.GUIDE_STEPS.length) { el.style.display = 'none'; return; }
+    while (step < this.GUIDE_STEPS.length && this.GUIDE_STEPS[step].check(this)) { step++; }
+    this.s.guideStep = step;
+    if (step >= this.GUIDE_STEPS.length) { el.style.display = 'none'; return; }
+    el.textContent = '📋 Крок ' + (step+1) + ': ' + this.GUIDE_STEPS[step].hint;
+    el.style.display = 'block';
+  },
+
+  checkNamePrompt: function() {
+    if (!this.s.named && (this.b.castle||0) >= 3) {
+      document.getElementById('name-modal').classList.remove('hidden');
+    }
   },
 
   renderResBar: function() {
@@ -565,25 +621,29 @@ var Game = {
     var shield = (this.s.shieldUntil||0) > Date.now();
     var shieldStr = shield ? '<span class="shield-badge">🛡️ Щит: ' + Math.ceil(((this.s.shieldUntil||0)-Date.now())/60000) + ' хв</span>' : '';
     document.getElementById('power-bar').innerHTML = '⚔️ Сила: '+fmt(this.getPower()) + ' | 🗡️ Атака: '+fmt(this.getAttackPower())+' | 🛡️ Оборона: '+fmt(this.getDefense()) + shieldStr;
-    document.getElementById('kingdom-title').textContent = '⚔️ ' + (this.s.name || 'Королівство');
+    document.getElementById('kingdom-title').textContent = '⚔️ ' + (this.s.name || 'Нове поселення');
   },
 
-  renderCity: function() {
-    var el = document.getElementById('view-city');
+  renderBuildingList: function(viewId, list, title) {
+    var el = document.getElementById(viewId);
     var castleLvl = this.b.castle || 0;
-    var icons = ['🏚️','🏠','🏡','🏘️','🏰','🏰','🏯','🏯','🏛️','🏛️','👑'];
-    var cIcon = icons[Math.min(Math.floor(castleLvl/2), icons.length-1)];
-    var html = '<div class="castle-visual"><div class="castle-icon">'+cIcon+'</div><div class="castle-name">'+esc(this.s.name||'Королівство')+'</div><div class="castle-level">Рівень замку: '+castleLvl+' | Будівлі: '+this.getTotalBuildings()+'/'+this.getMaxBuildings()+'</div></div>';
-    html += '<div class="section"><h2>🏗️ Будівлі</h2>';
-    for (var i=0; i<BUILDINGS.length; i++) {
-      var bd = BUILDINGS[i];
+    var html = '';
+    if (viewId === 'view-city') {
+      var icons = ['🏚️','🏠','🏡','🏘️','🏰','🏰','🏯','🏯','🏛️','🏛️','👑'];
+      var cIcon = icons[Math.min(Math.floor(castleLvl/2), icons.length-1)];
+      html += '<div class="castle-visual"><div class="castle-icon">'+cIcon+'</div><div class="castle-name">'+esc(this.s.name||'Нове поселення')+'</div><div class="castle-level">Замок: Lv.'+castleLvl+' | Будівлі: '+this.getTotalBuildings()+'/'+this.getMaxBuildings()+'</div></div>';
+    }
+    html += '<div class="section"><h2>'+title+'</h2>';
+    for (var i=0; i<list.length; i++) {
+      var bd = list[i];
       var lvl = this.b[bd.id]||0;
       var cost = bd.cost(lvl);
       var can = this.canAfford(cost) && lvl < bd.maxLevel;
       if (bd.id !== 'castle' && lvl === 0 && this.getTotalBuildings() >= this.getMaxBuildings()) can = false;
       var costStr = '';
       for (var r in cost) costStr += (RES_META[r]?RES_META[r].icon:'') + fmt(cost[r]) + ' ';
-      html += '<div class="row"><span class="row-icon">'+bd.icon+'</span><div class="row-info"><div class="row-name">'+esc(bd.name)+' <span style="opacity:0.5">Lv.'+lvl+'</span></div><div class="row-desc">'+esc(bd.desc)+'</div><div class="row-stat">'+bd.effect(lvl)+'</div></div><button class="btn btn-primary" '+(can?'':'disabled')+' onclick="G.upgradeBuilding(\''+bd.id+'\')">'+costStr+'</button></div>';
+      var btnText = lvl === 0 ? '🔨 Побудувати' : '⬆️ Lv.' + (lvl+1);
+      html += '<div class="row"><span class="row-icon">'+bd.icon+'</span><div class="row-info"><div class="row-name">'+esc(bd.name)+(lvl>0?' <span style="opacity:0.5">Lv.'+lvl+'</span>':'')+'</div><div class="row-desc">'+esc(bd.desc)+'</div><div class="row-stat">'+bd.effect(lvl)+'</div></div><button class="btn btn-primary" '+(can?'':'disabled')+' onclick="G.upgradeBuilding(\''+bd.id+'\')" style="min-width:90px"><div style="font-size:0.65rem;opacity:0.7">'+costStr+'</div>'+btnText+'</button></div>';
     }
     html += '</div>';
     el.innerHTML = html;
@@ -699,7 +759,7 @@ var Game = {
 
   resetProgress: function() {
     if (!confirm('Скинути весь прогрес? Це не можна скасувати.')) return;
-    this.s = { gold:200, wood:150, stone:100, food:100, name:'', started:false, lastSave:0, shieldUntil:0, lastAttack:0, battleLog:[] };
+    this.s = { gold:300, wood:200, stone:100, food:150, name:'', started:false, lastSave:0, shieldUntil:0, lastAttack:0, battleLog:[], guideStep:0, named:false };
     this.b = {}; this.troops = { warrior:0, archer:0, knight:0 };
     try { localStorage.removeItem(LS); } catch(e) {}
     location.reload();
