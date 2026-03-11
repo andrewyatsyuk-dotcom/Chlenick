@@ -24,7 +24,17 @@
   </div>
   <div id="dos"></div>
   <script>
-    try { var tg = window.Telegram && window.Telegram.WebApp; if (tg) { tg.ready(); tg.expand(); } } catch(e) {}
+    try {
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if (tg) {
+        tg.ready();
+        tg.expand();
+        tg.setHeaderColor('#000000');
+        tg.setBackgroundColor('#000000');
+        if (tg.BackButton) tg.BackButton.hide();
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      }
+    } catch(e) {}
 
     emulators.pathPrefix = "dist/";
 
